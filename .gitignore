@@ -1,0 +1,53 @@
+.*
+!.github
+!.gitignore
+!.clang-format
+!.cmake-format.*
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+build
+sphinx
+
+#Visual Code folders
+.vscode
+
+# Android build folders
+.idea
+
+# Android build config files
+local.properties
+
+.DS_Store
+
+OculusClient/app/src/main/assets/shaders/*.glsl
