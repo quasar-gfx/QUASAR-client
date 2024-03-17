@@ -149,7 +149,7 @@ public:
     AndroidStreambuf androidCout;
     AndroidStreambuf androidCerr;
 
-    DebugOutput() 
+    DebugOutput()
         : androidCout(), androidCerr(ANDROID_LOG_ERROR) {
         auto *oldout = std::cout.rdbuf(&androidCout);
         auto *olderr = std::cerr.rdbuf(&androidCerr);
@@ -178,20 +178,20 @@ public:
 #include <android/log.h>
 #include <sstream>
 
-#define XR_TUT_LOG_TAG "openxr_tutorial"
-#define XR_TUT_LOG(...) {                                                           \
+#define XR_LOG_TAG "oculus_client"
+#define XR_LOG(...) {                                                           \
         std::ostringstream ostr;                                                    \
         ostr<<__VA_ARGS__;                                                          \
-        __android_log_write(ANDROID_LOG_DEBUG, XR_TUT_LOG_TAG, ostr.str().c_str()); \
+        __android_log_write(ANDROID_LOG_DEBUG, XR_LOG_TAG, ostr.str().c_str()); \
     }
-#define XR_TUT_LOG_ERROR(...) {                                                     \
+#define XR_LOG_ERROR(...) {                                                     \
         std::ostringstream ostr;                                                    \
         ostr<<__VA_ARGS__;                                                          \
-        __android_log_write(ANDROID_LOG_ERROR, XR_TUT_LOG_TAG, ostr.str().c_str()); \
+        __android_log_write(ANDROID_LOG_ERROR, XR_LOG_TAG, ostr.str().c_str()); \
     }
 #else
 #include <iostream>
 
-#define XR_TUT_LOG(...) std::cout << __VA_ARGS__ << "\n"
-#define XR_TUT_LOG_ERROR(...) std::cerr << __VA_ARGS__ << "\n"
+#define XR_LOG(...) std::cout << __VA_ARGS__ << "\n"
+#define XR_LOG_ERROR(...) std::cerr << __VA_ARGS__ << "\n"
 #endif

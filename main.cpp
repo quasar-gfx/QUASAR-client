@@ -33,7 +33,7 @@ public:
         : m_apiType(apiType) {
         // Check API compatibility with Platform.
         if (!CheckGraphicsAPI_TypeIsValidForPlatform(m_apiType)) {
-            XR_TUT_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");
+            XR_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");
             DEBUG_BREAK;
         }
     }
@@ -137,7 +137,7 @@ private:
                 }
             }
             if (!found) {
-                XR_TUT_LOG_ERROR("Failed to find OpenXR instance extension: " << requestedInstanceExtension);
+                XR_LOG_ERROR("Failed to find OpenXR instance extension: " << requestedInstanceExtension);
             }
         }
 
@@ -176,7 +176,7 @@ private:
         XrInstanceProperties instanceProperties{XR_TYPE_INSTANCE_PROPERTIES};
         OPENXR_CHECK(xrGetInstanceProperties(m_xrInstance, &instanceProperties), "Failed to get InstanceProperties.");
 
-        XR_TUT_LOG("OpenXR Runtime: " << instanceProperties.runtimeName << " - "
+        XR_LOG("OpenXR Runtime: " << instanceProperties.runtimeName << " - "
                                     << XR_VERSION_MAJOR(instanceProperties.runtimeVersion) << "."
                                     << XR_VERSION_MINOR(instanceProperties.runtimeVersion) << "."
                                     << XR_VERSION_PATCH(instanceProperties.runtimeVersion));
@@ -260,7 +260,7 @@ private:
             interactionProfileSuggestedBinding.countSuggestedBindings = (uint32_t)bindings.size();
             if (xrSuggestInteractionProfileBindings(m_xrInstance, &interactionProfileSuggestedBinding) == XrResult::XR_SUCCESS)
                 return true;
-            XR_TUT_LOG("Failed to suggest bindings with " << profile_path);
+            XR_LOG("Failed to suggest bindings with " << profile_path);
             return false;
         };
         bool any_ok = false;
@@ -293,11 +293,11 @@ private:
             // for each action, what is the binding?
             OPENXR_CHECK(xrGetCurrentInteractionProfile(m_session, m_handPaths[0], &interactionProfile), "Failed to get profile.");
             if (interactionProfile.interactionProfile) {
-                XR_TUT_LOG("user/hand/left ActiveProfile " << FromXrPath(interactionProfile.interactionProfile).c_str());
+                XR_LOG("user/hand/left ActiveProfile " << FromXrPath(interactionProfile.interactionProfile).c_str());
             }
             OPENXR_CHECK(xrGetCurrentInteractionProfile(m_session, m_handPaths[1], &interactionProfile), "Failed to get profile.");
             if (interactionProfile.interactionProfile) {
-                XR_TUT_LOG("user/hand/right ActiveProfile " << FromXrPath(interactionProfile.interactionProfile).c_str());
+                XR_LOG("user/hand/right ActiveProfile " << FromXrPath(interactionProfile.interactionProfile).c_str());
             }
         }
     }
@@ -343,7 +343,7 @@ private:
             }
         }
         if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM) {
-            XR_TUT_LOG_ERROR("Failed to find a compatible blend mode. Defaulting to XR_ENVIRONMENT_BLEND_MODE_OPAQUE.");
+            XR_LOG_ERROR("Failed to find a compatible blend mode. Defaulting to XR_ENVIRONMENT_BLEND_MODE_OPAQUE.");
             m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
         }
     }
@@ -363,7 +363,7 @@ private:
             }
         }
         if (m_viewConfiguration == XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM) {
-            XR_TUT_LOG_ERROR("Failed to find a view configuration type. Defaulting to XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO.");
+            XR_LOG_ERROR("Failed to find a view configuration type. Defaulting to XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO.");
             m_viewConfiguration = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
         }
 
@@ -385,7 +385,7 @@ private:
             m_graphicsAPI = std::make_unique<GraphicsAPI_OpenGL_ES>(m_xrInstance, m_systemID);
 #endif
         } else {
-            XR_TUT_LOG_ERROR("ERROR: Unknown Graphics API.");
+            XR_LOG_ERROR("ERROR: Unknown Graphics API.");
             DEBUG_BREAK;
         }
         // Fill out the XrSessionCreateInfo structure and create an XrSession.
@@ -529,13 +529,13 @@ private:
             // Log the number of lost events from the runtime.
             case XR_TYPE_EVENT_DATA_EVENTS_LOST: {
                 XrEventDataEventsLost *eventsLost = reinterpret_cast<XrEventDataEventsLost *>(&eventData);
-                XR_TUT_LOG("OPENXR: Events Lost: " << eventsLost->lostEventCount);
+                XR_LOG("OPENXR: Events Lost: " << eventsLost->lostEventCount);
                 break;
             }
             // Log that an instance loss is pending and shutdown the application.
             case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING: {
                 XrEventDataInstanceLossPending *instanceLossPending = reinterpret_cast<XrEventDataInstanceLossPending *>(&eventData);
-                XR_TUT_LOG("OPENXR: Instance Loss Pending at: " << instanceLossPending->lossTime);
+                XR_LOG("OPENXR: Instance Loss Pending at: " << instanceLossPending->lossTime);
                 m_sessionRunning = false;
                 m_applicationRunning = false;
                 break;
@@ -543,9 +543,9 @@ private:
             // Log that the interaction profile has changed.
             case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED: {
                 XrEventDataInteractionProfileChanged *interactionProfileChanged = reinterpret_cast<XrEventDataInteractionProfileChanged *>(&eventData);
-                XR_TUT_LOG("OPENXR: Interaction Profile changed for Session: " << interactionProfileChanged->session);
+                XR_LOG("OPENXR: Interaction Profile changed for Session: " << interactionProfileChanged->session);
                 if (interactionProfileChanged->session != m_session) {
-                    XR_TUT_LOG("XrEventDataInteractionProfileChanged for unknown Session");
+                    XR_LOG("XrEventDataInteractionProfileChanged for unknown Session");
                     break;
                 }
                 RecordCurrentBindings();
@@ -554,9 +554,9 @@ private:
             // Log that there's a reference space change pending.
             case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING: {
                 XrEventDataReferenceSpaceChangePending *referenceSpaceChangePending = reinterpret_cast<XrEventDataReferenceSpaceChangePending *>(&eventData);
-                XR_TUT_LOG("OPENXR: Reference Space Change pending for Session: " << referenceSpaceChangePending->session);
+                XR_LOG("OPENXR: Reference Space Change pending for Session: " << referenceSpaceChangePending->session);
                 if (referenceSpaceChangePending->session != m_session) {
-                   XR_TUT_LOG("XrEventDataReferenceSpaceChangePending for unknown Session");
+                   XR_LOG("XrEventDataReferenceSpaceChangePending for unknown Session");
                     break;
                 }
                 break;
@@ -565,7 +565,7 @@ private:
             case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED: {
                 XrEventDataSessionStateChanged *sessionStateChanged = reinterpret_cast<XrEventDataSessionStateChanged *>(&eventData);
                 if (sessionStateChanged->session != m_session) {
-                    XR_TUT_LOG("XrEventDataSessionStateChanged for unknown Session");
+                    XR_LOG("XrEventDataSessionStateChanged for unknown Session");
                     break;
                 }
 
@@ -747,7 +747,7 @@ private:
         std::vector<int64_t> formats(formatCount);
         OPENXR_CHECK(xrEnumerateSwapchainFormats(m_session, formatCount, &formatCount, formats.data()), "Failed to enumerate Swapchain Formats");
         if (m_graphicsAPI->SelectDepthSwapchainFormat(formats) == 0) {
-            XR_TUT_LOG_ERROR("Failed to find depth format for Swapchain.");
+            XR_LOG_ERROR("Failed to find depth format for Swapchain.");
             DEBUG_BREAK;
         }
 
@@ -758,7 +758,7 @@ private:
             coherentViews |= m_viewConfigurationViews[0].recommendedImageRectHeight == viewConfigurationView.recommendedImageRectHeight;
         }
         if (!coherentViews) {
-            XR_TUT_LOG_ERROR("The views are not coherent. Unable to create a single Swapchain.");
+            XR_LOG_ERROR("The views are not coherent. Unable to create a single Swapchain.");
             DEBUG_BREAK;
         }
         const XrViewConfigurationView &viewConfigurationView = m_viewConfigurationViews[0];
@@ -931,7 +931,7 @@ private:
         uint32_t viewCount = 0;
         XrResult result = xrLocateViews(m_session, &viewLocateInfo, &viewState, static_cast<uint32_t>(views.size()), &viewCount, views.data());
         if (result != XR_SUCCESS) {
-            XR_TUT_LOG("Failed to locate Views.");
+            XR_LOG("Failed to locate Views.");
             return false;
         }
 
@@ -1214,7 +1214,7 @@ private:
 
 void OpenXRTutorial_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput;  // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
-    XR_TUT_LOG("OculusClient App");
+    XR_LOG("OculusClient App");
 
     OpenXRTutorial app(apiType);
     app.Run();
