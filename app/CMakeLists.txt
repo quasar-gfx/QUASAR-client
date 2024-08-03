@@ -6,6 +6,20 @@ cmake_minimum_required(VERSION 3.22.1)
 set(PROJECT_NAME OculusClient)
 project("${PROJECT_NAME}")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
+add_compile_options(-Wunused-variable)
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+
 # Additional Directories for find_package() to search within.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -36,26 +50,26 @@ FetchContent_MakeAvailable(OpenXR)
 
 # Files
 set(SOURCES
-    main.cpp
-    common/GraphicsAPI.cpp
-    common/GraphicsAPI_OpenGL_ES.cpp
-    common/OpenXRDebugUtils.cpp)
+    cpp/main.cpp
+    cpp/common/GraphicsAPI.cpp
+    cpp/common/GraphicsAPI_OpenGL_ES.cpp
+    cpp/common/OpenXRDebugUtils.cpp)
 set(HEADERS
-    common/DebugOutput.h
-    common/GraphicsAPI.h
-    common/GraphicsAPI_OpenGL_ES.h
-    common/HelperFunctions.h
-    common/OpenXRDebugUtils.h
-    common/OpenXRHelper.h)
+    cpp/common/DebugOutput.h
+    cpp/common/GraphicsAPI.h
+    cpp/common/GraphicsAPI_OpenGL_ES.h
+    cpp/common/HelperFunctions.h
+    cpp/common/OpenXRDebugUtils.h
+    cpp/common/OpenXRHelper.h)
 
 set(ES_GLSL_SHADERS
-    "shaders/VertexShader_GLES_MV.glsl"
-    "shaders/PixelShader_GLES_MV.glsl")
+    cpp/shaders/VertexShader_GLES_MV.glsl
+    cpp/shaders/PixelShader_GLES_MV.glsl)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE
     # In this repo
-    common/
+    cpp/common/
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
     "${openxr_SOURCE_DIR}/external/include"
@@ -85,7 +99,7 @@ if(TARGET openxr-gfxwrapper)
 endif()
 
 # OpenGL ES GLSL
-set(SHADER_DEST "${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/assets/shaders")
+set(SHADER_DEST "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders")
 foreach(FILE ${ES_GLSL_SHADERS})
     get_filename_component(FILE_WE ${FILE} NAME_WE)
     add_custom_command(

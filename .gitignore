@@ -49,5 +49,3 @@ sphinx
 local.properties
 
 .DS_Store
-
-OculusClient/app/src/main/assets/shaders/*.glsl
