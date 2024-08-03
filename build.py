@@ -4,7 +4,7 @@ import subprocess
 import time
 import argparse
 
-PACKAGE_NAME = "org.khronos.OculusClient"
+PACKAGE_NAME = "app.wiselab.OculusClient"
 ACTIVITY_NAME = "android.app.NativeActivity"
 
 def build():

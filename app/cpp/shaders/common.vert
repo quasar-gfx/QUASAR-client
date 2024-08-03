@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #version 310 es
+
 #extension GL_OVR_multiview : enable
 layout(num_views = 2) in;
+
 layout(std140, binding = 0) uniform CameraConstants {
     mat4 viewProj[2];
     mat4 modelViewProj[2];
@@ -18,9 +20,11 @@ layout(std140, binding = 1) uniform Normals {
     vec4 normals[6];
 };
 layout(location = 0) in highp vec4 a_Positions;
+
 layout(location = 0) out flat uvec2 o_TexCoord;
 layout(location = 1) out highp vec3 o_Normal;
 layout(location = 2) out flat vec3 o_Colour;
+
 void main() {
     gl_Position = modelViewProj[gl_ViewID_OVR] * a_Positions;
     int face = gl_VertexID / 6;

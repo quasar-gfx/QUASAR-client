@@ -770,7 +770,7 @@ void GraphicsAPI_OpenGL_ES::SetRenderAttachments(void **colorViews, size_t color
 
     // Color
     for (size_t i = 0; i < colorViewCount; i++) {
-        GLenum attachment = GL_COLOR_ATTACHMENT0;
+        // GLenum attachment = GL_COLOR_ATTACHMENT0;
 
         GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
         const ImageViewCreateInfo &imageViewCI = imageViews[glColorView];

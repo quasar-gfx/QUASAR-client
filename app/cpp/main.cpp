@@ -15,7 +15,7 @@ XrVector3f operator-(XrVector3f a, XrVector3f b) {
     return {a.x - b.x, a.y - b.y, a.z - b.z};
 }
 XrVector3f operator*(XrVector3f a, float b) {
-    return {a.x * b, a.y * b, a.z * b};
+    return {a.x*  b, a.y*  b, a.z*  b};
 }
 // Include <algorithm> for std::min and max
 #include <algorithm>
@@ -192,7 +192,7 @@ private:
         OPENXR_CHECK(xrGetSystemProperties(m_xrInstance, m_systemID, &m_systemProperties), "Failed to get SystemProperties.");
     }
 
-    XrPath CreateXrPath(const char *path_string) {
+    XrPath CreateXrPath(const char* path_string) {
         XrPath xrPath;
         OPENXR_CHECK(xrStringToPath(m_xrInstance, path_string, &xrPath), "Failed to create XrPath from string.");
         return xrPath;
@@ -221,7 +221,7 @@ private:
         // Set a priority: this comes into play when we have multiple Action Sets, and determines which Action takes priority in binding to a specific input.
         actionSetCI.priority = 0;
 
-        auto CreateAction = [this](XrAction &xrAction, const char *name, XrActionType xrActionType, std::vector<const char *> subaction_paths = {}) -> void {
+        auto CreateAction = [this](XrAction &xrAction, const char* name, XrActionType xrActionType, std::vector<const char*> subaction_paths = {}) -> void {
             XrActionCreateInfo actionCI{XR_TYPE_ACTION_CREATE_INFO};
             // The type of action: float input, pose, haptic output etc.
             actionCI.actionType = xrActionType;
@@ -252,7 +252,7 @@ private:
     }
 
     void SuggestBindings() {
-        auto SuggestBindings = [this](const char *profile_path, std::vector<XrActionSuggestedBinding> bindings) -> bool {
+        auto SuggestBindings = [this](const char* profile_path, std::vector<XrActionSuggestedBinding> bindings) -> bool {
             // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports.
             XrInteractionProfileSuggestedBinding interactionProfileSuggestedBinding{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
             interactionProfileSuggestedBinding.interactionProfile = CreateXrPath(profile_path);
@@ -304,7 +304,7 @@ private:
 
     void CreateActionPoses() {
         // Create an xrSpace for a pose action.
-        auto CreateActionPoseSpace = [this](XrSession session, XrAction xrAction, const char *subaction_path = nullptr) -> XrSpace {
+        auto CreateActionPoseSpace = [this](XrSession session, XrAction xrAction, const char* subaction_path = nullptr) -> XrSpace {
             XrSpace xrSpace;
             const XrPosef xrPoseIdentity = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
             // Create frame of reference for a pose action
@@ -381,9 +381,7 @@ private:
         // Create a std::unique_ptr<GraphicsAPI_...> from the instance and system.
         // This call sets up a graphics API that's suitable for use with OpenXR.
         if (m_apiType == OPENGL_ES) {
-#if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
             m_graphicsAPI = std::make_unique<GraphicsAPI_OpenGL_ES>(m_xrInstance, m_systemID);
-#endif
         } else {
             XR_LOG_ERROR("ERROR: Unknown Graphics API.");
             DEBUG_BREAK;
@@ -452,25 +450,25 @@ private:
             30, 31, 32, 33, 34, 35,  // +Z
         };
 
-        m_vertexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::VERTEX, sizeof(float) * 4, sizeof(cubeVertices), &cubeVertices});
+        m_vertexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::VERTEX, sizeof(float)*  4, sizeof(cubeVertices), &cubeVertices});
 
         m_indexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::INDEX, sizeof(uint32_t), sizeof(cubeIndices), &cubeIndices});
 
-        size_t numberOfCuboids = 125 + 2 + 2;
-        m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * numberOfCuboids, nullptr});
+        size_t numberOfCuboids = 64 + 2 + 2;
+        m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants))*  numberOfCuboids, nullptr});
         m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
 
         if (m_apiType == OPENGL_ES) {
-            std::string vertexSource = ReadTextFile("shaders/VertexShader_GLES_MV.glsl", androidApp->activity->assetManager);
+            std::string vertexSource = ReadTextFile("shaders/common.vert", androidApp->activity->assetManager);
             m_vertexShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::VERTEX, vertexSource.data(), vertexSource.size()});
-            std::string fragmentSource = ReadTextFile("shaders/PixelShader_GLES_MV.glsl", androidApp->activity->assetManager);
+            std::string fragmentSource = ReadTextFile("shaders/material_unlit.frag", androidApp->activity->assetManager);
             m_fragmentShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::FRAGMENT, fragmentSource.data(), fragmentSource.size()});
         }
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.shaders = {m_vertexShader, m_fragmentShader};
         pipelineCI.vertexInputState.attributes = {{0, 0, GraphicsAPI::VertexType::VEC4, 0, "TEXCOORD"}};
-        pipelineCI.vertexInputState.bindings = {{0, 0, 4 * sizeof(float)}};
+        pipelineCI.vertexInputState.bindings = {{0, 0, 4*  sizeof(float)}};
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
         pipelineCI.rasterisationState = {false, false, GraphicsAPI::PolygonMode::FILL, GraphicsAPI::CullMode::BACK, GraphicsAPI::FrontFace::COUNTER_CLOCKWISE, false, 0.0f, 0.0f, 0.0f, 1.0f};
         pipelineCI.multisampleState = {1, false, 1.0f, 0xFFFFFFFF, false, false};
@@ -489,13 +487,13 @@ private:
         float scale = 0.2f;
         // Center the blocks a little way from the origin.
         XrVector3f center = {0.0f, -0.2f, -0.7f};
-        for (int i = 0; i < 5; i++) {
-            float x = scale * (float(i) - 1.5f) + center.x;
-            for (int j = 0; j < 5; j++) {
-                float y = scale * (float(j) - 1.5f) + center.y;
-                for (int k = 0; k < 5; k++) {
-                    float angleRad = 0;
-                    float z = scale * (float(k) - 1.5f) + center.z;
+        for (int i = 0; i < 4; i++) {
+            float x = scale*  (float(i) - 1.5f) + center.x;
+            for (int j = 0; j < 4; j++) {
+                float y = scale*  (float(j) - 1.5f) + center.y;
+                for (int k = 0; k < 4; k++) {
+                    // float angleRad = 0;
+                    float z = scale*  (float(k) - 1.5f) + center.z;
                     // No rotation
                     XrQuaternionf q = {0.0f, 0.0f, 0.0f, 1.0f};
                     // A random color.
@@ -528,13 +526,13 @@ private:
             switch (eventData.type) {
             // Log the number of lost events from the runtime.
             case XR_TYPE_EVENT_DATA_EVENTS_LOST: {
-                XrEventDataEventsLost *eventsLost = reinterpret_cast<XrEventDataEventsLost *>(&eventData);
+                XrEventDataEventsLost* eventsLost = reinterpret_cast<XrEventDataEventsLost*>(&eventData);
                 XR_LOG("OPENXR: Events Lost: " << eventsLost->lostEventCount);
                 break;
             }
             // Log that an instance loss is pending and shutdown the application.
             case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING: {
-                XrEventDataInstanceLossPending *instanceLossPending = reinterpret_cast<XrEventDataInstanceLossPending *>(&eventData);
+                XrEventDataInstanceLossPending* instanceLossPending = reinterpret_cast<XrEventDataInstanceLossPending*>(&eventData);
                 XR_LOG("OPENXR: Instance Loss Pending at: " << instanceLossPending->lossTime);
                 m_sessionRunning = false;
                 m_applicationRunning = false;
@@ -542,7 +540,7 @@ private:
             }
             // Log that the interaction profile has changed.
             case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED: {
-                XrEventDataInteractionProfileChanged *interactionProfileChanged = reinterpret_cast<XrEventDataInteractionProfileChanged *>(&eventData);
+                XrEventDataInteractionProfileChanged* interactionProfileChanged = reinterpret_cast<XrEventDataInteractionProfileChanged*>(&eventData);
                 XR_LOG("OPENXR: Interaction Profile changed for Session: " << interactionProfileChanged->session);
                 if (interactionProfileChanged->session != m_session) {
                     XR_LOG("XrEventDataInteractionProfileChanged for unknown Session");
@@ -553,7 +551,7 @@ private:
             }
             // Log that there's a reference space change pending.
             case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING: {
-                XrEventDataReferenceSpaceChangePending *referenceSpaceChangePending = reinterpret_cast<XrEventDataReferenceSpaceChangePending *>(&eventData);
+                XrEventDataReferenceSpaceChangePending* referenceSpaceChangePending = reinterpret_cast<XrEventDataReferenceSpaceChangePending*>(&eventData);
                 XR_LOG("OPENXR: Reference Space Change pending for Session: " << referenceSpaceChangePending->session);
                 if (referenceSpaceChangePending->session != m_session) {
                    XR_LOG("XrEventDataReferenceSpaceChangePending for unknown Session");
@@ -563,7 +561,7 @@ private:
             }
             // Session State changes:
             case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED: {
-                XrEventDataSessionStateChanged *sessionStateChanged = reinterpret_cast<XrEventDataSessionStateChanged *>(&eventData);
+                XrEventDataSessionStateChanged* sessionStateChanged = reinterpret_cast<XrEventDataSessionStateChanged*>(&eventData);
                 if (sessionStateChanged->session != m_session) {
                     XR_LOG("XrEventDataSessionStateChanged for unknown Session");
                     break;
@@ -662,14 +660,14 @@ private:
             XrHapticActionInfo hapticActionInfo{XR_TYPE_HAPTIC_ACTION_INFO};
             hapticActionInfo.action = m_buzzAction;
             hapticActionInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader *)&vibration), "Failed to apply haptic feedback.");
+            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader* )&vibration), "Failed to apply haptic feedback.");
         }
     }
     // Helper function to snap a 3D position to the nearest 10cm
     static XrVector3f FixPosition(XrVector3f pos) {
-        int x = int(std::nearbyint(pos.x * 10.f));
-        int y = int(std::nearbyint(pos.y * 10.f));
-        int z = int(std::nearbyint(pos.z * 10.f));
+        int x = int(std::nearbyint(pos.x*  10.f));
+        int y = int(std::nearbyint(pos.y*  10.f));
+        int z = int(std::nearbyint(pos.z*  10.f));
         pos.x = float(x) / 10.f;
         pos.y = float(y) / 10.f;
         pos.z = float(z) / 10.f;
@@ -800,12 +798,12 @@ private:
         // Get the number of images in the color/depth swapchain and allocate Swapchain image data via GraphicsAPI to store the returned array.
         uint32_t colorSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(m_colorSwapchainInfo.swapchain, 0, &colorSwapchainImageCount, nullptr), "Failed to enumerate Color Swapchain Images.");
-        XrSwapchainImageBaseHeader *colorSwapchainImages = m_graphicsAPI->AllocateSwapchainImageData(m_colorSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::COLOR, colorSwapchainImageCount);
+        XrSwapchainImageBaseHeader* colorSwapchainImages = m_graphicsAPI->AllocateSwapchainImageData(m_colorSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::COLOR, colorSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(m_colorSwapchainInfo.swapchain, colorSwapchainImageCount, &colorSwapchainImageCount, colorSwapchainImages), "Failed to enumerate Color Swapchain Images.");
 
         uint32_t depthSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(m_depthSwapchainInfo.swapchain, 0, &depthSwapchainImageCount, nullptr), "Failed to enumerate Depth Swapchain Images.");
-        XrSwapchainImageBaseHeader *depthSwapchainImages = m_graphicsAPI->AllocateSwapchainImageData(m_depthSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::DEPTH, depthSwapchainImageCount);
+        XrSwapchainImageBaseHeader* depthSwapchainImages = m_graphicsAPI->AllocateSwapchainImageData(m_depthSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::DEPTH, depthSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(m_depthSwapchainInfo.swapchain, depthSwapchainImageCount, &depthSwapchainImageCount, depthSwapchainImages), "Failed to enumerate Depth Swapchain Images.");
 
         // Per image in the swapchains, fill out a GraphicsAPI::ImageViewCreateInfo structure and create a color/depth image view.
@@ -864,7 +862,7 @@ private:
             XrMatrix4x4f_Multiply(&cameraConstants.modelViewProj[i], &cameraConstants.viewProj[i], &cameraConstants.model);
         }
         cameraConstants.color = {color.x, color.y, color.z, 1.0};
-        size_t offsetCameraUB = m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * renderCuboidIndex;
+        size_t offsetCameraUB = m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants))*  renderCuboidIndex;
 
         m_graphicsAPI->SetPipeline(m_pipeline);
 
@@ -906,7 +904,7 @@ private:
             // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure.
             rendered = RenderLayer(renderLayerInfo);
             if (rendered) {
-                renderLayerInfo.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader *>(&renderLayerInfo.layerProjection));
+                renderLayerInfo.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&renderLayerInfo.layerProjection));
             }
         }
 
@@ -1020,7 +1018,7 @@ private:
             auto &thisBlock = m_blocks[i];
             XrVector3f sc = thisBlock.scale;
             if (i == m_nearBlock[0] || i == m_nearBlock[1])
-                sc = thisBlock.scale * 1.05f;
+                sc = thisBlock.scale*  1.05f;
             RenderCuboid(thisBlock.pose, sc, thisBlock.color);
         }
         m_graphicsAPI->EndRendering();
@@ -1041,19 +1039,19 @@ private:
 
 public:
     // Stored pointer to the android_app structure from android_main().
-    static android_app *androidApp;
+    static android_app* androidApp;
 
     // Custom data structure that is used by PollSystemEvents().
     // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/main.cpp#L133C1-L189C2
     struct AndroidAppState {
-        ANativeWindow *nativeWindow = nullptr;
+        ANativeWindow* nativeWindow = nullptr;
         bool resumed = false;
     };
     static AndroidAppState androidAppState;
 
     // Processes the next command from the Android OS. It updates AndroidAppState.
-    static void AndroidAppHandleCmd(struct android_app *app, int32_t cmd) {
-        AndroidAppState *appState = (AndroidAppState *)app->userData;
+    static void AndroidAppHandleCmd(struct android_app* app, int32_t cmd) {
+        AndroidAppState* appState = (AndroidAppState* )app->userData;
 
         switch (cmd) {
         // There is no APP_CMD_CREATE. The ANativeActivity creates the application thread from onCreate().
@@ -1096,11 +1094,11 @@ private:
         }
         while (true) {
             // Poll and process the Android OS system events.
-            struct android_poll_source *source = nullptr;
+            struct android_poll_source* source = nullptr;
             int events = 0;
             // The timeout depends on whether the application is active.
             const int timeoutMilliseconds = (!androidAppState.resumed && !m_sessionRunning && androidApp->destroyRequested == 0) ? -1 : 0;
-            if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void **)&source) >= 0) {
+            if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void* *)&source) >= 0) {
                 if (source != nullptr) {
                     source->process(androidApp, source);
                 }
@@ -1112,8 +1110,8 @@ private:
 
 private:
     XrInstance m_xrInstance = XR_NULL_HANDLE;
-    std::vector<const char *> m_activeAPILayers = {};
-    std::vector<const char *> m_activeInstanceExtensions = {};
+    std::vector<const char*> m_activeAPILayers = {};
+    std::vector<const char*> m_activeInstanceExtensions = {};
     std::vector<std::string> m_apiLayers = {};
     std::vector<std::string> m_instanceExtensions = {};
 
@@ -1139,7 +1137,7 @@ private:
     struct SwapchainInfo {
         XrSwapchain swapchain = XR_NULL_HANDLE;
         int64_t swapchainFormat = 0;
-        std::vector<void *> imageViews;
+        std::vector<void*> imageViews;
     };
     SwapchainInfo m_colorSwapchainInfo = {};
     SwapchainInfo m_depthSwapchainInfo = {};
@@ -1151,7 +1149,7 @@ private:
     XrSpace m_localSpace = XR_NULL_HANDLE;
     struct RenderLayerInfo {
         XrTime predictedDisplayTime = 0;
-        std::vector<XrCompositionLayerBaseHeader *> layers;
+        std::vector<XrCompositionLayerBaseHeader*> layers;
         XrCompositionLayerProjection layerProjection = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
@@ -1160,18 +1158,18 @@ private:
     float m_viewHeightM = 1.5f;
 
     // Vertex and index buffers: geometry for our cuboids.
-    void *m_vertexBuffer = nullptr;
-    void *m_indexBuffer = nullptr;
+    void* m_vertexBuffer = nullptr;
+    void* m_indexBuffer = nullptr;
     // Camera values constant buffer for the shaders.
-    void *m_uniformBuffer_Camera = nullptr;
+    void* m_uniformBuffer_Camera = nullptr;
     // The normals are stored in a uniform buffer to simplify our vertex geometry.
-    void *m_uniformBuffer_Normals = nullptr;
+    void* m_uniformBuffer_Normals = nullptr;
 
     // We use only two shaders in this app.
-    void *m_vertexShader = nullptr, *m_fragmentShader = nullptr;
+    void* m_vertexShader = nullptr,* m_fragmentShader = nullptr;
 
     // The pipeline is a graphics-API specific state object.
-    void *m_pipeline = nullptr;
+    void* m_pipeline = nullptr;
 
     // An instance of a 3d colored block.
     struct Block {
@@ -1220,21 +1218,21 @@ void OpenXRTutorial_Main(GraphicsAPI_Type apiType) {
     app.Run();
 }
 
-android_app *OpenXRTutorial::androidApp = nullptr;
+android_app* OpenXRTutorial::androidApp = nullptr;
 OpenXRTutorial::AndroidAppState OpenXRTutorial::androidAppState = {};
 
-void android_main(struct android_app *app) {
+void android_main(struct android_app* app) {
     // Allow interaction with JNI and the JVM on this thread.
     // https://developer.android.com/training/articles/perf-jni#threads
-    JNIEnv *env;
+    JNIEnv* env;
     app->activity->vm->AttachCurrentThread(&env, nullptr);
 
     // https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#XR_KHR_loader_init
-    // Load xrInitializeLoaderKHR() function pointer. On Android, the loader must be initialized with variables from android_app *.
+    // Load xrInitializeLoaderKHR() function pointer. On Android, the loader must be initialized with variables from android_app* .
     // Without this, there's is no loader and thus our function calls to OpenXR would fail.
     XrInstance m_xrInstance = XR_NULL_HANDLE;  // Dummy XrInstance variable for OPENXR_CHECK macro.
     PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
-    OPENXR_CHECK(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction *)&xrInitializeLoaderKHR), "Failed to get InstanceProcAddr for xrInitializeLoaderKHR.");
+    OPENXR_CHECK(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction* )&xrInitializeLoaderKHR), "Failed to get InstanceProcAddr for xrInitializeLoaderKHR.");
     if (!xrInitializeLoaderKHR) {
         return;
     }
@@ -1243,7 +1241,7 @@ void android_main(struct android_app *app) {
     XrLoaderInitInfoAndroidKHR loaderInitializeInfoAndroid{XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR};
     loaderInitializeInfoAndroid.applicationVM = app->activity->vm;
     loaderInitializeInfoAndroid.applicationContext = app->activity->clazz;
-    OPENXR_CHECK(xrInitializeLoaderKHR((XrLoaderInitInfoBaseHeaderKHR *)&loaderInitializeInfoAndroid), "Failed to initialize Loader for Android.");
+    OPENXR_CHECK(xrInitializeLoaderKHR((XrLoaderInitInfoBaseHeaderKHR* )&loaderInitializeInfoAndroid), "Failed to initialize Loader for Android.");
 
     // Set userData and Callback for PollSystemEvents().
     app->userData = &OpenXRTutorial::androidAppState;
