@@ -20,6 +20,10 @@ set(RENDERER_LIBS )
 # For FetchContent_Declare() and FetchContent_MakeAvailable()
 include(FetchContent)
 
+# add third party libraries
+add_subdirectory(${EXTERNAL}/stb/tnt)
+set(RENDERER_LIBS ${RENDERER_LIBS} stb)
+
 # openxr_loader - From github.com/KhronosGroup
 set(BUILD_TESTS
     OFF
@@ -39,28 +43,54 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(OpenXR)
 set(RENDERER_LIBS ${RENDERER_LIBS} openxr_loader)
 
-add_subdirectory(${EXTERNAL}/stb/tnt)
-set(RENDERER_LIBS ${RENDERER_LIBS} stb)
-
 add_subdirectory(${SHADERS})
 
 # Files
-set(RENDERER_INCLUDES
+set(RENDERER_HDRS
+    ${RENDERER}/include/Culling/AABB.h
+    ${RENDERER}/include/Culling/BoundingSphere.h
+    ${RENDERER}/include/Culling/Frustum.h
+    ${RENDERER}/include/Camera.h
+    ${RENDERER}/include/CubeMap.h
+    ${RENDERER}/include/Framebuffer.h
+    ${RENDERER}/include/Materials/Material.h
+    ${RENDERER}/include/Materials/UnlitMaterial.h
     ${RENDERER}/include/OpenGLObject.h
-    ${RENDERER}/include/Texture.h
-    ${RENDERER}/include/Shaders/ShaderBase.h
-    ${RENDERER}/include/Shaders/Shader.h
+    ${RENDERER}/include/Primatives/Cube.h
+    ${RENDERER}/include/Primatives/Entity.h
+    ${RENDERER}/include/Primatives/FullScreenQuad.h
+    ${RENDERER}/include/Primatives/Mesh.h
+    ${RENDERER}/include/Primatives/Node.h
+    ${RENDERER}/include/Primatives/Plane.h
+    ${RENDERER}/include/Primatives/Sphere.h
+    ${RENDERER}/include/RenderTargets/RenderTarget.h
+    ${RENDERER}/include/RenderTargets/RenderTargetBase.h
+    ${RENDERER}/include/Renderbuffer.h
+    ${RENDERER}/include/Scene.h
     ${RENDERER}/include/Shaders/ComputeShader.h
+    ${RENDERER}/include/Shaders/Shader.h
+    ${RENDERER}/include/Shaders/ShaderBase.h
+    ${RENDERER}/include/Texture.h
     ${RENDERER}/include/Utils/FileIO.h
+    ${RENDERER}/include/Utils/Platform.h
+    ${RENDERER}/include/Utils/TimeUtils.h
+    ${RENDERER}/include/Vertex.h
 )
 set(RENDERER_SRCS
-    ${RENDERER}/src/Texture.cpp
-    ${RENDERER}/src/Shaders/Shader.cpp
+    ${RENDERER}/src/Camera.cpp
+    ${RENDERER}/src/CubeMap.cpp
+    ${RENDERER}/src/Materials/UnlitMaterial.cpp
+    ${RENDERER}/src/Primatives/Entity.cpp
+    ${RENDERER}/src/Primatives/Mesh.cpp
+    ${RENDERER}/src/Primatives/Node.cpp
+    ${RENDERER}/src/Scene.cpp
     ${RENDERER}/src/Shaders/ComputeShader.cpp
+    ${RENDERER}/src/Shaders/Shader.cpp
+    ${RENDERER}/src/Texture.cpp
     ${RENDERER}/src/Utils/FileIO.cpp
 )
 
-set(INCLUDES
+set(PRIVATE_HDRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/HelperFunctions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/DebugOutput.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI.h
@@ -73,7 +103,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI_OpenGL_ES.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenXRDebugUtils.cpp)
 
-add_library(${TARGET} SHARED ${SRCS} ${INCLUDES} ${RENDERER_SRCS} ${RENDERER_INCLUDES})
+add_library(${TARGET} SHARED ${SRCS} ${PRIVATE_HDRS} ${RENDERER_SRCS} ${RENDERER_HDRS})
 target_include_directories(${TARGET} PRIVATE
     # In this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include

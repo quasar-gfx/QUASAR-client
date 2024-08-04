@@ -1,14 +1,12 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
-
-// OpenXR Tutorial for Khronos Group
+#include <Scene.h>
+#include <Primatives/Mesh.h>
+#include <Primatives/Cube.h>
+#include <Materials/UnlitMaterial.h>
+#include <Utils/FileIO.h>
 
 #include <DebugOutput.h>
 #include <GraphicsAPI_OpenGL_ES.h>
 #include <OpenXRDebugUtils.h>
-
-#include <Utils/FileIO.h>
 
 // include xr linear algebra for XrVector and XrMatrix classes.
 #include <Utils/xr_linear_algebra.h>
@@ -19,8 +17,6 @@ XrVector3f operator-(XrVector3f a, XrVector3f b) {
 XrVector3f operator*(XrVector3f a, float b) {
     return {a.x*  b, a.y*  b, a.z*  b};
 }
-// Include <algorithm> for std::min and max
-#include <algorithm>
 // Random numbers for colorful blocks
 #include <random>
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.f);
@@ -1152,6 +1148,8 @@ private:
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
 
+    std::shared_ptr<Shader> shader;
+
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
 
@@ -1162,8 +1160,6 @@ private:
     void* m_uniformBuffer_Camera = nullptr;
     // The normals are stored in a uniform buffer to simplify our vertex geometry.
     void* m_uniformBuffer_Normals = nullptr;
-
-    std::shared_ptr<Shader> shader;
 
     // The pipeline is a graphics-API specific state object.
     void* m_pipeline = nullptr;
