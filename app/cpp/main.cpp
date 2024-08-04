@@ -7,6 +7,7 @@
 #include <DebugOutput.h>
 #include <GraphicsAPI_OpenGL_ES.h>
 #include <OpenXRDebugUtils.h>
+
 #include <Utils/FileIO.h>
 
 // include xr linear algebra for XrVector and XrMatrix classes.
@@ -455,19 +456,19 @@ private:
 
         m_indexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::INDEX, sizeof(uint32_t), sizeof(cubeIndices), &cubeIndices});
 
-        size_t numberOfCuboids = 64 + 2 + 2;
+        size_t numberOfCuboids = 125 + 2 + 2;
         m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants))*  numberOfCuboids, nullptr});
         m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
 
-        if (m_apiType == OPENGL_ES) {
-            std::string vertexSource = FileIO::loadTextFile("shaders/common.vert");
-            m_vertexShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::VERTEX, vertexSource.data(), vertexSource.size()});
-            std::string fragmentSource = FileIO::loadTextFile("shaders/material_unlit.frag");
-            m_fragmentShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::FRAGMENT, fragmentSource.data(), fragmentSource.size()});
-        }
+        shader = std::make_shared<Shader>(ShaderDataCreateParams{
+            .vertexCodeData = SHADER_COMMON_VERT,
+            .vertexCodeSize = SHADER_COMMON_VERT_len,
+            .fragmentCodeData = SHADER_MATERIAL_UNLIT_FRAG,
+            .fragmentCodeSize = SHADER_MATERIAL_UNLIT_FRAG_len,
+        });
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
-        pipelineCI.shaders = {m_vertexShader, m_fragmentShader};
+        pipelineCI.shader = shader;
         pipelineCI.vertexInputState.attributes = {{0, 0, GraphicsAPI::VertexType::VEC4, 0, "TEXCOORD"}};
         pipelineCI.vertexInputState.bindings = {{0, 0, 4*  sizeof(float)}};
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
@@ -483,14 +484,14 @@ private:
         pipelineCI.viewMask = 0b11;
         m_pipeline = m_graphicsAPI->CreatePipeline(pipelineCI);
 
-        float scale = 0.1f;
+        float scale = 0.2f;
         // Center the blocks a little way from the origin.
         XrVector3f center = {0.0f, -0.2f, -0.7f};
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             float x = scale*  (float(i) - 1.5f) + center.x;
-            for (int j = 0; j < 4; j++) {
+            for (int j = 0; j < 5; j++) {
                 float y = scale*  (float(j) - 1.5f) + center.y;
-                for (int k = 0; k < 4; k++) {
+                for (int k = 0; k < 5; k++) {
                     // float angleRad = 0;
                     float z = scale*  (float(k) - 1.5f) + center.z;
                     // No rotation
@@ -505,8 +506,6 @@ private:
 
     void DestroyResources() {
         m_graphicsAPI->DestroyPipeline(m_pipeline);
-        m_graphicsAPI->DestroyShader(m_fragmentShader);
-        m_graphicsAPI->DestroyShader(m_vertexShader);
         m_graphicsAPI->DestroyBuffer(m_uniformBuffer_Camera);
         m_graphicsAPI->DestroyBuffer(m_uniformBuffer_Normals);
         m_graphicsAPI->DestroyBuffer(m_indexBuffer);
@@ -1164,8 +1163,7 @@ private:
     // The normals are stored in a uniform buffer to simplify our vertex geometry.
     void* m_uniformBuffer_Normals = nullptr;
 
-    // We use only two shaders in this app.
-    void* m_vertexShader = nullptr,* m_fragmentShader = nullptr;
+    std::shared_ptr<Shader> shader;
 
     // The pipeline is a graphics-API specific state object.
     void* m_pipeline = nullptr;

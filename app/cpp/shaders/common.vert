@@ -1,9 +1,3 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
-
-#version 310 es
-
 #extension GL_OVR_multiview : enable
 layout(num_views = 2) in;
 

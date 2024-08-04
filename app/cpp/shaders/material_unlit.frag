@@ -1,9 +1,3 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
-
-#version 310 es
-
 layout(location = 0) in flat uvec2 i_TexCoord;
 layout(location = 1) in highp vec3 i_Normal;
 layout(location = 2) in flat highp vec3 i_Color;

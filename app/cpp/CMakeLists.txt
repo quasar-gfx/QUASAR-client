@@ -75,14 +75,20 @@ set(SRCS
 
 add_library(${TARGET} SHARED ${SRCS} ${INCLUDES} ${RENDERER_SRCS} ${RENDERER_INCLUDES})
 target_include_directories(${TARGET} PRIVATE
-    # In this repo
+    # In this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+    # Renderer related includes
     ${RENDERER}/include
     ${EXTERNAL}
+    ${CMAKE_BINARY_DIR}/shaders
+
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
     "${openxr_SOURCE_DIR}/external/include"
 )
+
+add_dependencies(${TARGET} shaders)
 
 # export ANativeActivity_onCreate for java to call.
 set_property(

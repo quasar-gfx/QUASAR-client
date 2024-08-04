@@ -6,6 +6,8 @@
 
 #include <GraphicsAPI_OpenGL_ES.h>
 
+#include <Shaders/Shader.h>
+
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
 #if defined(OS_WINDOWS)
@@ -669,31 +671,8 @@ void GraphicsAPI_OpenGL_ES::DestroyShader(void *&shader) {
 }
 
 void *GraphicsAPI_OpenGL_ES::CreatePipeline(const PipelineCreateInfo &pipelineCI) {
-    GLuint program = glCreateProgram();
-
-    for (const void *const &shader : pipelineCI.shaders)
-        glAttachShader(program, (GLuint)(uint64_t)shader);
-
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    GLint isLinked = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-    if (isLinked == GL_FALSE) {
-        GLint maxLength = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
-
-        std::vector<GLchar> infoLog(maxLength);
-        glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
-
-        glDeleteProgram(program);
-    }
-
-    for (const void *const &shader : pipelineCI.shaders)
-        glDetachShader(program, (GLuint)(uint64_t)shader);
-
+    GLuint program = pipelineCI.shader->ID;
     pipelines[program] = pipelineCI;
-
     return (void *)(uint64_t)program;
 }
 
