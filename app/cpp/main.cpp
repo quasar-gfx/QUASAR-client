@@ -1050,7 +1050,7 @@ public:
 
     // Processes the next command from the Android OS. It updates AndroidAppState.
     static void AndroidAppHandleCmd(struct android_app* app, int32_t cmd) {
-        AndroidAppState* appState = (AndroidAppState* )app->userData;
+        AndroidAppState* appState = (AndroidAppState*)app->userData;
 
         switch (cmd) {
         // There is no APP_CMD_CREATE. The ANativeActivity creates the application thread from onCreate().

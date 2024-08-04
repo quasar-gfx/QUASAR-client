@@ -40,6 +40,8 @@ set(RENDERER_LIBS ${RENDERER_LIBS} openxr_loader)
 add_subdirectory(${EXTERNAL}/stb/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 
+add_subdirectory(${SHADERS})
+
 # Files
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
@@ -89,5 +91,3 @@ if(TARGET openxr-gfxwrapper)
     target_link_libraries(${TARGET} openxr-gfxwrapper)
     target_compile_definitions(${TARGET} PUBLIC XR_TUTORIAL_USE_OPENGL_ES)
 endif()
-
-add_subdirectory(${SHADERS})
