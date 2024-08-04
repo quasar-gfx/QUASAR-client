@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 project(cpp)
 
-set(RENDERER ${CMAKE_CURRENT_SOURCE_DIR}/renderer)
+set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/opengl-remote-rendering)
+
+set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
 set(SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
-set(EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
+set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
 
 # Additional Directories for find_package() to search within.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -43,25 +45,39 @@ set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 add_subdirectory(${SHADERS})
 
 # Files
-set(SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/FileIO.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI_OpenGL_ES.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenXRDebugUtils.cpp)
+set(RENDERER_INCLUDES
+    ${RENDERER}/include/OpenGLObject.h
+    ${RENDERER}/include/Texture.h
+    ${RENDERER}/include/Shaders/ShaderBase.h
+    ${RENDERER}/include/Shaders/Shader.h
+    ${RENDERER}/include/Shaders/ComputeShader.h
+    ${RENDERER}/include/Utils/FileIO.h
+)
+set(RENDERER_SRCS
+    ${RENDERER}/src/Texture.cpp
+    ${RENDERER}/src/Shaders/Shader.cpp
+    ${RENDERER}/src/Shaders/ComputeShader.cpp
+    ${RENDERER}/src/Utils/FileIO.cpp
+)
+
 set(INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/FileIO.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/HelperFunctions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/DebugOutput.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI_OpenGL_ES.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRDebugUtils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRHelper.h)
+set(SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI_OpenGL_ES.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenXRDebugUtils.cpp)
 
-add_library(${TARGET} SHARED ${SRCS} ${INCLUDES})
+add_library(${TARGET} SHARED ${SRCS} ${INCLUDES} ${RENDERER_SRCS} ${RENDERER_INCLUDES})
 target_include_directories(${TARGET} PRIVATE
     # In this repo
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${RENDERER}/include
     ${EXTERNAL}
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
