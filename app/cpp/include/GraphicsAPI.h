@@ -5,7 +5,7 @@
 // OpenXR Tutorial for Khronos Group
 
 #pragma once
-#include <HelperFunctions.h>
+#include <Utils/HelperFunctions.h>
 
 #include <android_native_app_glue.h>
 #define XR_USE_PLATFORM_ANDROID

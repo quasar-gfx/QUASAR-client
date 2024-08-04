@@ -7,9 +7,10 @@
 #include <DebugOutput.h>
 #include <GraphicsAPI_OpenGL_ES.h>
 #include <OpenXRDebugUtils.h>
+#include <Utils/FileIO.h>
 
 // include xr linear algebra for XrVector and XrMatrix classes.
-#include <xr_linear_algebra.h>
+#include <Utils/xr_linear_algebra.h>
 // Declare some useful operators for vectors:
 XrVector3f operator-(XrVector3f a, XrVector3f b) {
     return {a.x - b.x, a.y - b.y, a.z - b.z};
@@ -459,9 +460,9 @@ private:
         m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
 
         if (m_apiType == OPENGL_ES) {
-            std::string vertexSource = ReadTextFile("shaders/common.vert", androidApp->activity->assetManager);
+            std::string vertexSource = FileIO::loadTextFile("shaders/common.vert");
             m_vertexShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::VERTEX, vertexSource.data(), vertexSource.size()});
-            std::string fragmentSource = ReadTextFile("shaders/material_unlit.frag", androidApp->activity->assetManager);
+            std::string fragmentSource = FileIO::loadTextFile("shaders/material_unlit.frag");
             m_fragmentShader = m_graphicsAPI->CreateShader({GraphicsAPI::ShaderCreateInfo::Type::FRAGMENT, fragmentSource.data(), fragmentSource.size()});
         }
 
@@ -482,9 +483,7 @@ private:
         pipelineCI.viewMask = 0b11;
         m_pipeline = m_graphicsAPI->CreatePipeline(pipelineCI);
 
-        // Create sixty-four cubic blocks, 20cm wide, evenly distributed,
-        // and randomly colored.
-        float scale = 0.2f;
+        float scale = 0.1f;
         // Center the blocks a little way from the origin.
         XrVector3f center = {0.0f, -0.2f, -0.7f};
         for (int i = 0; i < 4; i++) {
@@ -1246,6 +1245,9 @@ void android_main(struct android_app* app) {
     // Set userData and Callback for PollSystemEvents().
     app->userData = &OpenXRTutorial::androidAppState;
     app->onAppCmd = OpenXRTutorial::AndroidAppHandleCmd;
+
+    // Set the asset manager for FileIO.
+    FileIO::registerAssetManager(app->activity->assetManager);
 
     OpenXRTutorial::androidApp = app;
     OpenXRTutorial_Main(XR_TUTORIAL_GRAPHICS_API);

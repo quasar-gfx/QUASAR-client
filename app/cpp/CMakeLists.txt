@@ -12,6 +12,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 
 message("Using graphics API: " ${XR_TUTORIAL_GRAPHICS_API})
 
+# set required libs
+set(RENDERER_LIBS )
+
 # For FetchContent_Declare() and FetchContent_MakeAvailable()
 include(FetchContent)
 
@@ -32,25 +35,32 @@ FetchContent_Declare(
         openxr
 )
 FetchContent_MakeAvailable(OpenXR)
+set(RENDERER_LIBS ${RENDERER_LIBS} openxr_loader)
+
+add_subdirectory(${EXTERNAL}/stb/tnt)
+set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 
 # Files
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/GraphicsAPI.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/GraphicsAPI_OpenGL_ES.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/OpenXRDebugUtils.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils/FileIO.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI_OpenGL_ES.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenXRDebugUtils.cpp)
 set(INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/DebugOutput.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/GraphicsAPI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/GraphicsAPI_OpenGL_ES.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/HelperFunctions.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/OpenXRDebugUtils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/OpenXRHelper.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/FileIO.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/HelperFunctions.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/DebugOutput.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI_OpenGL_ES.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRDebugUtils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRHelper.h)
 
 add_library(${TARGET} SHARED ${SRCS} ${INCLUDES})
 target_include_directories(${TARGET} PRIVATE
     # In this repo
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${EXTERNAL}
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
     "${openxr_SOURCE_DIR}/external/include"
@@ -66,8 +76,9 @@ set_property(
 # native_app_glue
 include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
+set(RENDERER_LIBS ${RENDERER_LIBS} android native_app_glue)
 
-target_link_libraries(${TARGET} android native_app_glue openxr_loader)
+target_link_libraries(${TARGET} ${RENDERER_LIBS})
 target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention)
 AddGraphicsAPIDefine(${TARGET})
 target_compile_definitions(${TARGET} PUBLIC XR_TUTORIAL_ENABLE_MULTIVIEW)

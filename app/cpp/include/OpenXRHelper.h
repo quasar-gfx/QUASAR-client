@@ -12,7 +12,7 @@
 #include <openxr/openxr_platform.h>
 
 // For DEBUG_BREAK
-#include <HelperFunctions.h>
+#include <Utils/HelperFunctions.h>
 
 inline void OpenXRDebugBreak() {
     std::cerr << "Breakpoint here to debug." << std::endl;
