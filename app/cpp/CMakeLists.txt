@@ -90,18 +90,12 @@ set(RENDERER_SRCS
     ${RENDERER}/src/Utils/FileIO.cpp
 )
 
-set(PRIVATE_HDRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils/HelperFunctions.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/DebugOutput.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/GraphicsAPI_OpenGL_ES.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRDebugUtils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/OpenXRHelper.h)
-set(SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/GraphicsAPI_OpenGL_ES.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/OpenXRDebugUtils.cpp)
+file(GLOB_RECURSE PRIVATE_HDRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+file(GLOB_RECURSE SRCS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
 
 add_library(${TARGET} SHARED ${SRCS} ${PRIVATE_HDRS} ${RENDERER_SRCS} ${RENDERER_HDRS})
 target_include_directories(${TARGET} PRIVATE

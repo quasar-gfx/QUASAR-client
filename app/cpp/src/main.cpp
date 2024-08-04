@@ -7,17 +7,8 @@
 #include <DebugOutput.h>
 #include <GraphicsAPI_OpenGL_ES.h>
 #include <OpenXRDebugUtils.h>
+#include <Utils/GLM_XR_Interop.h>
 
-// include xr linear algebra for XrVector and XrMatrix classes.
-#include <Utils/xr_linear_algebra.h>
-// Declare some useful operators for vectors:
-XrVector3f operator-(XrVector3f a, XrVector3f b) {
-    return {a.x - b.x, a.y - b.y, a.z - b.z};
-}
-XrVector3f operator*(XrVector3f a, float b) {
-    return {a.x*  b, a.y*  b, a.z*  b};
-}
-// Random numbers for colorful blocks
 #include <random>
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.f);
 static std::mt19937 pseudo_random_generator;
@@ -399,16 +390,16 @@ private:
     }
 
     struct CameraConstants {
-        XrMatrix4x4f viewProj[2];
-        XrMatrix4x4f modelViewProj[2];
-        XrMatrix4x4f model;
-        XrVector4f color;
-        XrVector4f pad1;
-        XrVector4f pad2;
-        XrVector4f pad3;
+        glm::mat4 view[2];
+        glm::mat4 proj[2];
+        glm::mat4 model;
+        glm::vec4 color;
+        glm::vec4 pad1;
+        glm::vec4 pad2;
+        glm::vec4 pad3;
     };
     CameraConstants cameraConstants;
-    XrVector4f normals[6] = {
+    glm::vec4 normals[6] = {
         {1.00f, 0.00f, 0.00f, 0},
         {-1.00f, 0.00f, 0.00f, 0},
         {0.00f, 1.00f, 0.00f, 0},
@@ -418,7 +409,7 @@ private:
 
     void CreateResources() {
         // Vertices for a 1x1x1 meter cube. (Left/Right, Top/Bottom, Front/Back)
-        constexpr XrVector4f vertexPositions[] = {
+        constexpr glm::vec4 vertexPositions[] = {
             {+0.5f, +0.5f, +0.5f, 1.0f},
             {+0.5f, +0.5f, -0.5f, 1.0f},
             {+0.5f, -0.5f, +0.5f, 1.0f},
@@ -430,7 +421,7 @@ private:
 
 #define CUBE_FACE(V1, V2, V3, V4, V5, V6) vertexPositions[V1], vertexPositions[V2], vertexPositions[V3], vertexPositions[V4], vertexPositions[V5], vertexPositions[V6],
 
-        XrVector4f cubeVertices[] = {
+        glm::vec4 cubeVertices[] = {
             CUBE_FACE(2, 1, 0, 2, 3, 1)  // -X
             CUBE_FACE(6, 4, 5, 6, 5, 7)  // +X
             CUBE_FACE(0, 1, 5, 0, 5, 4)  // -Y
@@ -448,12 +439,12 @@ private:
             30, 31, 32, 33, 34, 35,  // +Z
         };
 
-        m_vertexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::VERTEX, sizeof(float)*  4, sizeof(cubeVertices), &cubeVertices});
+        m_vertexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::VERTEX, sizeof(float) * 4, sizeof(cubeVertices), &cubeVertices});
 
         m_indexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::INDEX, sizeof(uint32_t), sizeof(cubeIndices), &cubeIndices});
 
         size_t numberOfCuboids = 125 + 2 + 2;
-        m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants))*  numberOfCuboids, nullptr});
+        m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * numberOfCuboids, nullptr});
         m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
 
         shader = std::make_shared<Shader>(ShaderDataCreateParams{
@@ -466,7 +457,7 @@ private:
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.shader = shader;
         pipelineCI.vertexInputState.attributes = {{0, 0, GraphicsAPI::VertexType::VEC4, 0, "TEXCOORD"}};
-        pipelineCI.vertexInputState.bindings = {{0, 0, 4*  sizeof(float)}};
+        pipelineCI.vertexInputState.bindings = {{0, 0, 4 * sizeof(float)}};
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
         pipelineCI.rasterisationState = {false, false, GraphicsAPI::PolygonMode::FILL, GraphicsAPI::CullMode::BACK, GraphicsAPI::FrontFace::COUNTER_CLOCKWISE, false, 0.0f, 0.0f, 0.0f, 1.0f};
         pipelineCI.multisampleState = {1, false, 1.0f, 0xFFFFFFFF, false, false};
@@ -482,18 +473,18 @@ private:
 
         float scale = 0.2f;
         // Center the blocks a little way from the origin.
-        XrVector3f center = {0.0f, -0.2f, -0.7f};
+        glm::vec3 center = {0.0f, -0.2f, -0.7f};
         for (int i = 0; i < 5; i++) {
-            float x = scale*  (float(i) - 1.5f) + center.x;
+            float x = scale * (float(i) - 1.5f) + center.x;
             for (int j = 0; j < 5; j++) {
-                float y = scale*  (float(j) - 1.5f) + center.y;
+                float y = scale * (float(j) - 1.5f) + center.y;
                 for (int k = 0; k < 5; k++) {
                     // float angleRad = 0;
-                    float z = scale*  (float(k) - 1.5f) + center.z;
+                    float z = scale * (float(k) - 1.5f) + center.z;
                     // No rotation
-                    XrQuaternionf q = {0.0f, 0.0f, 0.0f, 1.0f};
+                    glm::quat q = {1.0f, 0.0f, 0.0f, 0.0f};
                     // A random color.
-                    XrVector3f color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
+                    glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
                     m_blocks.push_back({{q, {x, y, z}}, {0.095f, 0.095f, 0.095f}, color});
                 }
             }
@@ -620,7 +611,7 @@ private:
                 if (XR_UNQUALIFIED_SUCCESS(res) &&
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
-                    m_handPose[i] = spaceLocation.pose;
+                    m_handPose[i] = gxi::toGLM(spaceLocation.pose);
                 } else {
                     m_handPoseState[i].isActive = false;
                 }
@@ -658,10 +649,10 @@ private:
         }
     }
     // Helper function to snap a 3D position to the nearest 10cm
-    static XrVector3f FixPosition(XrVector3f pos) {
-        int x = int(std::nearbyint(pos.x*  10.f));
-        int y = int(std::nearbyint(pos.y*  10.f));
-        int z = int(std::nearbyint(pos.z*  10.f));
+    static glm::vec3 FixPosition(glm::vec3 pos) {
+        int x = int(std::nearbyint(pos.x * 10.f));
+        int y = int(std::nearbyint(pos.y * 10.f));
+        int z = int(std::nearbyint(pos.z * 10.f));
         pos.x = float(x) / 10.f;
         pos.y = float(y) / 10.f;
         pos.z = float(z) / 10.f;
@@ -681,7 +672,7 @@ private:
                     for (int j = 0; j < m_blocks.size(); j++) {
                         auto block = m_blocks[j];
                         // How far is it from the hand to this block?
-                        XrVector3f diff = block.pose.position - m_handPose[i].position;
+                        glm::vec3 diff = block.pose.position - m_handPose[i].position;
                         float distance = std::max(fabs(diff.x), std::max(fabs(diff.y), fabs(diff.z)));
                         if (distance < 0.05f && distance < nearest) {
                             m_nearBlock[i] = j;
@@ -695,14 +686,14 @@ private:
                         m_buzz[i] = 1.0f;
                     } else if (m_changeColorState[i].isActive == XR_TRUE && m_changeColorState[i].currentState == XR_FALSE && m_changeColorState[i].changedSinceLastSync == XR_TRUE) {
                         auto &thisBlock = m_blocks[m_nearBlock[i]];
-                        XrVector3f color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
+                        glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
                         thisBlock.color = color;
                     }
                 } else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
-                        XrQuaternionf q = {0.0f, 0.0f, 0.0f, 1.0f};
-                        XrVector3f color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
+                        glm::quat q = {1.0f, 0.0f, 0.0f, 0.0f};
+                        glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
                         m_blocks.push_back({{q, FixPosition(m_handPose[i].position)}, {0.095f, 0.095f, 0.095f}, color});
                     }
                 }
@@ -848,15 +839,13 @@ private:
     }
 
     size_t renderCuboidIndex = 0;
-    void RenderCuboid(XrPosef pose, XrVector3f scale, XrVector3f color) {
-        XrMatrix4x4f_CreateTranslationRotationScale(&cameraConstants.model, &pose.position, &pose.orientation, &scale);
-
-        const uint32_t viewCount = 2; // This will only work for stereo rendering.
-        for (uint32_t i = 0; i < viewCount; i++) {
-            XrMatrix4x4f_Multiply(&cameraConstants.modelViewProj[i], &cameraConstants.viewProj[i], &cameraConstants.model);
-        }
+    void RenderCuboid(gxi::Pose pose, glm::vec3 scale, glm::vec3 color) {
+        glm::vec3 position = pose.position;
+        glm::quat orientation = pose.orientation;
+        cameraConstants.model = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(orientation) * glm::scale(glm::mat4(1.0f), scale);
         cameraConstants.color = {color.x, color.y, color.z, 1.0};
-        size_t offsetCameraUB = m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants))*  renderCuboidIndex;
+
+        size_t offsetCameraUB = m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * renderCuboidIndex;
 
         m_graphicsAPI->SetPipeline(m_pipeline);
 
@@ -986,14 +975,8 @@ private:
         // Compute the view-projection transforms.
         // All matrices (including OpenXR's) are column-major, right-handed.
         for (uint32_t i = 0; i < viewCount; i++) {
-            XrMatrix4x4f proj;
-            XrMatrix4x4f_CreateProjectionFov(&proj, m_apiType, views[i].fov, nearZ, farZ);
-            XrMatrix4x4f toView;
-            XrVector3f scale1m{ 1.0f, 1.0f, 1.0f };
-            XrMatrix4x4f_CreateTranslationRotationScale(&toView, &views[i].pose.position, &views[i].pose.orientation, &scale1m);
-            XrMatrix4x4f view;
-            XrMatrix4x4f_InvertRigidBody(&view, &toView);
-            XrMatrix4x4f_Multiply(&cameraConstants.viewProj[i], &proj, &view);
+            cameraConstants.proj[i] = gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ);
+            cameraConstants.view[i] = glm::inverse(gxi::toGlm(views[i].pose));
         }
 
         renderCuboidIndex = 0;
@@ -1010,9 +993,9 @@ private:
         }
         for (int i = 0; i < m_blocks.size(); i++) {
             auto &thisBlock = m_blocks[i];
-            XrVector3f sc = thisBlock.scale;
+            glm::vec3 sc = thisBlock.scale;
             if (i == m_nearBlock[0] || i == m_nearBlock[1])
-                sc = thisBlock.scale*  1.05f;
+                sc = thisBlock.scale * 1.05f;
             RenderCuboid(thisBlock.pose, sc, thisBlock.color);
         }
         m_graphicsAPI->EndRendering();
@@ -1166,9 +1149,9 @@ private:
 
     // An instance of a 3d colored block.
     struct Block {
-        XrPosef pose;
-        XrVector3f scale;
-        XrVector3f color;
+        gxi::Pose pose;
+        glm::vec3 scale;
+        glm::vec3 color;
     };
     // The list of block instances.
     std::vector<Block> m_blocks;
@@ -1198,7 +1181,7 @@ private:
     XrSpace m_handPoseSpace[2];
     XrActionStatePose m_handPoseState[2] = {{XR_TYPE_ACTION_STATE_POSE}, {XR_TYPE_ACTION_STATE_POSE}};
     // The current poses obtained from the XrSpaces.
-    XrPosef m_handPose[2] = {
+    gxi::Pose m_handPose[2] = {
         {{1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -m_viewHeightM}},
         {{1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -m_viewHeightM}}};
 };
