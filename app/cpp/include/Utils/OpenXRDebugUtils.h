@@ -6,7 +6,7 @@
 
 #pragma once
 #include <Utils/HelperFunctions.h>
-#include <OpenXRHelper.h>
+#include <Utils/OpenXRHelper.h>
 
 XrBool32 OpenXRMessageCallbackFunction(XrDebugUtilsMessageSeverityFlagsEXT messageSeverity, XrDebugUtilsMessageTypeFlagsEXT messageType, const XrDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData);
 

@@ -1,8 +1,6 @@
 #ifndef GLM_XR_INTEROP_H
 #define GLM_XR_INTEROP_H
 
-#include <openxr/openxr.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 

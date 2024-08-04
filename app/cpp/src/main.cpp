@@ -4,9 +4,10 @@
 #include <Materials/UnlitMaterial.h>
 #include <Utils/FileIO.h>
 
-#include <DebugOutput.h>
 #include <GraphicsAPI_OpenGL_ES.h>
-#include <OpenXRDebugUtils.h>
+
+#include <Utils/DebugOutput.h>
+#include <Utils/OpenXRDebugUtils.h>
 #include <Utils/GLM_XR_Interop.h>
 
 #include <random>

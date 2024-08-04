@@ -16,7 +16,7 @@
 
 
 // OpenXR Helper
-#include <OpenXRHelper.h>
+#include <Utils/OpenXRHelper.h>
 
 #include <Shaders/Shader.h>
 

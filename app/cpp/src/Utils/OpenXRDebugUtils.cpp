@@ -4,7 +4,7 @@
 
 // OpenXR Tutorial for Khronos Group
 
-#include <OpenXRDebugUtils.h>
+#include <Utils/OpenXRDebugUtils.h>
 
 XrBool32 OpenXRMessageCallbackFunction(XrDebugUtilsMessageSeverityFlagsEXT messageSeverity, XrDebugUtilsMessageTypeFlagsEXT messageType, const XrDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
     // Lambda to covert an XrDebugUtilsMessageSeverityFlagsEXT to std::string. Bitwise check to concatenate multiple severities to the output string.
