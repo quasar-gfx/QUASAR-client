@@ -1,13 +1,11 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
-
-// OpenXR Tutorial for Khronos Group
+#include <Shaders/Shader.h>
+#include <Primatives/Mesh.h>
+#include <Primatives/Model.h>
 
 #include <OpenGLESRenderer.h>
 
-#include <Shaders/Shader.h>
-#include <Primatives/Mesh.h>
+#include <Utils/DebugOutput.h>
+#include <Utils/OpenXRDebugUtils.h>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
@@ -700,13 +698,28 @@ RenderStats OpenGLESRenderer::DrawNode(Scene &scene, Camera cameras[], Node* nod
     if (node->entity != nullptr) {
         if (node->visible) {
             // HACK: have to do manually bind cameras for now
-            auto mesh = static_cast<Mesh*>(node->entity);
-            mesh->material->bind();
-            for (uint32_t i = 0; i < 2; i++) {
-                mesh->material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-                mesh->material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+            if (node->entity->getType() == EntityType::MESH) {
+                auto mesh = static_cast<Mesh*>(node->entity);
+                auto materialToUse = overrideMaterial != nullptr ? overrideMaterial : mesh->material;
+
+                materialToUse->bind();
+                for (uint32_t i = 0; i < 2; i++) {
+                    materialToUse->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
+                    materialToUse->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+                }
+                materialToUse->unbind();
             }
-            mesh->material->unbind();
+            else if (node->entity->getType() == EntityType::MODEL) {
+                auto model = static_cast<Model*>(node->entity);
+                auto materialToUse = overrideMaterial != nullptr ? overrideMaterial : model->material;
+
+                materialToUse->bind();
+                for (uint32_t i = 0; i < 2; i++) {
+                    materialToUse->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
+                    materialToUse->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+                }
+                materialToUse->unbind();
+            }
 
             node->entity->bindMaterial(scene, cameras[0], model, overrideMaterial);
             bool doFrustumCull = frustumCull && node->frustumCulled;

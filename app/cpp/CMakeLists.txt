@@ -66,6 +66,10 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Materials/Material.h
     ${RENDERER}/include/Materials/PBRMaterial.h
     ${RENDERER}/include/Materials/UnlitMaterial.h
+    ${RENDERER}/include/Lights/AmbientLight.h
+    ${RENDERER}/include/Lights/Light.h
+    ${RENDERER}/include/Lights/DirectionalLight.h
+    ${RENDERER}/include/Lights/PointLight.h
     ${RENDERER}/include/OpenGLObject.h
     ${RENDERER}/include/Primatives/Cube.h
     ${RENDERER}/include/Primatives/Entity.h

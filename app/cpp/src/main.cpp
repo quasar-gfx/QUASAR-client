@@ -1,7 +1,12 @@
 #include <Scene.h>
+#include <Camera.h>
 #include <Primatives/Mesh.h>
 #include <Primatives/Cube.h>
+#include <Primatives/Model.h>
 #include <Materials/UnlitMaterial.h>
+#include <Lights/AmbientLight.h>
+#include <Lights/DirectionalLight.h>
+#include <Lights/PointLight.h>
 #include <Utils/FileIO.h>
 
 #include <OpenGLESRenderer.h>
@@ -396,15 +401,27 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
-        cube = new Cube(MeshCreateParams{
-            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+        AmbientLight* ambientLight = new AmbientLight({
+            .intensity = 0.05f
+        });
+        scene->setAmbientLight(ambientLight);
+
+        DirectionalLight* directionalLight = new DirectionalLight({
+            .intensity = 3.0f,
+            .direction = glm::vec3(-0.5f, -1.0f, 0.5f),
+            .color = glm::vec3(1.0f, 0.5f, 0.5f)
+        });
+        scene->setDirectionalLight(directionalLight);
+
+        cube = new Cube({
+            .material = new UnlitMaterial({
                 .baseColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
             })
         });
 
         // Create the hand nodes.
-        Cube* handMesh = new Cube(MeshCreateParams{
-            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+        Cube* handMesh = new Cube({
+            .material = new UnlitMaterial({
                 .diffuseTexturePath = "textures/metal.png"
             })
         });
@@ -416,8 +433,8 @@ private:
         }
 
         // Draw a floor.
-        Cube* floorMesh = new Cube(MeshCreateParams{
-            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+        Cube* floorMesh = new Cube({
+            .material = new UnlitMaterial({
                 .diffuseTexturePath = "textures/container.jpg"
             })
         });
@@ -428,8 +445,8 @@ private:
         scene->addChildNode(floor);
 
         // Draw a "table".
-        Cube* tableMesh = new Cube(MeshCreateParams{
-            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+        Cube* tableMesh = new Cube({
+            .material = new UnlitMaterial({
                 .diffuseTexturePath = "textures/pbr/grass/albedo.png"
             })
         });
@@ -438,6 +455,19 @@ private:
         table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
         table->frustumCulled = false;
         scene->addChildNode(table);
+
+        Model* helmetMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/DamagedHelmet.glb"
+        });
+        Node* helmet = new Node(helmetMesh);
+        helmet->setPosition(glm::vec3(0.0f, 0.0f, -0.3f));
+        helmet->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
+        helmet->frustumCulled = false;
+        scene->addChildNode(helmet);
+
+        XR_LOG(helmetMesh->material);
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
@@ -938,6 +968,11 @@ private:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
         }
 
+        // Draw objects.
+        for (auto& child : scene->children) {
+            m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
+        }
+
         // Draw the blocks.
         for (int i = 0; i < m_blocks.size(); i++) {
             glm::vec3 sc = m_blocks[i].node.getScale();
@@ -948,10 +983,6 @@ private:
             m_graphicsAPI->DrawNode(*scene, cameras, &m_blocks[i].node, glm::mat4(1.0f)); // render
             if (i == m_nearBlock[0] || i == m_nearBlock[1]) // restore scale
                 m_blocks[i].node.setScale(sc);
-        }
-
-        for (auto& child : scene->children) {
-            m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
         }
 
         m_graphicsAPI->EndRendering();
@@ -1169,7 +1200,7 @@ void android_main(struct android_app* app) {
     app->onAppCmd = OpenXRTutorial::AndroidAppHandleCmd;
 
     // Set the asset manager for FileIO.
-    FileIO::registerAssetManager(app->activity->assetManager);
+    FileIO::registerIOSystem(app->activity);
 
     OpenXRTutorial::androidApp = app;
     OpenXRTutorial_Main(XR_TUTORIAL_GRAPHICS_API);
