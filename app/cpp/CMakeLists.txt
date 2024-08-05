@@ -137,3 +137,6 @@ if(TARGET openxr-gfxwrapper)
     target_link_libraries(${TARGET} openxr-gfxwrapper)
     target_compile_definitions(${TARGET} PUBLIC XR_TUTORIAL_USE_OPENGL_ES)
 endif()
+
+# make symbolic link of ${OGL_REMOTE_RENDERING}/assets to assets directory
+file(CREATE_LINK ${OGL_REMOTE_RENDERING}/assets ${CMAKE_SOURCE_DIR}/assets SYMBOLIC)

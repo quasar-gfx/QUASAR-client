@@ -7,6 +7,7 @@
 #include <OpenGLESRenderer.h>
 
 #include <Shaders/Shader.h>
+#include <Primatives/Mesh.h>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
@@ -690,4 +691,34 @@ const std::vector<int64_t> OpenGLESRenderer::GetSupportedDepthSwapchainFormats()
         GL_DEPTH_COMPONENT16};
 }
 // XR_DOCS_TAG_END_OpenGLESRenderer_GetSupportedSwapchainFormats
+
+RenderStats OpenGLESRenderer::DrawNode(Scene &scene, Camera cameras[], Node* node, const glm::mat4 &parentTransform,
+                                       bool frustumCull, const Material* overrideMaterial) {
+    const glm::mat4 &model = parentTransform * node->getTransformParentFromLocal();
+
+    RenderStats stats;
+    if (node->entity != nullptr) {
+        if (node->visible) {
+            // HACK: have to do manually bind cameras for now
+            auto mesh = static_cast<Mesh*>(node->entity);
+            mesh->material->bind();
+            for (uint32_t i = 0; i < 2; i++) {
+                mesh->material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
+                mesh->material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+            }
+            mesh->material->unbind();
+
+            node->entity->bindMaterial(scene, cameras[0], model, overrideMaterial);
+            bool doFrustumCull = frustumCull && node->frustumCulled;
+            stats += node->entity->draw(scene, cameras[0], model, doFrustumCull, overrideMaterial);
+        }
+    }
+
+    for (auto& child : node->children) {
+        stats += DrawNode(scene, cameras, child, model, overrideMaterial);
+    }
+
+    return stats;
+}
+
 #endif

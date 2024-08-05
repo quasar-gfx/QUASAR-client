@@ -396,21 +396,48 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
-        material = new UnlitMaterial(UnlitMaterialCreateParams{
-            .baseColor = glm::vec4(1.0,0.0,0.0,1.0),
-            .alphaMode = AlphaMode::OPAQUE,
-        });
-
         cube = new Cube(MeshCreateParams{
-            .material = material,
+            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+                .baseColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
+            })
         });
 
         // Create the hand nodes.
+        Cube* handMesh = new Cube(MeshCreateParams{
+            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+                .diffuseTexturePath = "textures/metal.png"
+            })
+        });
         for (int i = 0; i < 2; i++) {
-            m_handNodes[i].setEntity((Cube*)cube);
-            m_handNodes[i].setScale(glm::vec3(0.02f, 0.04f, 0.10f));
+            m_handNodes[i].setEntity(handMesh);
+            m_handNodes[i].setScale(glm::vec3(0.01f, 0.02f, 0.05f));
             m_handNodes[i].frustumCulled = false;
+            scene->addChildNode(&m_handNodes[i]);
         }
+
+        // Draw a floor.
+        Cube* floorMesh = new Cube(MeshCreateParams{
+            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+                .diffuseTexturePath = "textures/container.jpg"
+            })
+        });
+        Node* floor = new Node(floorMesh);
+        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
+        floor->frustumCulled = false;
+        scene->addChildNode(floor);
+
+        // Draw a "table".
+        Cube* tableMesh = new Cube(MeshCreateParams{
+            .material = new UnlitMaterial(UnlitMaterialCreateParams{
+                .diffuseTexturePath = "textures/pbr/grass/albedo.png"
+            })
+        });
+        Node* table = new Node(tableMesh);
+        table->setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.6f));
+        table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
+        table->frustumCulled = false;
+        scene->addChildNode(table);
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
@@ -436,9 +463,10 @@ private:
                 for (int k = 0; k < 5; k++) {
                     float z = scale * (float(k) - 1.5f) + center.z;
 
-                    Node node((Cube*)cube);
+                    Node node(cube);
                     node.setPosition({x, y, z});
-                    node.setScale({0.095f, 0.095f, 0.095f});
+                    node.setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
+                    node.frustumCulled = false;
                     m_blocks.push_back({node, randomColor()});
                 }
             }
@@ -643,9 +671,10 @@ private:
                 } else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
-                        Node node((Cube*)cube);
+                        Node node(cube);
                         node.setPosition(m_handNodes[i].getPosition());
-                        node.setScale({0.095f, 0.095f, 0.095f});
+                        node.setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
+                        node.frustumCulled = false;
                         m_blocks.push_back({node, randomColor()});
                     }
                 }
@@ -904,31 +933,25 @@ private:
             cameras[i].setViewMatrix(glm::inverse(gxi::toGlm(views[i].pose)));
         }
 
-        // Draw a floor. Scale it by 2 in the X and Z, and 0.1 in the Y,
-        Node floor = Node((Cube*)cube);
-        floor.setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        floor.setScale(glm::vec3(2.0f, 0.1f, 2.0f));
-        RenderCuboid(floor, {0.4f, 0.5f, 0.5f});
-
-        // Draw a "table".
-        Node table = Node((Cube*)cube);
-        table.setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.7f));
-        table.setScale(glm::vec3(1.0f, 0.1f, 1.0f));
-        RenderCuboid(table, {0.6f, 0.6f, 0.4f});
-
         // Draw some blocks at the controller positions:
         for (int i = 0; i < 2; i++) {
-            if (m_handPoseState[i].isActive) {
-                RenderCuboid(m_handNodes[i], {1.0f, 1.0f, 1.0f});
-            }
+            m_handNodes[i].visible = m_handPoseState[i].isActive;
         }
+
+        // Draw the blocks.
         for (int i = 0; i < m_blocks.size(); i++) {
             glm::vec3 sc = m_blocks[i].node.getScale();
             if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
                 m_blocks[i].node.setScale(sc * 1.05f);
-            RenderCuboid(m_blocks[i].node, m_blocks[i].color); // render
+            auto colorMaterial = static_cast<UnlitMaterial*>(cube->material);
+            colorMaterial->baseColor = glm::vec4(m_blocks[i].color.r, m_blocks[i].color.g, m_blocks[i].color.b, 1.0f);
+            m_graphicsAPI->DrawNode(*scene, cameras, &m_blocks[i].node, glm::mat4(1.0f)); // render
             if (i == m_nearBlock[0] || i == m_nearBlock[1]) // restore scale
                 m_blocks[i].node.setScale(sc);
+        }
+
+        for (auto& child : scene->children) {
+            m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
         }
 
         m_graphicsAPI->EndRendering();
@@ -945,24 +968,6 @@ private:
         renderLayerInfo.layerProjection.views = renderLayerInfo.layerProjectionViews.data();
 
         return true;
-    }
-
-    void RenderCuboid(const Node &node, glm::vec3 color) {
-        uint32_t viewCount = 2;
-
-        material->bind();
-        for (uint32_t i = 0; i < viewCount; i++) {
-            material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
-            material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-        }
-        material->unbind();
-
-        material->baseColor = glm::vec4(color.r, color.g, color.b, 1.0f);
-
-        // Cube dimensions are 1x1x1, so we need to scale it to the desired size.
-        const glm::mat4 &model = node.getTransformParentFromLocal() * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-
-        cube->draw(*scene, cameras[0], model, false, nullptr);
     }
 
 public:
@@ -1085,7 +1090,6 @@ private:
     Camera cameras[2];
     std::unique_ptr<Scene> scene;
 
-    UnlitMaterial* material;
     Cube* cube = nullptr;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.

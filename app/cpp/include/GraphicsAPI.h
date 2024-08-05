@@ -14,9 +14,11 @@
 
 #include <gfxwrapper_opengl.h>
 
-
 // OpenXR Helper
 #include <Utils/OpenXRHelper.h>
+
+#include <Primatives/Entity.h>
+#include <Primatives/Node.h>
 
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,
@@ -407,6 +409,9 @@ public:
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) = 0;
     virtual void SetViewports(Viewport* viewports, size_t count) = 0;
     virtual void SetScissors(Rect2D* scissors, size_t count) = 0;
+
+    virtual RenderStats DrawNode(Scene &scene, Camera cameras[], Node* node, const glm::mat4 &parentTransform,
+                                 bool frustumCull = true, const Material* overrideMaterial = nullptr) = 0;
 
 protected:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() = 0;

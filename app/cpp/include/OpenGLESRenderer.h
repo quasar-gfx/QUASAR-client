@@ -1,10 +1,6 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
+#ifndef OPENGLES_RENDERER_H
+#define OPENGLES_RENDERER_H
 
-// OpenXR Tutorial for Khronos Group
-
-#pragma once
 #include <GraphicsAPI.h>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
@@ -51,6 +47,9 @@ public:
     virtual void SetViewports(Viewport* viewports, size_t count) override;
     virtual void SetScissors(Rect2D* scissors, size_t count) override;
 
+    virtual RenderStats DrawNode(Scene &scene, Camera cameras[], Node* node, const glm::mat4 &parentTransform,
+                                 bool frustumCull = true, const Material* overrideMaterial = nullptr) override;
+
 private:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() override;
     virtual const std::vector<int64_t> GetSupportedDepthSwapchainFormats() override;
@@ -70,3 +69,5 @@ private:
     PipelineCreateInfo pipeline;
 };
 #endif
+
+#endif // OPENGLES_RENDERER_H
