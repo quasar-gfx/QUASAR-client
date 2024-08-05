@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 project(cpp)
 
-set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/opengl-remote-rendering)
+set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/libs/opengl-remote-rendering)
 
 set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
 set(SHADERS ${OGL_REMOTE_RENDERING}/shaders)
 set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
 
-# Additional Directories for find_package() to search within.
+# additional Directories for find_package() to search within.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
@@ -43,9 +43,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(OpenXR)
 set(RENDERER_LIBS ${RENDERER_LIBS} openxr_loader)
 
+# renderer shaders
 add_subdirectory(${SHADERS})
 
-# Files
+# our shaders
+add_subdirectory(shaders)
+
+# files
 set(RENDERER_HDRS
     ${RENDERER}/include/Culling/AABB.h
     ${RENDERER}/include/Culling/BoundingSphere.h
