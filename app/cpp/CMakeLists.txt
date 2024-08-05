@@ -21,11 +21,14 @@ set(RENDERER_LIBS )
 include(FetchContent)
 
 # add third party libraries
-# add_subdirectory(${EXTERNAL}/libassimp/tnt)
-# set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
+add_subdirectory(${EXTERNAL}/libassimp/tnt)
+set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
 
 add_subdirectory(${EXTERNAL}/stb/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} stb)
+
+add_subdirectory(${EXTERNAL}/jsmn/tnt)
+set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
 
 # openxr_loader - From github.com/KhronosGroup
 set(BUILD_TESTS
@@ -61,12 +64,14 @@ set(RENDERER_HDRS
     ${RENDERER}/include/CubeMap.h
     ${RENDERER}/include/Framebuffer.h
     ${RENDERER}/include/Materials/Material.h
+    ${RENDERER}/include/Materials/PBRMaterial.h
     ${RENDERER}/include/Materials/UnlitMaterial.h
     ${RENDERER}/include/OpenGLObject.h
     ${RENDERER}/include/Primatives/Cube.h
     ${RENDERER}/include/Primatives/Entity.h
     ${RENDERER}/include/Primatives/FullScreenQuad.h
     ${RENDERER}/include/Primatives/Mesh.h
+    ${RENDERER}/include/Primatives/Model.h
     ${RENDERER}/include/Primatives/Node.h
     ${RENDERER}/include/Primatives/Plane.h
     ${RENDERER}/include/Primatives/Sphere.h
@@ -86,9 +91,11 @@ set(RENDERER_HDRS
 set(RENDERER_SRCS
     ${RENDERER}/src/Camera.cpp
     ${RENDERER}/src/CubeMap.cpp
+    ${RENDERER}/src/Materials/PBRMaterial.cpp
     ${RENDERER}/src/Materials/UnlitMaterial.cpp
     ${RENDERER}/src/Primatives/Entity.cpp
     ${RENDERER}/src/Primatives/Mesh.cpp
+    ${RENDERER}/src/Primatives/Model.cpp
     ${RENDERER}/src/Primatives/Node.cpp
     ${RENDERER}/src/Scene.cpp
     ${RENDERER}/src/Shaders/ComputeShader.cpp
