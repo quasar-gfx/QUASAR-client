@@ -19,8 +19,8 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-inline glm::vec3 randomColor() {
-    return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
+inline glm::vec4 randomColor() {
+    return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), 1.0f};
 }
 
 class OpenXRTutorial {
@@ -407,27 +407,61 @@ private:
         scene->setAmbientLight(ambientLight);
 
         DirectionalLight* directionalLight = new DirectionalLight({
-            .intensity = 3.0f,
+            .color = glm::vec3(1.0f, 1.0f, 1.0f),
             .direction = glm::vec3(-0.5f, -1.0f, 0.5f),
-            .color = glm::vec3(1.0f, 0.5f, 0.5f)
+            .intensity = 3.0f
         });
         scene->setDirectionalLight(directionalLight);
 
-        cube = new Cube({
-            .material = new UnlitMaterial({
-                .baseColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
-            })
+        PointLight* pointLight1 = new PointLight({
+            .color = glm::vec3(0.0f, 0.0f, 1.0f),
+            .position = glm::vec3(2.0f, 0.0f, 2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
         });
+        scene->addPointLight(pointLight1);
+
+        PointLight* pointLight2 = new PointLight({
+            .color = glm::vec3(0.0f, 1.0f, 0.0f),
+            .position = glm::vec3(2.0f, 0.0f, -2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight2);
+
+        PointLight* pointLight3 = new PointLight({
+            .color = glm::vec3(1.0f, 0.0f, 0.0f),
+            .position = glm::vec3(-2.0f, 0.0f, 2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight3);
+
+        PointLight* pointLight4 = new PointLight({
+            .color = glm::vec3(1.0f, 1.0f, 0.0f),
+            .position = glm::vec3(-2.0f, 0.0f, -2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight4);
 
         // Create the hand nodes.
-        Cube* handMesh = new Cube({
-            .material = new UnlitMaterial({
-                .diffuseTexturePath = "textures/metal.png"
-            })
+        Model* helmetMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/DamagedHelmet.glb"
         });
         for (int i = 0; i < 2; i++) {
-            m_handNodes[i].setEntity(handMesh);
-            m_handNodes[i].setScale(glm::vec3(0.01f, 0.02f, 0.05f));
+            m_handNodes[i].setEntity(helmetMesh);
+            m_handNodes[i].setScale(glm::vec3(0.05f, 0.05f, 0.05f));
             m_handNodes[i].frustumCulled = false;
             scene->addChildNode(&m_handNodes[i]);
         }
@@ -456,17 +490,6 @@ private:
         table->frustumCulled = false;
         scene->addChildNode(table);
 
-        Model* helmetMesh = new Model({
-            .flipTextures = true,
-            .IBL = 0,
-            .path = "models/DamagedHelmet.glb"
-        });
-        Node* helmet = new Node(helmetMesh);
-        helmet->setPosition(glm::vec3(0.0f, 0.0f, -0.3f));
-        helmet->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
-        helmet->frustumCulled = false;
-        scene->addChildNode(helmet);
-
         XR_LOG(helmetMesh->material);
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
@@ -493,18 +516,23 @@ private:
                 for (int k = 0; k < 5; k++) {
                     float z = scale * (float(k) - 1.5f) + center.z;
 
-                    Node node(cube);
-                    node.setPosition({x, y, z});
-                    node.setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
-                    node.frustumCulled = false;
-                    m_blocks.push_back({node, randomColor()});
+                    Cube* cube = new Cube({
+                        .material = new UnlitMaterial({
+                            .baseColor = randomColor()
+                        })
+                    });
+                    Node* node = new Node(cube);
+                    node->setPosition({x, y, z});
+                    node->setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
+                    node->frustumCulled = false;
+                    m_blocks.push_back(node);
+                    scene->addChildNode(node);
                 }
             }
         }
     }
 
     void DestroyResources() {
-        delete cube;
     }
 
     void PollEvents() {
@@ -621,7 +649,9 @@ private:
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
                     gxi::Pose pose = gxi::toGLM(spaceLocation.pose);
                     m_handNodes[i].setPosition(pose.position);
-                    m_handNodes[i].setRotationQuat(pose.orientation);
+                    // rotate by 180 degrees around the y-axis asnd 90 degrees along x-axis
+                    m_handNodes[i].setRotationQuat(pose.orientation * glm::quat(glm::vec3(glm::radians(90.0f), glm::radians(180.0f), 0.0f)));
+
                 } else {
                     m_handPoseState[i].isActive = false;
                 }
@@ -682,7 +712,7 @@ private:
                     for (int j = 0; j < m_blocks.size(); j++) {
                         auto block = m_blocks[j];
                         // How far is it from the hand to this block?
-                        glm::vec3 diff = block.node.getPosition() - m_handNodes[i].getPosition();
+                        glm::vec3 diff = block->getPosition() - m_handNodes[i].getPosition();
                         float distance = std::max(fabs(diff.x), std::max(fabs(diff.y), fabs(diff.z)));
                         if (distance < 0.05f && distance < nearest) {
                             m_nearBlock[i] = j;
@@ -696,24 +726,32 @@ private:
                         m_buzz[i] = 1.0f;
                     } else if (m_changeColorState[i].isActive == XR_TRUE && m_changeColorState[i].currentState == XR_FALSE && m_changeColorState[i].changedSinceLastSync == XR_TRUE) {
                         auto &thisBlock = m_blocks[m_nearBlock[i]];
-                        thisBlock.color = randomColor();
+                        auto mesh = static_cast<Mesh*>(thisBlock->entity);
+                        auto material = static_cast<UnlitMaterial*>(mesh->material);
+                        material->baseColor = randomColor();
                     }
                 } else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
-                        Node node(cube);
-                        node.setPosition(m_handNodes[i].getPosition());
-                        node.setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
-                        node.frustumCulled = false;
-                        m_blocks.push_back({node, randomColor()});
+                        Cube* cube = new Cube({
+                            .material = new UnlitMaterial({
+                                .baseColor = randomColor()
+                            })
+                        });
+                        Node* node = new Node(cube);
+                        node->setPosition(m_handNodes[i].getPosition());
+                        node->setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
+                        node->frustumCulled = false;
+                        m_blocks.push_back(node);
+                        scene->addChildNode(node);
                     }
                 }
             } else {
                 m_nearBlock[i] = m_grabbedBlock[i];
                 if (m_handPoseState[i].isActive)
-                    m_blocks[m_grabbedBlock[i]].node.setPosition(m_handNodes[i].getPosition());
+                    m_blocks[m_grabbedBlock[i]]->setPosition(m_handNodes[i].getPosition());
                 if (!m_grabState[i].isActive || m_grabState[i].currentState < 0.5f) {
-                    m_blocks[m_grabbedBlock[i]].node.setPosition(FixPosition(m_blocks[m_grabbedBlock[i]].node.getPosition()));
+                    m_blocks[m_grabbedBlock[i]]->setPosition(FixPosition(m_blocks[m_grabbedBlock[i]]->getPosition()));
                     m_grabbedBlock[i] = -1;
                     m_buzz[i] = 0.2f;
                 }
@@ -968,21 +1006,22 @@ private:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
         }
 
+        // Draw the blocks.
+        for (int i = 0; i < m_blocks.size(); i++) {
+            glm::vec3 sc = m_blocks[i]->getScale();
+            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
+                m_blocks[i]->setScale(sc * 1.05f);
+        }
+
         // Draw objects.
         for (auto& child : scene->children) {
             m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
         }
 
-        // Draw the blocks.
         for (int i = 0; i < m_blocks.size(); i++) {
-            glm::vec3 sc = m_blocks[i].node.getScale();
-            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
-                m_blocks[i].node.setScale(sc * 1.05f);
-            auto colorMaterial = static_cast<UnlitMaterial*>(cube->material);
-            colorMaterial->baseColor = glm::vec4(m_blocks[i].color.r, m_blocks[i].color.g, m_blocks[i].color.b, 1.0f);
-            m_graphicsAPI->DrawNode(*scene, cameras, &m_blocks[i].node, glm::mat4(1.0f)); // render
-            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // restore scale
-                m_blocks[i].node.setScale(sc);
+            glm::vec3 sc = m_blocks[i]->getScale();
+            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // reset scale
+                m_blocks[i]->setScale(sc / 1.05f);
         }
 
         m_graphicsAPI->EndRendering();
@@ -1121,18 +1160,11 @@ private:
     Camera cameras[2];
     std::unique_ptr<Scene> scene;
 
-    Cube* cube = nullptr;
-
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
 
-    // An instance of a 3d colored block.
-    struct Block {
-        Node node;
-        glm::vec3 color;
-    };
     // The list of block instances.
-    std::vector<Block> m_blocks;
+    std::vector<Node*> m_blocks;
     // Don't let too many m_blocks get created.
     const size_t m_maxBlockCount = 200;
     // Which block, if any, is being held by each of the user's hands or controllers.
