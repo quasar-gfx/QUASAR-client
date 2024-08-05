@@ -18,8 +18,6 @@
 // OpenXR Helper
 #include <Utils/OpenXRHelper.h>
 
-#include <Materials/Material.h>
-
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,
     D3D11,
@@ -188,10 +186,6 @@ public:
         size_t stride;
     };
     typedef std::vector<VertexInputBinding> VertexInputBindings;
-    struct VertexInputState {
-        VertexInputAttributes attributes;
-        VertexInputBindings bindings;
-    };
     struct InputAssemblyState {
         PrimitiveTopology topology;
         bool primitiveRestartEnable;
@@ -255,8 +249,6 @@ public:
         size_t bufferSize;
     };
     struct PipelineCreateInfo {
-        Material* material;
-        VertexInputState vertexInputState;
         InputAssemblyState inputAssemblyState;
         RasterisationState rasterisationState;
         MultisampleState multisampleState;
@@ -401,43 +393,20 @@ public:
     virtual XrSwapchainImageBaseHeader* GetSwapchainImageData(XrSwapchain swapchain, uint32_t index) = 0;
     virtual void* GetSwapchainImage(XrSwapchain swapchain, uint32_t index) = 0;
 
-    virtual void* CreateImage(const ImageCreateInfo& imageCI) = 0;
-    virtual void DestroyImage(void*& image) = 0;
-
     virtual void* CreateImageView(const ImageViewCreateInfo& imageViewCI) = 0;
     virtual void DestroyImageView(void*& imageView) = 0;
 
-    virtual void* CreateSampler(const SamplerCreateInfo& samplerCI) = 0;
-    virtual void DestroySampler(void*& sampler) = 0;
-
-    virtual void* CreateBuffer(const BufferCreateInfo& bufferCI) = 0;
-    virtual void DestroyBuffer(void*& buffer) {}
-
-    virtual void* CreateShader(const ShaderCreateInfo& shaderCI) = 0;
-    virtual void DestroyShader(void*& shader) = 0;
-
-    virtual void* CreatePipeline(const PipelineCreateInfo& pipelineCI) = 0;
-    virtual void DestroyPipeline(void*& pipeline) = 0;
+    virtual void CreatePipeline(const PipelineCreateInfo& pipelineCI) = 0;
 
     virtual void BeginRendering() = 0;
     virtual void EndRendering() = 0;
 
-    virtual void SetBufferData(void* buffer, size_t offset, size_t size, void* data) = 0;
-
     virtual void ClearColor(void* imageView, float r, float g, float b, float a) = 0;
     virtual void ClearDepth(void* imageView, float d) = 0;
 
-    virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height, void* pipeline) = 0;
+    virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) = 0;
     virtual void SetViewports(Viewport* viewports, size_t count) = 0;
     virtual void SetScissors(Rect2D* scissors, size_t count) = 0;
-
-    virtual void SetPipeline(void* pipeline) = 0;
-    virtual void SetDescriptor(const DescriptorInfo& descriptorInfo) = 0;
-    virtual void UpdateDescriptors() = 0;
-    virtual void SetVertexBuffers(void** vertexBuffers, size_t count) = 0;
-    virtual void SetIndexBuffer(void* indexBuffer) = 0;
-    virtual void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t vertexOffset = 0, uint32_t firstInstance = 0) = 0;
-    virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
 
 protected:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() = 0;

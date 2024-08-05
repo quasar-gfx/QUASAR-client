@@ -4,7 +4,7 @@
 
 // OpenXR Tutorial for Khronos Group
 
-#include <GraphicsAPI_OpenGL_ES.h>
+#include <OpenGLESRenderer.h>
 
 #include <Shaders/Shader.h>
 
@@ -128,18 +128,6 @@ inline GLenum ToGLTopology(GraphicsAPI::PrimitiveTopology topology) {
         return 0;
     }
 };
-/*inline GLenum ToGLPolygonMode(GraphicsAPI::PolygonMode polygonMode) {
-    switch (polygonMode) {
-        case GraphicsAPI::PolygonMode::FILL:
-            return GL_FILL;
-        case GraphicsAPI::PolygonMode::LINE:
-            return GL_LINE;
-        case GraphicsAPI::PolygonMode::POINT:
-            return GL_POINT;
-        default:
-            return 0;
-    }
-};*/ // None for ES
 inline GLenum ToGLCullMode(GraphicsAPI::CullMode cullMode) {
     switch (cullMode) {
     case GraphicsAPI::CullMode::NONE:
@@ -240,44 +228,6 @@ inline GLenum ToGLBlendOp(GraphicsAPI::BlendOp op) {
         return 0;
     }
 };
-/*inline GLenum ToGLLogicOp(GraphicsAPI::LogicOp op) {
-    switch (op) {
-    case GraphicsAPI::LogicOp::CLEAR:
-        return GL_CLEAR;
-    case GraphicsAPI::LogicOp::AND:
-        return GL_AND;
-    case GraphicsAPI::LogicOp::AND_REVERSE:
-        return GL_AND_REVERSE;
-    case GraphicsAPI::LogicOp::COPY:
-        return GL_COPY;
-    case GraphicsAPI::LogicOp::AND_INVERTED:
-        return GL_AND_INVERTED;
-    case GraphicsAPI::LogicOp::NO_OP:
-        return GL_NOOP;
-    case GraphicsAPI::LogicOp::XOR:
-        return GL_XOR;
-    case GraphicsAPI::LogicOp::OR:
-        return GL_OR;
-    case GraphicsAPI::LogicOp::NOR:
-        return GL_NOR;
-    case GraphicsAPI::LogicOp::EQUIVALENT:
-        return GL_EQUIV;
-    case GraphicsAPI::LogicOp::INVERT:
-        return GL_INVERT;
-    case GraphicsAPI::LogicOp::OR_REVERSE:
-        return GL_OR_REVERSE;
-    case GraphicsAPI::LogicOp::COPY_INVERTED:
-        return GL_COPY_INVERTED;
-    case GraphicsAPI::LogicOp::OR_INVERTED:
-        return GL_OR_INVERTED;
-    case GraphicsAPI::LogicOp::NAND:
-        return GL_NAND;
-    case GraphicsAPI::LogicOp::SET:
-        return GL_SET;
-    default:
-        return 0;
-    }
-};*/ // None for ES
 #pragma endregion
 
 void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
@@ -357,7 +307,7 @@ void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLs
         DEBUG_BREAK;
 }
 
-GraphicsAPI_OpenGL_ES::GraphicsAPI_OpenGL_ES() {
+OpenGLESRenderer::OpenGLESRenderer() {
     // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L101-L119
     // Initialize the gl extensions. Note we have to open a window.
     ksDriverInstance driverInstance{};
@@ -381,8 +331,8 @@ GraphicsAPI_OpenGL_ES::GraphicsAPI_OpenGL_ES() {
     glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 }
 
-// XR_DOCS_TAG_BEGIN_GraphicsAPI_OpenGL_ES
-GraphicsAPI_OpenGL_ES::GraphicsAPI_OpenGL_ES(XrInstance m_xrInstance, XrSystemId systemId) {
+// XR_DOCS_TAG_BEGIN_OpenGLESRenderer
+OpenGLESRenderer::OpenGLESRenderer(XrInstance m_xrInstance, XrSystemId systemId) {
     OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
     XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
     OPENXR_CHECK(xrGetOpenGLESGraphicsRequirementsKHR(m_xrInstance, systemId, &graphicsRequirements), "Failed to get Graphics Requirements for OpenGLES.");
@@ -426,18 +376,18 @@ GraphicsAPI_OpenGL_ES::GraphicsAPI_OpenGL_ES(XrInstance m_xrInstance, XrSystemId
 #endif
 }
 
-GraphicsAPI_OpenGL_ES::~GraphicsAPI_OpenGL_ES() {
+OpenGLESRenderer::~OpenGLESRenderer() {
     ksGpuWindow_Destroy(&window);
 }
-// XR_DOCS_TAG_END_GraphicsAPI_OpenGL_ES
+// XR_DOCS_TAG_END_OpenGLESRenderer
 
-void *GraphicsAPI_OpenGL_ES::CreateDesktopSwapchain(const SwapchainCreateInfo &swapchainCI) { return nullptr; }
-void GraphicsAPI_OpenGL_ES::DestroyDesktopSwapchain(void *&swapchain) {}
-void *GraphicsAPI_OpenGL_ES::GetDesktopSwapchainImage(void *swapchain, uint32_t index) { return nullptr; }
-void GraphicsAPI_OpenGL_ES::AcquireDesktopSwapchanImage(void *swapchain, uint32_t &index) {}
-void GraphicsAPI_OpenGL_ES::PresentDesktopSwapchainImage(void *swapchain, uint32_t index) {}
+void *OpenGLESRenderer::CreateDesktopSwapchain(const SwapchainCreateInfo &swapchainCI) { return nullptr; }
+void OpenGLESRenderer::DestroyDesktopSwapchain(void *&swapchain) {}
+void *OpenGLESRenderer::GetDesktopSwapchainImage(void *swapchain, uint32_t index) { return nullptr; }
+void OpenGLESRenderer::AcquireDesktopSwapchanImage(void *swapchain, uint32_t &index) {}
+void OpenGLESRenderer::PresentDesktopSwapchainImage(void *swapchain, uint32_t index) {}
 
-size_t GraphicsAPI_OpenGL_ES::AlignSizeForUniformBuffer(size_t size) {
+size_t OpenGLESRenderer::AlignSizeForUniformBuffer(size_t size) {
     static size_t align = 0;
     if (align == 0) {
         glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&align);
@@ -445,67 +395,25 @@ size_t GraphicsAPI_OpenGL_ES::AlignSizeForUniformBuffer(size_t size) {
     return Align<size_t>(size, align);
 }
 
-// XR_DOCS_TAG_BEGIN_GraphicsAPI_OpenGL_ES_GetGraphicsBinding
-void *GraphicsAPI_OpenGL_ES::GetGraphicsBinding() {
+// XR_DOCS_TAG_BEGIN_OpenGLESRenderer_GetGraphicsBinding
+void *OpenGLESRenderer::GetGraphicsBinding() {
     graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR};
     graphicsBinding.display = window.display;
     graphicsBinding.config = window.context.config;
     graphicsBinding.context = window.context.context;
     return &graphicsBinding;
 }
-// XR_DOCS_TAG_END_GraphicsAPI_OpenGL_ES_GetGraphicsBinding
+// XR_DOCS_TAG_END_OpenGLESRenderer_GetGraphicsBinding
 
-// XR_DOCS_TAG_BEGIN_GraphicsAPI_OpenGL_ES_AllocateSwapchainImageData
-XrSwapchainImageBaseHeader *GraphicsAPI_OpenGL_ES::AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) {
+// XR_DOCS_TAG_BEGIN_OpenGLESRenderer_AllocateSwapchainImageData
+XrSwapchainImageBaseHeader *OpenGLESRenderer::AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) {
     swapchainImagesMap[swapchain].first = type;
     swapchainImagesMap[swapchain].second.resize(count, {XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
     return reinterpret_cast<XrSwapchainImageBaseHeader *>(swapchainImagesMap[swapchain].second.data());
 }
-// XR_DOCS_TAG_END_GraphicsAPI_OpenGL_ES_AllocateSwapchainImageData
+// XR_DOCS_TAG_END_OpenGLESRenderer_AllocateSwapchainImageData
 
-void *GraphicsAPI_OpenGL_ES::CreateImage(const ImageCreateInfo &imageCI) {
-    GLuint texture = 0;
-    glGenTextures(1, &texture);
-
-    GLenum target = GetGLTextureTarget(imageCI);
-    glBindTexture(target, texture);
-
-    if (target == GL_TEXTURE_1D) {
-        // glTexStorage1D() is not available - Poor work around.
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexStorage2D(GL_TEXTURE_2D, imageCI.mipLevels, imageCI.format, imageCI.width, 1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    } else if (target == GL_TEXTURE_2D) {
-        glTexStorage2D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.height);
-    } else if (target == GL_TEXTURE_2D_MULTISAMPLE) {
-        glTexStorage2DMultisample(target, imageCI.sampleCount, imageCI.format, imageCI.width, imageCI.height, GL_TRUE);
-    } else if (target == GL_TEXTURE_3D) {
-        glTexStorage3D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.height, imageCI.depth);
-    } else if (target == GL_TEXTURE_CUBE_MAP) {
-        glTexStorage2D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.height);
-    } else if (target == GL_TEXTURE_1D_ARRAY) {
-        glTexStorage2D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.arrayLayers);
-    } else if (target == GL_TEXTURE_2D_ARRAY) {
-        glTexStorage3D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.height, imageCI.arrayLayers);
-    } else if (target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-        glTexStorage3DMultisample(target, imageCI.sampleCount, imageCI.format, imageCI.width, imageCI.height, imageCI.arrayLayers, GL_TRUE);
-    } else if (target == GL_TEXTURE_CUBE_MAP_ARRAY) {
-        glTexStorage3D(target, imageCI.mipLevels, imageCI.format, imageCI.width, imageCI.height, imageCI.arrayLayers);
-    }
-
-    glBindTexture(target, 0);
-
-    images[texture] = imageCI;
-    return (void *)(uint64_t)texture;
-}
-void GraphicsAPI_OpenGL_ES::DestroyImage(void *&image) {
-    GLuint texture = (GLuint)(uint64_t)image;
-    images.erase(texture);
-    glDeleteTextures(1, &texture);
-    image = nullptr;
-}
-
-void *GraphicsAPI_OpenGL_ES::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
+void *OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
     GLuint framebuffer = 0;
     glGenFramebuffers(1, &framebuffer);
 
@@ -532,277 +440,14 @@ void *GraphicsAPI_OpenGL_ES::CreateImageView(const ImageViewCreateInfo &imageVie
     return (void *)(uint64_t)framebuffer;
 }
 
-void GraphicsAPI_OpenGL_ES::DestroyImageView(void *&imageView) {
+void OpenGLESRenderer::DestroyImageView(void *&imageView) {
     GLuint framebuffer = (GLuint)(uint64_t)imageView;
     imageViews.erase(framebuffer);
     glDeleteFramebuffers(1, &framebuffer);
     imageView = nullptr;
 }
 
-void *GraphicsAPI_OpenGL_ES::CreateSampler(const SamplerCreateInfo &samplerCI) {
-    GLuint sampler = 0;
-    glGenSamplers(1, &sampler);
-
-    // Filter
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, ToGLFilter(samplerCI.magFilter));
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, ToGLFilterMipmap(samplerCI.minFilter, samplerCI.mipmapMode));
-
-    // AddressMode
-
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, ToGLAddressMode(samplerCI.addressModeS));
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, ToGLAddressMode(samplerCI.addressModeT));
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_R, ToGLAddressMode(samplerCI.addressModeR));
-
-    // Lod Bias
-    // glSamplerParameterf(sampler, GL_TEXTURE_LOD_BIAS, samplerCI.mipLodBias); // None for ES
-
-    // Compare
-    glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_MODE, samplerCI.compareEnable ? GL_COMPARE_REF_TO_TEXTURE : GL_NONE);
-    glSamplerParameteri(sampler, GL_TEXTURE_COMPARE_FUNC, ToGLCompareOp(samplerCI.compareOp));
-
-    // Lod
-    glSamplerParameterf(sampler, GL_TEXTURE_MIN_LOD, samplerCI.minLod);
-    glSamplerParameterf(sampler, GL_TEXTURE_MAX_LOD, samplerCI.maxLod);
-
-    // BorderColor
-    // glSamplerParameterfv(sampler, GL_TEXTURE_BORDER_COLOR, samplerCI.borderColor); // None for ES
-
-    return (void *)(uint64_t)sampler;
-}
-
-void GraphicsAPI_OpenGL_ES::DestroySampler(void *&sampler) {
-    GLuint glsampler = (GLuint)(uint64_t)sampler;
-    glDeleteSamplers(1, &glsampler);
-    sampler = nullptr;
-}
-
-void *GraphicsAPI_OpenGL_ES::CreateBuffer(const BufferCreateInfo &bufferCI) {
-    GLuint buffer = 0;
-    glGenBuffers(1, &buffer);
-
-    GLenum target = 0;
-    if (bufferCI.type == BufferCreateInfo::Type::VERTEX) {
-        target = GL_ARRAY_BUFFER;
-    } else if (bufferCI.type == BufferCreateInfo::Type::INDEX) {
-        target = GL_ELEMENT_ARRAY_BUFFER;
-    } else if (bufferCI.type == BufferCreateInfo::Type::UNIFORM) {
-        target = GL_UNIFORM_BUFFER;
-    } else {
-        DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Unknown Buffer Type." << std::endl;
-    }
-
-    size_t size = bufferCI.size;
-    if (bufferCI.type == BufferCreateInfo::Type::UNIFORM) {
-        size = AlignSizeForUniformBuffer(size);
-    }
-
-    glBindBuffer(target, buffer);
-    glBufferData(target, (GLsizeiptr)size, bufferCI.data, GL_STATIC_DRAW);
-    glBindBuffer(target, 0);
-
-    buffers[buffer] = bufferCI;
-    return (void *)(uint64_t)buffer;
-}
-
-void GraphicsAPI_OpenGL_ES::DestroyBuffer(void *&buffer) {
-    GLuint glBuffer = (GLuint)(uint64_t)buffer;
-    buffers.erase(glBuffer);
-    glDeleteBuffers(1, &glBuffer);
-    buffer = nullptr;
-}
-
-void *GraphicsAPI_OpenGL_ES::CreateShader(const ShaderCreateInfo &shaderCI) {
-    GLenum type = 0;
-    switch (shaderCI.type) {
-    case ShaderCreateInfo::Type::VERTEX: {
-        type = GL_VERTEX_SHADER;
-        break;
-    }
-    case ShaderCreateInfo::Type::TESSELLATION_CONTROL: {
-        type = GL_TESS_CONTROL_SHADER;
-        break;
-    }
-    case ShaderCreateInfo::Type::TESSELLATION_EVALUATION: {
-        type = GL_TESS_EVALUATION_SHADER;
-        break;
-    }
-    case ShaderCreateInfo::Type::GEOMETRY: {
-        type = GL_GEOMETRY_SHADER;
-        break;
-    }
-    case ShaderCreateInfo::Type::FRAGMENT: {
-        type = GL_FRAGMENT_SHADER;
-        break;
-    }
-    case ShaderCreateInfo::Type::COMPUTE: {
-        type = GL_COMPUTE_SHADER;
-        break;
-    }
-    default:
-        std::cout << "ERROR: OPENGL: Unknown Shader Type." << std::endl;
-    }
-    GLuint shader = glCreateShader(type);
-
-    glShaderSource(shader, 1, &shaderCI.sourceData, nullptr);
-    glCompileShader(shader);
-
-    GLint isCompiled = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-    if (isCompiled == GL_FALSE) {
-        GLint maxLength = 0;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-        std::vector<GLchar> infoLog(maxLength);
-        glGetShaderInfoLog(shader, maxLength, &maxLength, &infoLog[0]);
-        std::cout << infoLog.data() << std::endl;
-        DEBUG_BREAK;
-
-        glDeleteShader(shader);
-        shader = 0;
-    }
-    return (void *)(uint64_t)shader;
-}
-
-void GraphicsAPI_OpenGL_ES::DestroyShader(void *&shader) {
-    GLuint glShader = (GLuint)(uint64_t)shader;
-    glDeleteShader(glShader);
-    shader = nullptr;
-}
-
-void *GraphicsAPI_OpenGL_ES::CreatePipeline(const PipelineCreateInfo &pipelineCI) {
-    GLuint program = pipelineCI.material->shader->ID;
-    pipelines[program] = pipelineCI;
-    return (void *)(uint64_t)program;
-}
-
-void GraphicsAPI_OpenGL_ES::DestroyPipeline(void *&pipeline) {
-    GLint program = (GLuint)(uint64_t)pipeline;
-    pipelines.erase(program);
-    glDeleteProgram(program);
-    pipeline = nullptr;
-}
-
-void GraphicsAPI_OpenGL_ES::BeginRendering() {
-    glGenVertexArrays(1, &vertexArray);
-    glBindVertexArray(vertexArray);
-
-    glGenFramebuffers(1, &setFramebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, setFramebuffer);
-}
-
-void GraphicsAPI_OpenGL_ES::EndRendering() {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &setFramebuffer);
-    setFramebuffer = 0;
-
-    glBindVertexArray(0);
-    glDeleteVertexArrays(1, &vertexArray);
-    vertexArray = 0;
-}
-
-void GraphicsAPI_OpenGL_ES::ClearColor(void *imageView, float r, float g, float b, float a) {
-    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)(uint64_t)imageView);
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void GraphicsAPI_OpenGL_ES::ClearDepth(void *imageView, float d) {
-    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)(uint64_t)imageView);
-    glClearDepthf(d);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void GraphicsAPI_OpenGL_ES::SetBufferData(void *buffer, size_t offset, size_t size, void *data) {
-    GLuint glBuffer = (GLuint)(uint64_t)buffer;
-    const BufferCreateInfo &bufferCI = buffers[glBuffer];
-
-    GLenum target = 0;
-    if (bufferCI.type == BufferCreateInfo::Type::VERTEX) {
-        target = GL_ARRAY_BUFFER;
-    } else if (bufferCI.type == BufferCreateInfo::Type::INDEX) {
-        target = GL_ELEMENT_ARRAY_BUFFER;
-    } else if (bufferCI.type == BufferCreateInfo::Type::UNIFORM) {
-        target = GL_UNIFORM_BUFFER;
-    } else {
-        DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Unknown Buffer Type." << std::endl;
-    }
-
-    if (data) {
-        glBindBuffer(target, glBuffer);
-        glBufferSubData(target, (GLintptr)offset, (GLsizeiptr)size, data);
-        glBindBuffer(target, 0);
-    }
-}
-
-void GraphicsAPI_OpenGL_ES::SetRenderAttachments(void **colorViews, size_t colorViewCount, void *depthStencilView, uint32_t width, uint32_t height, void *pipeline) {
-    // Reset Framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &setFramebuffer);
-    setFramebuffer = 0;
-
-    glGenFramebuffers(1, &setFramebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, setFramebuffer);
-
-    // Color
-    for (size_t i = 0; i < colorViewCount; i++) {
-        // GLenum attachment = GL_COLOR_ATTACHMENT0;
-
-        GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
-        const ImageViewCreateInfo &imageViewCI = imageViews[glColorView];
-
-        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
-        } else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
-        } else {
-            DEBUG_BREAK;
-            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
-        }
-    }
-    // DepthStencil
-    if (depthStencilView) {
-        GLuint glDepthView = (GLuint)(uint64_t)depthStencilView;
-        const ImageViewCreateInfo &imageViewCI = imageViews[glDepthView];
-
-        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
-        } else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
-        } else {
-            DEBUG_BREAK;
-            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
-        }
-    }
-
-    GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-    if (result != GL_FRAMEBUFFER_COMPLETE) {
-        DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Framebuffer is not complete." << std::endl;
-    }
-}
-
-void GraphicsAPI_OpenGL_ES::SetViewports(Viewport *viewports, size_t count) {
-    Viewport viewport = viewports[0];
-    glViewport((GLint)viewport.x, (GLint)viewport.y, (GLsizei)viewport.width, (GLsizei)viewport.height);
-    glDepthRangef(viewport.minDepth, viewport.maxDepth);
-}
-
-void GraphicsAPI_OpenGL_ES::SetScissors(Rect2D *scissors, size_t count) {
-    Rect2D scissor = scissors[0];
-    glScissor((GLint)scissor.offset.x, (GLint)scissor.offset.y, (GLsizei)scissor.extent.width, (GLsizei)scissor.extent.height);
-}
-
-void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
-    GLuint program = (GLuint)(uint64_t)pipeline;
-    // glUseProgram(program);
-    // setPipeline = program;
-
-    const PipelineCreateInfo &pipelineCI = pipelines[program];
-
+void OpenGLESRenderer::CreatePipeline(const PipelineCreateInfo &pipelineCI) {
     // InputAssemblyState
     const InputAssemblyState &IAS = pipelineCI.inputAssemblyState;
     if (IAS.primitiveRestartEnable) {
@@ -814,21 +459,11 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     // RasterisationState
     const RasterisationState &RS = pipelineCI.rasterisationState;
 
-    /*if (RS.depthClampEnable) {
-        glEnable(GL_DEPTH_CLAMP);
-    } else {
-        glDisable(GL_DEPTH_CLAMP);
-    }*/ // None for ES
-
     if (RS.rasteriserDiscardEnable) {
         glEnable(GL_RASTERIZER_DISCARD);
     } else {
         glDisable(GL_RASTERIZER_DISCARD);
     }
-
-    /*if (RS.cullMode == CullMode::FRONT_AND_BACK) {
-        glPolygonMode(GL_FRONT_AND_BACK, ToGLPolygonMode(RS.polygonMode));
-    }*/ // None for ES
 
     if (RS.cullMode > CullMode::NONE) {
         glEnable(GL_CULL_FACE);
@@ -868,12 +503,6 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     // MultisampleState
     const MultisampleState &MS = pipelineCI.multisampleState;
 
-    /*if (MS.rasterisationSamples > 1) {
-        glEnable(GL_MULTISAMPLE);
-    } else {
-        glDisable(GL_MULTISAMPLE);
-    }*/ // None for ES
-
     if (MS.sampleShadingEnable) {
         glEnable(GL_SAMPLE_SHADING);
         glMinSampleShading(MS.minSampleShading);
@@ -894,12 +523,6 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
         glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
     }
 
-    /*if (MS.alphaToOneEnable) {
-        glEnable(GL_SAMPLE_ALPHA_TO_ONE);
-    } else {
-        glDisable(GL_SAMPLE_ALPHA_TO_ONE);
-    }*/ // None for ES
-
     // DepthStencilState
     const DepthStencilState &DSS = pipelineCI.depthStencilState;
 
@@ -912,16 +535,6 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     glDepthMask(DSS.depthWriteEnable ? GL_TRUE : GL_FALSE);
 
     glDepthFunc(ToGLCompareOp(DSS.depthCompareOp));
-
-    /*PFNGLDEPTHBOUNDSEXTPROC glDepthBoundsEXT = (PFNGLDEPTHBOUNDSEXTPROC)GetExtension("glDepthBoundsEXT");  // EXT
-    if (glDepthBoundsEXT) {
-        if (DSS.depthBoundsTestEnable) {
-            glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
-            glDepthBoundsEXT(DSS.minDepthBounds, DSS.maxDepthBounds);
-        } else {
-            glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
-        }
-    }*/ // None for ES
 
     if (DSS.stencilTestEnable) {
         glEnable(GL_STENCIL_TEST);
@@ -952,13 +565,6 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     // ColorBlendState
     const ColorBlendState &CBS = pipelineCI.colorBlendState;
 
-    /*if (CBS.logicOpEnable) {
-        glEnable(GL_COLOR_LOGIC_OP);
-        glLogicOp(ToGLLogicOp(CBS.logicOp));
-    } else {
-        glDisable(GL_COLOR_LOGIC_OP);
-    }*/ // None for ES
-
     for (int i = 0; i < (int)CBS.attachments.size(); i++) {
         const ColorBlendAttachmentState &CBA = CBS.attachments[i];
 
@@ -985,75 +591,89 @@ void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     glBlendColor(CBS.blendConstants[0], CBS.blendConstants[1], CBS.blendConstants[2], CBS.blendConstants[3]);
 }
 
-void GraphicsAPI_OpenGL_ES::SetDescriptor(const DescriptorInfo &descriptorInfo) {
-    GLuint glResource = (GLuint)(uint64_t)descriptorInfo.resource;
-    const GLuint &bindingIndex = descriptorInfo.bindingIndex;
-    if (descriptorInfo.type == DescriptorInfo::Type::BUFFER) {
-        size_t offset = AlignSizeForUniformBuffer(descriptorInfo.bufferOffset);
-        glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, glResource, (GLintptr)offset, (GLsizeiptr)descriptorInfo.bufferSize);
-    } else if (descriptorInfo.type == DescriptorInfo::Type::IMAGE) {
-        glActiveTexture(GL_TEXTURE0 + bindingIndex);
-        glBindTexture(GetGLTextureTarget(images[glResource]), glResource);
-    } else if (descriptorInfo.type == DescriptorInfo::Type::SAMPLER) {
-        glBindSampler(bindingIndex, glResource);
-    } else {
-        std::cout << "ERROR: OPENGL: Unknown Descriptor Type." << std::endl;
-    }
+void OpenGLESRenderer::BeginRendering() {
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 }
 
-void GraphicsAPI_OpenGL_ES::UpdateDescriptors() {
+void OpenGLESRenderer::EndRendering() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &framebuffer);
+    framebuffer = 0;
 }
 
-void GraphicsAPI_OpenGL_ES::SetVertexBuffers(void **vertexBuffers, size_t count) {
-    const VertexInputState &vertexInputState = pipelines[setPipeline].vertexInputState;
-    for (size_t i = 0; i < count; i++) {
-        GLuint glVertexBufferID = (GLuint)(uint64_t)vertexBuffers[i];
-        if (buffers[glVertexBufferID].type != BufferCreateInfo::Type::VERTEX) {
-            std::cout << "ERROR: OpenGL: Provided buffer is not type: VERTEX." << std::endl;
+void OpenGLESRenderer::ClearColor(void *imageView, float r, float g, float b, float a) {
+    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)(uint64_t)imageView);
+    glClearColor(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void OpenGLESRenderer::ClearDepth(void *imageView, float d) {
+    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)(uint64_t)imageView);
+    glClearDepthf(d);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewCount, void *depthStencilView, uint32_t width, uint32_t height) {
+    // Reset Framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &framebuffer);
+    framebuffer = 0;
+
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    // Color
+    for (size_t i = 0; i < colorViewCount; i++) {
+        GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
+        const ImageViewCreateInfo &imageViewCI = imageViews[glColorView];
+
+        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
+            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
+        } else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
+            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
+        } else {
+            DEBUG_BREAK;
+            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
         }
+    }
+    // DepthStencil
+    if (depthStencilView) {
+        GLuint glDepthView = (GLuint)(uint64_t)depthStencilView;
+        const ImageViewCreateInfo &imageViewCI = imageViews[glDepthView];
 
-        glBindBuffer(GL_ARRAY_BUFFER, (GLuint)(uint64_t)vertexBuffers[i]);
-
-        // https://i.redd.it/fyxp5ah06a661.png
-        for (const VertexInputBinding &vertexBinding : vertexInputState.bindings) {
-            if (vertexBinding.bindingIndex == (uint32_t)i) {
-                for (const VertexInputAttribute &vertexAttribute : vertexInputState.attributes) {
-                    if (vertexAttribute.bindingIndex == (uint32_t)i) {
-                        GLuint attribIndex = vertexAttribute.attribIndex;
-                        GLint size = ((GLint)vertexAttribute.vertexType % 4) + 1;
-                        GLenum type = (GLenum)vertexAttribute.vertexType >= (GLenum)VertexType::UINT ? GL_UNSIGNED_INT : (GLenum)vertexAttribute.vertexType >= (GLenum)VertexType::INT ? GL_INT
-                                                                                                                                                                                       : GL_FLOAT;
-                        GLsizei stride = vertexBinding.stride;
-                        const void *offset = (const void *)vertexAttribute.offset;
-                        glEnableVertexAttribArray(attribIndex);
-                        glVertexAttribPointer(attribIndex, size, type, false, stride, offset);
-                    }
-                }
-            }
+        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
+            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
+        } else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
+            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
+        } else {
+            DEBUG_BREAK;
+            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
         }
     }
-}
 
-void GraphicsAPI_OpenGL_ES::SetIndexBuffer(void *indexBuffer) {
-    GLuint glIndexBufferID = (GLuint)(uint64_t)indexBuffer;
-    if (buffers[glIndexBufferID].type != BufferCreateInfo::Type::INDEX) {
-        std::cout << "ERROR: OpenGL: Provided buffer is not type: INDEX." << std::endl;
+    GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+    if (result != GL_FRAMEBUFFER_COMPLETE) {
+        DEBUG_BREAK;
+        std::cout << "ERROR: OPENGL: Framebuffer is not complete." << std::endl;
     }
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glIndexBufferID);
-    setIndexBuffer = glIndexBufferID;
 }
 
-void GraphicsAPI_OpenGL_ES::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) {
-    GLenum indexType = buffers[setIndexBuffer].stride == 4 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
-    glDrawElementsInstanced(ToGLTopology(pipelines[setPipeline].inputAssemblyState.topology),indexCount, indexType, nullptr,instanceCount);
+void OpenGLESRenderer::SetViewports(Viewport *viewports, size_t count) {
+    Viewport viewport = viewports[0];
+    glViewport((GLint)viewport.x, (GLint)viewport.y, (GLsizei)viewport.width, (GLsizei)viewport.height);
+    glDepthRangef(viewport.minDepth, viewport.maxDepth);
 }
 
-void GraphicsAPI_OpenGL_ES::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
-    glDrawArraysInstanced(ToGLTopology(pipelines[setPipeline].inputAssemblyState.topology), firstVertex, vertexCount, instanceCount);
+void OpenGLESRenderer::SetScissors(Rect2D *scissors, size_t count) {
+    Rect2D scissor = scissors[0];
+    glScissor((GLint)scissor.offset.x, (GLint)scissor.offset.y, (GLsizei)scissor.extent.width, (GLsizei)scissor.extent.height);
 }
 
-// XR_DOCS_TAG_BEGIN_GraphicsAPI_OpenGL_ES_GetSupportedSwapchainFormats
-const std::vector<int64_t> GraphicsAPI_OpenGL_ES::GetSupportedColorSwapchainFormats() {
+// XR_DOCS_TAG_BEGIN_OpenGLESRenderer_GetSupportedSwapchainFormats
+const std::vector<int64_t> OpenGLESRenderer::GetSupportedColorSwapchainFormats() {
     // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L208-L216
     GLint glMajorVersion = 0;
     glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersion);
@@ -1063,11 +683,11 @@ const std::vector<int64_t> GraphicsAPI_OpenGL_ES::GetSupportedColorSwapchainForm
         return {GL_RGBA8, GL_RGBA8_SNORM};
     }
 }
-const std::vector<int64_t> GraphicsAPI_OpenGL_ES::GetSupportedDepthSwapchainFormats() {
+const std::vector<int64_t> OpenGLESRenderer::GetSupportedDepthSwapchainFormats() {
     return {
         GL_DEPTH_COMPONENT32F,
         GL_DEPTH_COMPONENT24,
         GL_DEPTH_COMPONENT16};
 }
-// XR_DOCS_TAG_END_GraphicsAPI_OpenGL_ES_GetSupportedSwapchainFormats
+// XR_DOCS_TAG_END_OpenGLESRenderer_GetSupportedSwapchainFormats
 #endif

@@ -4,23 +4,26 @@
 #include <Materials/UnlitMaterial.h>
 #include <Utils/FileIO.h>
 
-#include <GraphicsAPI_OpenGL_ES.h>
+#include <OpenGLESRenderer.h>
 
 #include <Utils/DebugOutput.h>
 #include <Utils/OpenXRDebugUtils.h>
 #include <Utils/GLM_XR_Interop.h>
 
 #include <random>
-static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.f);
+static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
+
+inline glm::vec3 randomColor() {
+    return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
+}
 
 class OpenXRTutorial {
 private:
     struct RenderLayerInfo;
 
 public:
-    OpenXRTutorial(GraphicsAPI_Type apiType)
-        : m_apiType(apiType) {
+    OpenXRTutorial(GraphicsAPI_Type apiType) : m_apiType(apiType) {
         // Check API compatibility with Platform.
         if (!CheckGraphicsAPI_TypeIsValidForPlatform(m_apiType)) {
             XR_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");
@@ -371,7 +374,7 @@ private:
         // Create a std::unique_ptr<GraphicsAPI_...> from the instance and system.
         // This call sets up a graphics API that's suitable for use with OpenXR.
         if (m_apiType == OPENGL_ES) {
-            m_graphicsAPI = std::make_unique<GraphicsAPI_OpenGL_ES>(m_xrInstance, m_systemID);
+            m_graphicsAPI = std::make_unique<OpenGLESRenderer>(m_xrInstance, m_systemID);
         } else {
             XR_LOG_ERROR("ERROR: Unknown Graphics API.");
             DEBUG_BREAK;
@@ -402,10 +405,14 @@ private:
             .material = material,
         });
 
+        // Create the hand nodes.
+        for (int i = 0; i < 2; i++) {
+            m_handNodes[i].setEntity((Cube*)cube);
+            m_handNodes[i].setScale(glm::vec3(0.02f, 0.04f, 0.10f));
+            m_handNodes[i].frustumCulled = false;
+        }
+
         GraphicsAPI::PipelineCreateInfo pipelineCI;
-        pipelineCI.material = material;
-        pipelineCI.vertexInputState.attributes = {{0, 0, GraphicsAPI::VertexType::VEC4, 0, "TEXCOORD"}};
-        pipelineCI.vertexInputState.bindings = {{0, 0, 4 * sizeof(float)}};
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
         pipelineCI.rasterisationState = {false, false, GraphicsAPI::PolygonMode::FILL, GraphicsAPI::CullMode::BACK, GraphicsAPI::FrontFace::COUNTER_CLOCKWISE, false, 0.0f, 0.0f, 0.0f, 1.0f};
         pipelineCI.multisampleState = {1, false, 1.0f, 0xFFFFFFFF, false, false};
@@ -417,7 +424,7 @@ private:
                              {1, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX},
                              {2, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::FRAGMENT}};
         pipelineCI.viewMask = 0b11;
-        m_pipeline = m_graphicsAPI->CreatePipeline(pipelineCI);
+        m_graphicsAPI->CreatePipeline(pipelineCI);
 
         float scale = 0.2f;
         // Center the blocks a little way from the origin.
@@ -427,20 +434,19 @@ private:
             for (int j = 0; j < 5; j++) {
                 float y = scale * (float(j) - 1.5f) + center.y;
                 for (int k = 0; k < 5; k++) {
-                    // float angleRad = 0;
                     float z = scale * (float(k) - 1.5f) + center.z;
-                    // No rotation
-                    glm::quat q = {1.0f, 0.0f, 0.0f, 0.0f};
-                    // A random color.
-                    glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
-                    m_blocks.push_back({{q, {x, y, z}}, {0.095f, 0.095f, 0.095f}, color});
+
+                    Node node((Cube*)cube);
+                    node.setPosition({x, y, z});
+                    node.setScale({0.095f, 0.095f, 0.095f});
+                    m_blocks.push_back({node, randomColor()});
                 }
             }
         }
     }
 
     void DestroyResources() {
-        m_graphicsAPI->DestroyPipeline(m_pipeline);
+        delete cube;
     }
 
     void PollEvents() {
@@ -555,7 +561,9 @@ private:
                 if (XR_UNQUALIFIED_SUCCESS(res) &&
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
-                    m_handPose[i] = gxi::toGLM(spaceLocation.pose);
+                    gxi::Pose pose = gxi::toGLM(spaceLocation.pose);
+                    m_handNodes[i].setPosition(pose.position);
+                    m_handNodes[i].setRotationQuat(pose.orientation);
                 } else {
                     m_handPoseState[i].isActive = false;
                 }
@@ -616,7 +624,7 @@ private:
                     for (int j = 0; j < m_blocks.size(); j++) {
                         auto block = m_blocks[j];
                         // How far is it from the hand to this block?
-                        glm::vec3 diff = block.pose.position - m_handPose[i].position;
+                        glm::vec3 diff = block.node.getPosition() - m_handNodes[i].getPosition();
                         float distance = std::max(fabs(diff.x), std::max(fabs(diff.y), fabs(diff.z)));
                         if (distance < 0.05f && distance < nearest) {
                             m_nearBlock[i] = j;
@@ -630,23 +638,23 @@ private:
                         m_buzz[i] = 1.0f;
                     } else if (m_changeColorState[i].isActive == XR_TRUE && m_changeColorState[i].currentState == XR_FALSE && m_changeColorState[i].changedSinceLastSync == XR_TRUE) {
                         auto &thisBlock = m_blocks[m_nearBlock[i]];
-                        glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
-                        thisBlock.color = color;
+                        thisBlock.color = randomColor();
                     }
                 } else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
-                        glm::quat q = {1.0f, 0.0f, 0.0f, 0.0f};
-                        glm::vec3 color = {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator)};
-                        m_blocks.push_back({{q, FixPosition(m_handPose[i].position)}, {0.095f, 0.095f, 0.095f}, color});
+                        Node node((Cube*)cube);
+                        node.setPosition(m_handNodes[i].getPosition());
+                        node.setScale({0.095f, 0.095f, 0.095f});
+                        m_blocks.push_back({node, randomColor()});
                     }
                 }
             } else {
                 m_nearBlock[i] = m_grabbedBlock[i];
                 if (m_handPoseState[i].isActive)
-                    m_blocks[m_grabbedBlock[i]].pose.position = m_handPose[i].position;
+                    m_blocks[m_grabbedBlock[i]].node.setPosition(m_handNodes[i].getPosition());
                 if (!m_grabState[i].isActive || m_grabState[i].currentState < 0.5f) {
-                    m_blocks[m_grabbedBlock[i]].pose.position = FixPosition(m_blocks[m_grabbedBlock[i]].pose.position);
+                    m_blocks[m_grabbedBlock[i]].node.setPosition(FixPosition(m_blocks[m_grabbedBlock[i]].node.getPosition()));
                     m_grabbedBlock[i] = -1;
                     m_buzz[i] = 0.2f;
                 }
@@ -779,30 +787,6 @@ private:
         OPENXR_CHECK(xrDestroySwapchain(m_depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
 
-    void RenderCuboid(gxi::Pose pose, glm::vec3 scale, glm::vec3 color) {
-        m_graphicsAPI->SetPipeline(m_pipeline);
-
-        // Cube dimensions are 1x1x1, so we need to scale it to the desired size.
-        scale /= 2.0f;
-
-        glm::vec3 position = pose.position;
-        glm::quat orientation = pose.orientation;
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(orientation) * glm::scale(glm::mat4(1.0f), scale);
-
-        uint32_t viewCount = 2;
-
-        material->bind();
-        for (uint32_t i = 0; i < viewCount; i++) {
-            material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
-            material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-        }
-        material->unbind();
-
-        material->baseColor = glm::vec4(color.r, color.g, color.b, 1.0f);
-
-        cube->draw(*scene, cameras[0], model, false, nullptr);
-    }
-
     void RenderFrame() {
         // Get the XrFrameState for timing and rendering info.
         XrFrameState frameState{XR_TYPE_FRAME_STATE};
@@ -909,7 +893,7 @@ private:
         }
         m_graphicsAPI->ClearDepth(m_depthSwapchainInfo.imageViews[depthImageIndex], 1.0f);
 
-        m_graphicsAPI->SetRenderAttachments(&m_colorSwapchainInfo.imageViews[colorImageIndex], 1, m_depthSwapchainInfo.imageViews[depthImageIndex], width, height, m_pipeline);
+        m_graphicsAPI->SetRenderAttachments(&m_colorSwapchainInfo.imageViews[colorImageIndex], 1, m_depthSwapchainInfo.imageViews[depthImageIndex], width, height);
         m_graphicsAPI->SetViewports(&viewport, 1);
         m_graphicsAPI->SetScissors(&scissor, 1);
 
@@ -921,23 +905,32 @@ private:
         }
 
         // Draw a floor. Scale it by 2 in the X and Z, and 0.1 in the Y,
-        RenderCuboid({{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, -m_viewHeightM, 0.0f}}, {2.0f, 0.1f, 2.0f}, {0.4f, 0.5f, 0.5f});
+        Node floor = Node((Cube*)cube);
+        floor.setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        floor.setScale(glm::vec3(2.0f, 0.1f, 2.0f));
+        RenderCuboid(floor, {0.4f, 0.5f, 0.5f});
+
         // Draw a "table".
-        RenderCuboid({{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, -m_viewHeightM + 0.9f, -0.7f}}, {1.0f, 0.2f, 1.0f}, {0.6f, 0.6f, 0.4f});
+        Node table = Node((Cube*)cube);
+        table.setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.7f));
+        table.setScale(glm::vec3(1.0f, 0.1f, 1.0f));
+        RenderCuboid(table, {0.6f, 0.6f, 0.4f});
 
         // Draw some blocks at the controller positions:
         for (int i = 0; i < 2; i++) {
             if (m_handPoseState[i].isActive) {
-                RenderCuboid(m_handPose[i], {0.02f, 0.04f, 0.10f}, {1.f, 1.f, 1.f});
+                RenderCuboid(m_handNodes[i], {1.0f, 1.0f, 1.0f});
             }
         }
         for (int i = 0; i < m_blocks.size(); i++) {
-            auto &thisBlock = m_blocks[i];
-            glm::vec3 sc = thisBlock.scale;
-            if (i == m_nearBlock[0] || i == m_nearBlock[1])
-                sc = thisBlock.scale * 1.05f;
-            RenderCuboid(thisBlock.pose, sc, thisBlock.color);
+            glm::vec3 sc = m_blocks[i].node.getScale();
+            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
+                m_blocks[i].node.setScale(sc * 1.05f);
+            RenderCuboid(m_blocks[i].node, m_blocks[i].color); // render
+            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // restore scale
+                m_blocks[i].node.setScale(sc);
         }
+
         m_graphicsAPI->EndRendering();
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
@@ -952,6 +945,24 @@ private:
         renderLayerInfo.layerProjection.views = renderLayerInfo.layerProjectionViews.data();
 
         return true;
+    }
+
+    void RenderCuboid(const Node &node, glm::vec3 color) {
+        uint32_t viewCount = 2;
+
+        material->bind();
+        for (uint32_t i = 0; i < viewCount; i++) {
+            material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+            material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
+        }
+        material->unbind();
+
+        material->baseColor = glm::vec4(color.r, color.g, color.b, 1.0f);
+
+        // Cube dimensions are 1x1x1, so we need to scale it to the desired size.
+        const glm::mat4 &model = node.getTransformParentFromLocal() * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+
+        cube->draw(*scene, cameras[0], model, false, nullptr);
     }
 
 public:
@@ -1071,7 +1082,7 @@ private:
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
 
-    std::vector<Camera> cameras = {Camera(), Camera()};
+    Camera cameras[2];
     std::unique_ptr<Scene> scene;
 
     UnlitMaterial* material;
@@ -1080,13 +1091,9 @@ private:
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
 
-    // The pipeline is a graphics-API specific state object.
-    void* m_pipeline = nullptr;
-
     // An instance of a 3d colored block.
     struct Block {
-        gxi::Pose pose;
-        glm::vec3 scale;
+        Node node;
         glm::vec3 color;
     };
     // The list of block instances.
@@ -1117,9 +1124,7 @@ private:
     XrSpace m_handPoseSpace[2];
     XrActionStatePose m_handPoseState[2] = {{XR_TYPE_ACTION_STATE_POSE}, {XR_TYPE_ACTION_STATE_POSE}};
     // The current poses obtained from the XrSpaces.
-    gxi::Pose m_handPose[2] = {
-        {{1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -m_viewHeightM}},
-        {{1.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -m_viewHeightM}}};
+    Node m_handNodes[2];
 };
 
 void OpenXRTutorial_Main(GraphicsAPI_Type apiType) {

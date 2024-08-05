@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <GraphicsAPI_OpenGL_ES.h>
+#include <OpenGLESRenderer.h>
 
 namespace gxi {
 
