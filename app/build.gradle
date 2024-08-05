@@ -53,7 +53,7 @@ android {
         }
         main {
             assets {
-                srcDirs 'assets', 'src/main/assets'
+                srcDirs 'assets', 'src/main/assets', 'app/assets'
             }
         }
     }
