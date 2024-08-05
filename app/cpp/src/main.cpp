@@ -390,16 +390,6 @@ private:
         OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
     }
 
-    struct CameraConstants {
-        glm::mat4 view[2];
-        glm::mat4 proj[2];
-        glm::mat4 model;
-        glm::vec4 color;
-        glm::vec4 pad1;
-        glm::vec4 pad2;
-        glm::vec4 pad3;
-    };
-    CameraConstants cameraConstants;
     glm::vec4 normals[6] = {
         {1.00f, 0.00f, 0.00f, 0},
         {-1.00f, 0.00f, 0.00f, 0},
@@ -444,8 +434,6 @@ private:
 
         m_indexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::INDEX, sizeof(uint32_t), sizeof(cubeIndices), &cubeIndices});
 
-        size_t numberOfCuboids = 125 + 2 + 2;
-        m_uniformBuffer_Camera = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * numberOfCuboids, nullptr});
         m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
 
         shader = std::make_shared<Shader>(ShaderDataCreateParams{
@@ -494,7 +482,6 @@ private:
 
     void DestroyResources() {
         m_graphicsAPI->DestroyPipeline(m_pipeline);
-        m_graphicsAPI->DestroyBuffer(m_uniformBuffer_Camera);
         m_graphicsAPI->DestroyBuffer(m_uniformBuffer_Normals);
         m_graphicsAPI->DestroyBuffer(m_indexBuffer);
         m_graphicsAPI->DestroyBuffer(m_vertexBuffer);
@@ -839,28 +826,32 @@ private:
         OPENXR_CHECK(xrDestroySwapchain(m_depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
 
-    size_t renderCuboidIndex = 0;
     void RenderCuboid(gxi::Pose pose, glm::vec3 scale, glm::vec3 color) {
         glm::vec3 position = pose.position;
         glm::quat orientation = pose.orientation;
-        cameraConstants.model = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(orientation) * glm::scale(glm::mat4(1.0f), scale);
-        cameraConstants.color = {color.x, color.y, color.z, 1.0};
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(orientation) * glm::scale(glm::mat4(1.0f), scale);
 
-        size_t offsetCameraUB = m_graphicsAPI->AlignSizeForUniformBuffer(sizeof(CameraConstants)) * renderCuboidIndex;
+        shader->bind();
+        {
+            uint32_t viewCount = 2;
+            for (uint32_t i = 0; i < viewCount; i++) {
+                shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
+                shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+            }
+            shader->setMat4("model", model);
+            shader->setVec3("color", color);
+        }
+        shader->unbind();
 
         m_graphicsAPI->SetPipeline(m_pipeline);
 
-        m_graphicsAPI->SetBufferData(m_uniformBuffer_Camera, offsetCameraUB, sizeof(CameraConstants), &cameraConstants);
-        m_graphicsAPI->SetDescriptor({0, m_uniformBuffer_Camera, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX, false, offsetCameraUB, sizeof(CameraConstants)});
-        m_graphicsAPI->SetDescriptor({1, m_uniformBuffer_Normals, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX, false, 0, sizeof(normals)});
+        m_graphicsAPI->SetDescriptor({0, m_uniformBuffer_Normals, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX, false, 0, sizeof(normals)});
 
         m_graphicsAPI->UpdateDescriptors();
 
         m_graphicsAPI->SetVertexBuffers(&m_vertexBuffer, 1);
         m_graphicsAPI->SetIndexBuffer(m_indexBuffer);
         m_graphicsAPI->DrawIndexed(36, 1);
-
-        renderCuboidIndex++;
     }
 
     void RenderFrame() {
@@ -976,11 +967,10 @@ private:
         // Compute the view-projection transforms.
         // All matrices (including OpenXR's) are column-major, right-handed.
         for (uint32_t i = 0; i < viewCount; i++) {
-            cameraConstants.proj[i] = gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ);
-            cameraConstants.view[i] = glm::inverse(gxi::toGlm(views[i].pose));
+            cameras[i].setProjectionMatrix(gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ));
+            cameras[i].setViewMatrix(glm::inverse(gxi::toGlm(views[i].pose)));
         }
 
-        renderCuboidIndex = 0;
         // Draw a floor. Scale it by 2 in the X and Z, and 0.1 in the Y,
         RenderCuboid({{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, -m_viewHeightM, 0.0f}}, {2.0f, 0.1f, 2.0f}, {0.4f, 0.5f, 0.5f});
         // Draw a "table".
@@ -1133,6 +1123,7 @@ private:
     };
 
     std::shared_ptr<Shader> shader;
+    std::vector<Camera> cameras = {Camera(), Camera()};
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
@@ -1140,8 +1131,6 @@ private:
     // Vertex and index buffers: geometry for our cuboids.
     void* m_vertexBuffer = nullptr;
     void* m_indexBuffer = nullptr;
-    // Camera values constant buffer for the shaders.
-    void* m_uniformBuffer_Camera = nullptr;
     // The normals are stored in a uniform buffer to simplify our vertex geometry.
     void* m_uniformBuffer_Normals = nullptr;
 
