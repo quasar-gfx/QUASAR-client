@@ -4,7 +4,7 @@ project(cpp)
 set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/opengl-remote-rendering)
 
 set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
-set(SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+set(SHADERS ${OGL_REMOTE_RENDERING}/shaders)
 set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
 
 # Additional Directories for find_package() to search within.

@@ -18,7 +18,7 @@
 // OpenXR Helper
 #include <Utils/OpenXRHelper.h>
 
-#include <Shaders/Shader.h>
+#include <Materials/Material.h>
 
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,
@@ -255,7 +255,7 @@ public:
         size_t bufferSize;
     };
     struct PipelineCreateInfo {
-        std::shared_ptr<Shader> shader;
+        Material* material;
         VertexInputState vertexInputState;
         InputAssemblyState inputAssemblyState;
         RasterisationState rasterisationState;

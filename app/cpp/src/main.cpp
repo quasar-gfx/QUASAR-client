@@ -390,61 +390,20 @@ private:
         OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
     }
 
-    glm::vec4 normals[6] = {
-        {1.00f, 0.00f, 0.00f, 0},
-        {-1.00f, 0.00f, 0.00f, 0},
-        {0.00f, 1.00f, 0.00f, 0},
-        {0.00f, -1.00f, 0.00f, 0},
-        {0.00f, 0.00f, 1.00f, 0},
-        {0.00f, 0.0f, -1.00f, 0}};
-
     void CreateResources() {
-        // Vertices for a 1x1x1 meter cube. (Left/Right, Top/Bottom, Front/Back)
-        constexpr glm::vec4 vertexPositions[] = {
-            {+0.5f, +0.5f, +0.5f, 1.0f},
-            {+0.5f, +0.5f, -0.5f, 1.0f},
-            {+0.5f, -0.5f, +0.5f, 1.0f},
-            {+0.5f, -0.5f, -0.5f, 1.0f},
-            {-0.5f, +0.5f, +0.5f, 1.0f},
-            {-0.5f, +0.5f, -0.5f, 1.0f},
-            {-0.5f, -0.5f, +0.5f, 1.0f},
-            {-0.5f, -0.5f, -0.5f, 1.0f}};
+        scene = std::make_unique<Scene>();
 
-#define CUBE_FACE(V1, V2, V3, V4, V5, V6) vertexPositions[V1], vertexPositions[V2], vertexPositions[V3], vertexPositions[V4], vertexPositions[V5], vertexPositions[V6],
+        material = new UnlitMaterial(UnlitMaterialCreateParams{
+            .baseColor = glm::vec4(1.0,0.0,0.0,1.0),
+            .alphaMode = AlphaMode::OPAQUE,
+        });
 
-        glm::vec4 cubeVertices[] = {
-            CUBE_FACE(2, 1, 0, 2, 3, 1)  // -X
-            CUBE_FACE(6, 4, 5, 6, 5, 7)  // +X
-            CUBE_FACE(0, 1, 5, 0, 5, 4)  // -Y
-            CUBE_FACE(2, 6, 7, 2, 7, 3)  // +Y
-            CUBE_FACE(0, 4, 6, 0, 6, 2)  // -Z
-            CUBE_FACE(1, 3, 7, 1, 7, 5)  // +Z
-        };
-
-        uint32_t cubeIndices[36] = {
-            0, 1, 2, 3, 4, 5,        // -X
-            6, 7, 8, 9, 10, 11,      // +X
-            12, 13, 14, 15, 16, 17,  // -Y
-            18, 19, 20, 21, 22, 23,  // +Y
-            24, 25, 26, 27, 28, 29,  // -Z
-            30, 31, 32, 33, 34, 35,  // +Z
-        };
-
-        m_vertexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::VERTEX, sizeof(float) * 4, sizeof(cubeVertices), &cubeVertices});
-
-        m_indexBuffer = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::INDEX, sizeof(uint32_t), sizeof(cubeIndices), &cubeIndices});
-
-        m_uniformBuffer_Normals = m_graphicsAPI->CreateBuffer({GraphicsAPI::BufferCreateInfo::Type::UNIFORM, 0, sizeof(normals), &normals});
-
-        shader = std::make_shared<Shader>(ShaderDataCreateParams{
-            .vertexCodeData = SHADER_COMMON_VERT,
-            .vertexCodeSize = SHADER_COMMON_VERT_len,
-            .fragmentCodeData = SHADER_MATERIAL_UNLIT_FRAG,
-            .fragmentCodeSize = SHADER_MATERIAL_UNLIT_FRAG_len,
+        cube = new Cube(MeshCreateParams{
+            .material = material,
         });
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
-        pipelineCI.shader = shader;
+        pipelineCI.material = material;
         pipelineCI.vertexInputState.attributes = {{0, 0, GraphicsAPI::VertexType::VEC4, 0, "TEXCOORD"}};
         pipelineCI.vertexInputState.bindings = {{0, 0, 4 * sizeof(float)}};
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
@@ -482,9 +441,6 @@ private:
 
     void DestroyResources() {
         m_graphicsAPI->DestroyPipeline(m_pipeline);
-        m_graphicsAPI->DestroyBuffer(m_uniformBuffer_Normals);
-        m_graphicsAPI->DestroyBuffer(m_indexBuffer);
-        m_graphicsAPI->DestroyBuffer(m_vertexBuffer);
     }
 
     void PollEvents() {
@@ -764,9 +720,6 @@ private:
         OPENXR_CHECK(xrCreateSwapchain(m_session, &swapchainCI, &m_depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
         m_depthSwapchainInfo.swapchainFormat = swapchainCI.format;  // Save the swapchain format for later use.
 
-
-        // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
-
         // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
         // Get the number of images in the color/depth swapchain and allocate Swapchain image data via GraphicsAPI to store the returned array.
         uint32_t colorSwapchainImageCount = 0;
@@ -827,31 +780,27 @@ private:
     }
 
     void RenderCuboid(gxi::Pose pose, glm::vec3 scale, glm::vec3 color) {
+        m_graphicsAPI->SetPipeline(m_pipeline);
+
+        // Cube dimensions are 1x1x1, so we need to scale it to the desired size.
+        scale /= 2.0f;
+
         glm::vec3 position = pose.position;
         glm::quat orientation = pose.orientation;
         glm::mat4 model = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(orientation) * glm::scale(glm::mat4(1.0f), scale);
 
-        shader->bind();
-        {
-            uint32_t viewCount = 2;
-            for (uint32_t i = 0; i < viewCount; i++) {
-                shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-                shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
-            }
-            shader->setMat4("model", model);
-            shader->setVec3("color", color);
+        uint32_t viewCount = 2;
+
+        material->bind();
+        for (uint32_t i = 0; i < viewCount; i++) {
+            material->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
+            material->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
         }
-        shader->unbind();
+        material->unbind();
 
-        m_graphicsAPI->SetPipeline(m_pipeline);
+        material->baseColor = glm::vec4(color.r, color.g, color.b, 1.0f);
 
-        m_graphicsAPI->SetDescriptor({0, m_uniformBuffer_Normals, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX, false, 0, sizeof(normals)});
-
-        m_graphicsAPI->UpdateDescriptors();
-
-        m_graphicsAPI->SetVertexBuffers(&m_vertexBuffer, 1);
-        m_graphicsAPI->SetIndexBuffer(m_indexBuffer);
-        m_graphicsAPI->DrawIndexed(36, 1);
+        cube->draw(*scene, cameras[0], model, false, nullptr);
     }
 
     void RenderFrame() {
@@ -1122,17 +1071,14 @@ private:
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
 
-    std::shared_ptr<Shader> shader;
     std::vector<Camera> cameras = {Camera(), Camera()};
+    std::unique_ptr<Scene> scene;
+
+    UnlitMaterial* material;
+    Cube* cube = nullptr;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
-
-    // Vertex and index buffers: geometry for our cuboids.
-    void* m_vertexBuffer = nullptr;
-    void* m_indexBuffer = nullptr;
-    // The normals are stored in a uniform buffer to simplify our vertex geometry.
-    void* m_uniformBuffer_Normals = nullptr;
 
     // The pipeline is a graphics-API specific state object.
     void* m_pipeline = nullptr;
@@ -1178,7 +1124,7 @@ private:
 
 void OpenXRTutorial_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput;  // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
-    XR_LOG("OculusClient App");
+    XR_LOG("Starting OculusClient...");
 
     OpenXRTutorial app(apiType);
     app.Run();

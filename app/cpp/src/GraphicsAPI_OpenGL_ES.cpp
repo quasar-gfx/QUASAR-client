@@ -671,7 +671,7 @@ void GraphicsAPI_OpenGL_ES::DestroyShader(void *&shader) {
 }
 
 void *GraphicsAPI_OpenGL_ES::CreatePipeline(const PipelineCreateInfo &pipelineCI) {
-    GLuint program = pipelineCI.shader->ID;
+    GLuint program = pipelineCI.material->shader->ID;
     pipelines[program] = pipelineCI;
     return (void *)(uint64_t)program;
 }
@@ -798,8 +798,8 @@ void GraphicsAPI_OpenGL_ES::SetScissors(Rect2D *scissors, size_t count) {
 
 void GraphicsAPI_OpenGL_ES::SetPipeline(void *pipeline) {
     GLuint program = (GLuint)(uint64_t)pipeline;
-    glUseProgram(program);
-    setPipeline = program;
+    // glUseProgram(program);
+    // setPipeline = program;
 
     const PipelineCreateInfo &pipelineCI = pipelines[program];
 
