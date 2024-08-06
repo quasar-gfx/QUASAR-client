@@ -398,6 +398,20 @@ private:
         OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
     }
 
+    Node* CreateBox(glm::vec3 position) {
+        Cube* cube = new Cube({
+            .material = new UnlitMaterial({
+                .baseColor = randomColor()
+            })
+        });
+        Node* node = new Node(cube);
+        node->setPosition(position);
+        node->setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
+        m_blocks.push_back(node);
+
+        return node;
+    }
+
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
@@ -453,19 +467,6 @@ private:
         });
         scene->addPointLight(pointLight4);
 
-        // Create the hand nodes.
-        Model* helmetMesh = new Model({
-            .flipTextures = true,
-            .IBL = 0,
-            .path = "models/DamagedHelmet.glb"
-        });
-        for (int i = 0; i < 2; i++) {
-            m_handNodes[i].setEntity(helmetMesh);
-            m_handNodes[i].setScale(glm::vec3(0.05f, 0.05f, 0.05f));
-            m_handNodes[i].frustumCulled = false;
-            scene->addChildNode(&m_handNodes[i]);
-        }
-
         // Draw a floor.
         Cube* floorMesh = new Cube({
             .material = new UnlitMaterial({
@@ -487,10 +488,50 @@ private:
         Node* table = new Node(tableMesh);
         table->setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.6f));
         table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
-        table->frustumCulled = false;
         scene->addChildNode(table);
 
-        XR_LOG(helmetMesh->material);
+        // Create the hand nodes.
+        Model* leftControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/oculus-touch-controller-v3-left.glb"
+        });
+        m_handNodes[0].setEntity(leftControllerMesh);
+        scene->addChildNode(&m_handNodes[0]);
+
+        Model* rightControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/oculus-touch-controller-v3-right.glb"
+        });
+        m_handNodes[1].setEntity(rightControllerMesh);
+        scene->addChildNode(&m_handNodes[1]);
+
+        Model* helmetMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/DamagedHelmet.glb"
+        });
+        Node *helmetNode = new Node(helmetMesh);
+        helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
+        helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
+        scene->addChildNode(helmetNode);
+
+        float scale = 0.2f;
+        // Center the blocks a little way from the origin.
+        glm::vec3 center = {0.0f, -0.2f, -0.7f};
+        for (int i = 0; i < 5; i++) {
+            float x = scale * (float(i) - 1.5f) + center.x;
+            for (int j = 0; j < 5; j++) {
+                float y = scale * (float(j) - 1.5f) + center.y;
+                for (int k = 0; k < 5; k++) {
+                    float z = scale * (float(k) - 1.5f) + center.z;
+
+                    auto node = CreateBox({x, y, z});
+                    scene->addChildNode(node);
+                }
+            }
+        }
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
@@ -505,31 +546,6 @@ private:
                              {2, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::FRAGMENT}};
         pipelineCI.viewMask = 0b11;
         m_graphicsAPI->CreatePipeline(pipelineCI);
-
-        float scale = 0.2f;
-        // Center the blocks a little way from the origin.
-        glm::vec3 center = {0.0f, -0.2f, -0.7f};
-        for (int i = 0; i < 5; i++) {
-            float x = scale * (float(i) - 1.5f) + center.x;
-            for (int j = 0; j < 5; j++) {
-                float y = scale * (float(j) - 1.5f) + center.y;
-                for (int k = 0; k < 5; k++) {
-                    float z = scale * (float(k) - 1.5f) + center.z;
-
-                    Cube* cube = new Cube({
-                        .material = new UnlitMaterial({
-                            .baseColor = randomColor()
-                        })
-                    });
-                    Node* node = new Node(cube);
-                    node->setPosition({x, y, z});
-                    node->setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
-                    node->frustumCulled = false;
-                    m_blocks.push_back(node);
-                    scene->addChildNode(node);
-                }
-            }
-        }
     }
 
     void DestroyResources() {
@@ -649,8 +665,7 @@ private:
                     (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
                     gxi::Pose pose = gxi::toGLM(spaceLocation.pose);
                     m_handNodes[i].setPosition(pose.position);
-                    // rotate by 180 degrees around the y-axis asnd 90 degrees along x-axis
-                    m_handNodes[i].setRotationQuat(pose.orientation * glm::quat(glm::vec3(glm::radians(90.0f), glm::radians(180.0f), 0.0f)));
+                    m_handNodes[i].setRotationQuat(pose.orientation);
 
                 } else {
                     m_handPoseState[i].isActive = false;
@@ -733,16 +748,7 @@ private:
                 } else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
-                        Cube* cube = new Cube({
-                            .material = new UnlitMaterial({
-                                .baseColor = randomColor()
-                            })
-                        });
-                        Node* node = new Node(cube);
-                        node->setPosition(m_handNodes[i].getPosition());
-                        node->setScale({0.095f / 2, 0.095f / 2, 0.095f / 2});
-                        node->frustumCulled = false;
-                        m_blocks.push_back(node);
+                        auto node = CreateBox(m_handNodes[i].getPosition());
                         scene->addChildNode(node);
                     }
                 }

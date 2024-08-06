@@ -697,38 +697,14 @@ RenderStats OpenGLESRenderer::DrawNode(Scene &scene, Camera cameras[], Node* nod
     RenderStats stats;
     if (node->entity != nullptr) {
         if (node->visible) {
-            // HACK: have to do manually bind cameras for now
-            if (node->entity->getType() == EntityType::MESH) {
-                auto mesh = static_cast<Mesh*>(node->entity);
-                auto materialToUse = overrideMaterial != nullptr ? overrideMaterial : mesh->material;
-
-                materialToUse->bind();
-                for (uint32_t i = 0; i < 2; i++) {
-                    materialToUse->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-                    materialToUse->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
-                }
-                materialToUse->unbind();
-            }
-            else if (node->entity->getType() == EntityType::MODEL) {
-                auto model = static_cast<Model*>(node->entity);
-                auto materialToUse = overrideMaterial != nullptr ? overrideMaterial : model->material;
-
-                materialToUse->bind();
-                for (uint32_t i = 0; i < 2; i++) {
-                    materialToUse->shader->setMat4("view["+std::to_string(i)+"]", cameras[i].getViewMatrix());
-                    materialToUse->shader->setMat4("projection["+std::to_string(i)+"]", cameras[i].getProjectionMatrix());
-                }
-                materialToUse->unbind();
-            }
-
-            node->entity->bindMaterial(scene, cameras[0], model, overrideMaterial);
+            node->entity->bindMaterial(scene, model, overrideMaterial);
             bool doFrustumCull = frustumCull && node->frustumCulled;
-            stats += node->entity->draw(scene, cameras[0], model, doFrustumCull, overrideMaterial);
+            stats += node->entity->draw(cameras, model, doFrustumCull, overrideMaterial);
         }
     }
 
     for (auto& child : node->children) {
-        stats += DrawNode(scene, cameras, child, model, overrideMaterial);
+        stats += DrawNode(scene, cameras, child, model, frustumCull, overrideMaterial);
     }
 
     return stats;
