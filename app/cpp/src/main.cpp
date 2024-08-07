@@ -480,8 +480,12 @@ private:
 
         // Draw a floor.
         Cube* floorMesh = new Cube({
-            .material = new UnlitMaterial({
-                .diffuseTexturePath = "textures/container.jpg"
+            .material = new PBRMaterial({
+                .albedoTexturePath = "textures/pbr/grass/albedo.png",
+                .normalTexturePath = "textures/pbr/grass/normal.png",
+                .metallicTexturePath = "textures/pbr/grass/metallic.png",
+                .roughnessTexturePath = "textures/pbr/grass/roughness.png",
+                .aoTexturePath = "textures/pbr/grass/ao.png"
             })
         });
         Node* floor = new Node(floorMesh);
@@ -492,8 +496,12 @@ private:
 
         // Draw a "table".
         Cube* tableMesh = new Cube({
-            .material = new UnlitMaterial({
-                .diffuseTexturePath = "textures/pbr/grass/albedo.png"
+            .material = new PBRMaterial({
+                .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
+                .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
+                .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
+                .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
+                .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
             })
         });
         Node* table = new Node(tableMesh);
