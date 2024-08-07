@@ -4,7 +4,6 @@ project(cpp)
 set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/libs/opengl-remote-rendering)
 
 set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
-set(APPS ${OGL_REMOTE_RENDERING}/apps)
 set(SHADERS ${OGL_REMOTE_RENDERING}/shaders)
 set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
 
@@ -50,6 +49,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(OpenXR)
 set(RENDERER_LIBS ${RENDERER_LIBS} openxr_loader)
 
+# FFMPEG-android-maker
+set(FFMPEG_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/ffmpeg")
+set(FFMPEG_LIBS_DIR ${FFMPEG_ROOT_DIR}/lib/${ANDROID_ABI})
+set(FFMPEG_LIBS
+    # ffmpeg lib names
+    avutil avformat avcodec swscale swresample
+)
+
+foreach(LIB_NAME ${FFMPEG_LIBS})
+    add_library(${LIB_NAME} SHARED IMPORTED)
+    set_target_properties(${LIB_NAME} PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIBS_DIR}/lib${LIB_NAME}.so)
+endforeach()
+
 # renderer shaders
 add_subdirectory(${SHADERS})
 
@@ -92,7 +104,6 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Utils/Platform.h
     ${RENDERER}/include/Utils/TimeUtils.h
     ${RENDERER}/include/Vertex.h
-    ${APPS}/Common/include/VideoTexture.h
 )
 set(RENDERER_SRCS
     ${RENDERER}/src/Camera.cpp
@@ -108,7 +119,13 @@ set(RENDERER_SRCS
     ${RENDERER}/src/Shaders/Shader.cpp
     ${RENDERER}/src/Texture.cpp
     ${RENDERER}/src/Utils/FileIO.cpp
-    ${APPS}/Common/src/VideoTexture.cpp
+)
+
+file(GLOB_RECURSE COMMON_HDRS
+    "${OGL_REMOTE_RENDERING}/apps/Common/include/*.h"
+)
+file(GLOB_RECURSE COMMON_SRCS
+    "${OGL_REMOTE_RENDERING}/apps/Common/src/*.cpp"
 )
 
 file(GLOB_RECURSE PRIVATE_HDRS
@@ -118,46 +135,26 @@ file(GLOB_RECURSE SRCS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-add_library(${TARGET} SHARED ${SRCS} ${PRIVATE_HDRS} ${RENDERER_SRCS} ${RENDERER_HDRS})
+add_library(${TARGET} SHARED ${SRCS} ${PRIVATE_HDRS} ${RENDERER_SRCS} ${RENDERER_HDRS} ${COMMON_SRCS} ${COMMON_HDRS})
 target_include_directories(${TARGET} PRIVATE
     # In this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 
     # Renderer related includes
     ${RENDERER}/include
-    ${APPS}/Common/include
+    ${OGL_REMOTE_RENDERING}/apps/Common/include
     ${EXTERNAL}
     ${CMAKE_BINARY_DIR}/shaders
+
+    # For ffmpeg-android
+    "libs/ffmpeg/include/${ANDROID_ABI}"
 
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
     "${openxr_SOURCE_DIR}/external/include"
-
-    # For ffmpeg-android
-    "/libs/ffmpeg/include/${ANDROID_ABI}"
 )
 
 add_dependencies(${TARGET} shaders)
-
-# FFMPEG-android-maker
-set(FFMPEG_ROOT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/ffmpeg")
-set(ffmpeg_libs ${FFMPEG_ROOT_DIRECTORY}/lib/${ANDROID_ABI})
-set(ffmpeg_libs_names
-    # ffmpeg lib names
-    avutil avformat avcodec swscale swresample
-)
-
-foreach(ffmpeg_lib_name ${ffmpeg_libs_names})
-    add_library(
-        ${ffmpeg_lib_name}
-        SHARED
-        IMPORTED)
-    set_target_properties(
-        ${ffmpeg_lib_name}
-        PROPERTIES
-        IMPORTED_LOCATION
-        ${ffmpeg_libs}/lib${ffmpeg_lib_name}.so)
-endforeach()
 
 # export ANativeActivity_onCreate for java to call.
 set_property(
@@ -169,9 +166,9 @@ set_property(
 # native_app_glue
 include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
-set(RENDERER_LIBS ${RENDERER_LIBS} android native_app_glue)
+set(ANDROID_LIBS android native_app_glue)
 
-target_link_libraries(${TARGET} ${RENDERER_LIBS} ${ffmpeg_libs_names})
+target_link_libraries(${TARGET} ${ANDROID_LIBS} ${RENDERER_LIBS} ${FFMPEG_LIBS})
 target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention)
 AddGraphicsAPIDefine(${TARGET})
 target_compile_definitions(${TARGET} PUBLIC XR_TUTORIAL_ENABLE_MULTIVIEW)
