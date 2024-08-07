@@ -70,6 +70,7 @@ GLint ToGLFilter(GraphicsAPI::SamplerCreateInfo::Filter filter) {
         return 0;
     }
 };
+
 GLint ToGLFilterMipmap(GraphicsAPI::SamplerCreateInfo::Filter filter, GraphicsAPI::SamplerCreateInfo::MipmapMode mipmapMode) {
     switch (filter) {
     case GraphicsAPI::SamplerCreateInfo::Filter::NEAREST: {
@@ -92,6 +93,7 @@ GLint ToGLFilterMipmap(GraphicsAPI::SamplerCreateInfo::Filter filter, GraphicsAP
         return 0;
     }
 };
+
 GLint ToGLAddressMode(GraphicsAPI::SamplerCreateInfo::AddressMode mode) {
     switch (mode) {
     case GraphicsAPI::SamplerCreateInfo::AddressMode::REPEAT:
@@ -127,6 +129,7 @@ inline GLenum ToGLTopology(GraphicsAPI::PrimitiveTopology topology) {
         return 0;
     }
 };
+
 inline GLenum ToGLCullMode(GraphicsAPI::CullMode cullMode) {
     switch (cullMode) {
     case GraphicsAPI::CullMode::NONE:
@@ -141,6 +144,7 @@ inline GLenum ToGLCullMode(GraphicsAPI::CullMode cullMode) {
         return 0;
     }
 }
+
 inline GLenum ToGLCompareOp(GraphicsAPI::CompareOp op) {
     switch (op) {
     case GraphicsAPI::CompareOp::NEVER:
@@ -163,6 +167,7 @@ inline GLenum ToGLCompareOp(GraphicsAPI::CompareOp op) {
         return 0;
     }
 };
+
 inline GLenum ToGLStencilCompareOp(GraphicsAPI::StencilOp op) {
     switch (op) {
     case GraphicsAPI::StencilOp::KEEP:
@@ -185,6 +190,7 @@ inline GLenum ToGLStencilCompareOp(GraphicsAPI::StencilOp op) {
         return 0;
     }
 };
+
 inline GLenum ToGLBlendFactor(GraphicsAPI::BlendFactor factor) {
     switch (factor) {
     case GraphicsAPI::BlendFactor::ZERO:
@@ -211,6 +217,7 @@ inline GLenum ToGLBlendFactor(GraphicsAPI::BlendFactor factor) {
         return 0;
     }
 };
+
 inline GLenum ToGLBlendOp(GraphicsAPI::BlendOp op) {
     switch (op) {
     case GraphicsAPI::BlendOp::ADD:

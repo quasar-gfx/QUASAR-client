@@ -4,6 +4,7 @@ project(cpp)
 set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/libs/opengl-remote-rendering)
 
 set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
+set(APPS ${OGL_REMOTE_RENDERING}/apps)
 set(SHADERS ${OGL_REMOTE_RENDERING}/shaders)
 set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
 
@@ -91,6 +92,7 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Utils/Platform.h
     ${RENDERER}/include/Utils/TimeUtils.h
     ${RENDERER}/include/Vertex.h
+    ${APPS}/Common/include/VideoTexture.h
 )
 set(RENDERER_SRCS
     ${RENDERER}/src/Camera.cpp
@@ -106,6 +108,7 @@ set(RENDERER_SRCS
     ${RENDERER}/src/Shaders/Shader.cpp
     ${RENDERER}/src/Texture.cpp
     ${RENDERER}/src/Utils/FileIO.cpp
+    ${APPS}/Common/src/VideoTexture.cpp
 )
 
 file(GLOB_RECURSE PRIVATE_HDRS
@@ -122,15 +125,39 @@ target_include_directories(${TARGET} PRIVATE
 
     # Renderer related includes
     ${RENDERER}/include
+    ${APPS}/Common/include
     ${EXTERNAL}
     ${CMAKE_BINARY_DIR}/shaders
 
     # From OpenXR repo
     "${openxr_SOURCE_DIR}/src/common"
     "${openxr_SOURCE_DIR}/external/include"
+
+    # For ffmpeg-android
+    "/libs/ffmpeg/include/${ANDROID_ABI}"
 )
 
 add_dependencies(${TARGET} shaders)
+
+# FFMPEG-android-maker
+set(FFMPEG_ROOT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/libs/ffmpeg")
+set(ffmpeg_libs ${FFMPEG_ROOT_DIRECTORY}/lib/${ANDROID_ABI})
+set(ffmpeg_libs_names
+    # ffmpeg lib names
+    avutil avformat avcodec swscale swresample
+)
+
+foreach(ffmpeg_lib_name ${ffmpeg_libs_names})
+    add_library(
+        ${ffmpeg_lib_name}
+        SHARED
+        IMPORTED)
+    set_target_properties(
+        ${ffmpeg_lib_name}
+        PROPERTIES
+        IMPORTED_LOCATION
+        ${ffmpeg_libs}/lib${ffmpeg_lib_name}.so)
+endforeach()
 
 # export ANativeActivity_onCreate for java to call.
 set_property(
@@ -144,7 +171,7 @@ include(AndroidNdkModules)
 android_ndk_import_module_native_app_glue()
 set(RENDERER_LIBS ${RENDERER_LIBS} android native_app_glue)
 
-target_link_libraries(${TARGET} ${RENDERER_LIBS})
+target_link_libraries(${TARGET} ${RENDERER_LIBS} ${ffmpeg_libs_names})
 target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention)
 AddGraphicsAPIDefine(${TARGET})
 target_compile_definitions(${TARGET} PUBLIC XR_TUTORIAL_ENABLE_MULTIVIEW)

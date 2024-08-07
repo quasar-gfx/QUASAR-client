@@ -1,8 +1,10 @@
 #include <Scene.h>
 #include <Camera.h>
+#include <VideoTexture.h>
 #include <Primatives/Mesh.h>
 #include <Primatives/Cube.h>
 #include <Primatives/Model.h>
+
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 #include <Lights/DirectionalLight.h>
@@ -414,6 +416,15 @@ private:
 
     void CreateResources() {
         scene = std::make_unique<Scene>();
+
+        VideoTexture* videoTex = new VideoTexture({
+            .width = 1024,
+            .height = 1024,
+            .wrapS = GL_REPEAT,
+            .wrapT = GL_REPEAT,
+            .minFilter = GL_LINEAR_MIPMAP_LINEAR,
+            .magFilter = GL_LINEAR
+        }, "0.0.0.0:12345");
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.05f

@@ -255,6 +255,37 @@ typedef struct AVFrameSideData {
     AVBufferRef *buf;
 } AVFrameSideData;
 
+enum AVSideDataProps {
+    /**
+     * The side data type can be used in stream-global structures.
+     * Side data types without this property are only meaningful on per-frame
+     * basis.
+     */
+    AV_SIDE_DATA_PROP_GLOBAL = (1 << 0),
+
+    /**
+     * Multiple instances of this side data type can be meaningfully present in
+     * a single side data array.
+     */
+    AV_SIDE_DATA_PROP_MULTI  = (1 << 1),
+};
+
+/**
+ * This struct describes the properties of a side data type. Its instance
+ * corresponding to a given type can be obtained from av_frame_side_data_desc().
+ */
+typedef struct AVSideDataDescriptor {
+    /**
+     * Human-readable side data description.
+     */
+    const char      *name;
+
+    /**
+     * Side data property flags, a combination of AVSideDataProps values.
+     */
+    unsigned         props;
+} AVSideDataDescriptor;
+
 /**
  * Structure describing a single Region Of Interest.
  *
@@ -338,8 +369,7 @@ typedef struct AVRegionOfInterest {
  * to the end with a minor bump.
  *
  * Fields can be accessed through AVOptions, the name string used, matches the
- * C structure field name for fields accessible through AVOptions. The AVClass
- * for AVFrame can be obtained from avcodec_get_frame_class()
+ * C structure field name for fields accessible through AVOptions.
  */
 typedef struct AVFrame {
 #define AV_NUM_DATA_POINTERS 8
@@ -993,6 +1023,12 @@ int av_frame_apply_cropping(AVFrame *frame, int flags);
 const char *av_frame_side_data_name(enum AVFrameSideDataType type);
 
 /**
+ * @return side data descriptor corresponding to a given side data type, NULL
+ *         when not available.
+ */
+const AVSideDataDescriptor *av_frame_side_data_desc(enum AVFrameSideDataType type);
+
+/**
  * Free all side data entries and their contents, then zeroes out the
  * values which the pointers are pointing to.
  *
@@ -1003,7 +1039,15 @@ const char *av_frame_side_data_name(enum AVFrameSideDataType type);
  */
 void av_frame_side_data_free(AVFrameSideData ***sd, int *nb_sd);
 
+/**
+ * Remove existing entries before adding new ones.
+ */
 #define AV_FRAME_SIDE_DATA_FLAG_UNIQUE (1 << 0)
+/**
+ * Don't add a new entry if another of the same type exists.
+ * Applies only for side data types without the AV_SIDE_DATA_PROP_MULTI prop.
+ */
+#define AV_FRAME_SIDE_DATA_FLAG_REPLACE (1 << 1)
 
 /**
  * Add new side data entry to an array.
@@ -1016,14 +1060,42 @@ void av_frame_side_data_free(AVFrameSideData ***sd, int *nb_sd);
  * @param size  size of the side data
  * @param flags Some combination of AV_FRAME_SIDE_DATA_FLAG_* flags, or 0.
  *
- * @return newly added side data on success, NULL on error. In case of
- *         AV_FRAME_SIDE_DATA_FLAG_UNIQUE being set, entries of matching
- *         AVFrameSideDataType will be removed before the addition is
- *         attempted.
+ * @return newly added side data on success, NULL on error.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_UNIQUE being set, entries of
+ *       matching AVFrameSideDataType will be removed before the addition
+ *       is attempted.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_REPLACE being set, if an
+ *       entry of the same type already exists, it will be replaced instead.
  */
 AVFrameSideData *av_frame_side_data_new(AVFrameSideData ***sd, int *nb_sd,
                                         enum AVFrameSideDataType type,
                                         size_t size, unsigned int flags);
+
+/**
+ * Add a new side data entry to an array from an existing AVBufferRef.
+ *
+ * @param sd    pointer to array of side data to which to add another entry,
+ *              or to NULL in order to start a new array.
+ * @param nb_sd pointer to an integer containing the number of entries in
+ *              the array.
+ * @param type  type of the added side data
+ * @param buf   Pointer to AVBufferRef to add to the array. On success,
+ *              the function takes ownership of the AVBufferRef and *buf is
+ *              set to NULL, unless AV_FRAME_SIDE_DATA_FLAG_NEW_REF is set
+ *              in which case the ownership will remain with the caller.
+ * @param flags Some combination of AV_FRAME_SIDE_DATA_FLAG_* flags, or 0.
+ *
+ * @return newly added side data on success, NULL on error.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_UNIQUE being set, entries of
+ *       matching AVFrameSideDataType will be removed before the addition
+ *       is attempted.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_REPLACE being set, if an
+ *       entry of the same type already exists, it will be replaced instead.
+ *
+ */
+AVFrameSideData *av_frame_side_data_add(AVFrameSideData ***sd, int *nb_sd,
+                                        enum AVFrameSideDataType type,
+                                        AVBufferRef **buf, unsigned int flags);
 
 /**
  * Add a new side data entry to an array based on existing side data, taking
@@ -1037,10 +1109,12 @@ AVFrameSideData *av_frame_side_data_new(AVFrameSideData ***sd, int *nb_sd,
  *              for the buffer.
  * @param flags Some combination of AV_FRAME_SIDE_DATA_FLAG_* flags, or 0.
  *
- * @return negative error code on failure, >=0 on success. In case of
- *         AV_FRAME_SIDE_DATA_FLAG_UNIQUE being set, entries of matching
- *         AVFrameSideDataType will be removed before the addition is
- *         attempted.
+ * @return negative error code on failure, >=0 on success.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_UNIQUE being set, entries of
+ *       matching AVFrameSideDataType will be removed before the addition
+ *       is attempted.
+ * @note In case of AV_FRAME_SIDE_DATA_FLAG_REPLACE being set, if an
+ *       entry of the same type already exists, it will be replaced instead.
  */
 int av_frame_side_data_clone(AVFrameSideData ***sd, int *nb_sd,
                              const AVFrameSideData *src, unsigned int flags);
@@ -1074,6 +1148,11 @@ const AVFrameSideData *av_frame_side_data_get(AVFrameSideData * const *sd,
                                     nb_sd, type);
 }
 
+/**
+ * Remove and free all side data instances of the given type from an array.
+ */
+void av_frame_side_data_remove(AVFrameSideData ***sd, int *nb_sd,
+                               enum AVFrameSideDataType type);
 /**
  * @}
  */
