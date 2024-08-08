@@ -5,6 +5,7 @@
 		android:required="true" />
 	<uses-permission
 		android:name="android.permission.READ_DEVICE_CONFIG" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
 	<application
 		android:allowBackup="false"
