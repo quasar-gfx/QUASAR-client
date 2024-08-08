@@ -11,6 +11,8 @@
 #include <Lights/PointLight.h>
 #include <Utils/FileIO.h>
 
+#include <PoseStreamer.h>
+
 #include <OpenGLESRenderer.h>
 
 #include <Utils/DebugOutput.h>
@@ -416,11 +418,15 @@ private:
 
     void CreateResources() {
         scene = std::make_unique<Scene>();
+
         std::string videoURL = "0.0.0.0:12345";
         videoTex = new VideoTexture({
             .width = 1024,
             .height = 1024
         }, videoURL);
+
+        std::string receiverURL = "192.168.3.142:54321";
+        poseStreamer = new PoseStreamer(&cameras[0], receiverURL);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.05f
@@ -490,7 +496,6 @@ private:
         floor->frustumCulled = false;
         scene->addChildNode(floor);
 
-
         // Draw a screen.
         Cube* screenMesh = new Cube({
             .material = new UnlitMaterial({ .diffuseTextureID = videoTex->ID }),
@@ -559,7 +564,7 @@ private:
             }
         }
 
-        
+
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
         pipelineCI.rasterisationState = {false, false, GraphicsAPI::PolygonMode::FILL, GraphicsAPI::CullMode::BACK, GraphicsAPI::FrontFace::COUNTER_CLOCKWISE, false, 0.0f, 0.0f, 0.0f, 1.0f};
@@ -1051,11 +1056,14 @@ private:
             m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
         }
 
-        //Bind VideoTexture
-        pose_id_t poseIdColor = -1;
+        // Send pose.
+        poseStreamer->sendPose();
+
+        // Bind VideoTexture.
         videoTex->bind();
         poseIdColor = videoTex->draw();
         videoTex->unbind();
+
         for (int i = 0; i < m_blocks.size(); i++) {
             glm::vec3 sc = m_blocks[i]->getScale();
             if (i == m_nearBlock[0] || i == m_nearBlock[1]) // reset scale
@@ -1150,7 +1158,6 @@ private:
     }
 
 private:
-    VideoTexture* videoTex;
     XrInstance m_xrInstance = XR_NULL_HANDLE;
     std::vector<const char*> m_activeAPILayers = {};
     std::vector<const char*> m_activeInstanceExtensions = {};
@@ -1198,6 +1205,11 @@ private:
 
     Camera cameras[2];
     std::unique_ptr<Scene> scene;
+
+    VideoTexture* videoTex;
+
+    pose_id_t poseIdColor = -1;
+    PoseStreamer* poseStreamer;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
