@@ -74,6 +74,7 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Culling/BoundingSphere.h
     ${RENDERER}/include/Culling/Frustum.h
     ${RENDERER}/include/Camera.h
+    ${RENDERER}/include/VRCamera.h
     ${RENDERER}/include/CubeMap.h
     ${RENDERER}/include/Framebuffer.h
     ${RENDERER}/include/Materials/Material.h
@@ -107,6 +108,7 @@ set(RENDERER_HDRS
 )
 set(RENDERER_SRCS
     ${RENDERER}/src/Camera.cpp
+    ${RENDERER}/src/VRCamera.cpp
     ${RENDERER}/src/CubeMap.cpp
     ${RENDERER}/src/Materials/PBRMaterial.cpp
     ${RENDERER}/src/Materials/UnlitMaterial.cpp
@@ -155,6 +157,8 @@ target_include_directories(${TARGET} PRIVATE
 )
 
 add_dependencies(${TARGET} shaders)
+
+add_definitions(-DVR)
 
 # export ANativeActivity_onCreate for java to call.
 set_property(

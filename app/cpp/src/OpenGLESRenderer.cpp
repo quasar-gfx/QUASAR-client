@@ -697,7 +697,7 @@ const std::vector<int64_t> OpenGLESRenderer::GetSupportedDepthSwapchainFormats()
 }
 // XR_DOCS_TAG_END_OpenGLESRenderer_GetSupportedSwapchainFormats
 
-RenderStats OpenGLESRenderer::DrawNode(Scene &scene, Camera cameras[], Node* node, const glm::mat4 &parentTransform,
+RenderStats OpenGLESRenderer::DrawNode(Scene &scene, VRCamera cameras, Node* node, const glm::mat4 &parentTransform,
                                        bool frustumCull, const Material* overrideMaterial) {
     const glm::mat4 &model = parentTransform * node->getTransformParentFromLocal();
 

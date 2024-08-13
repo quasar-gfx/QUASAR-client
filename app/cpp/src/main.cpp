@@ -1,5 +1,6 @@
 #include <Scene.h>
 #include <Camera.h>
+#include <VRCamera.h>
 #include <VideoTexture.h>
 #include <Primatives/Mesh.h>
 #include <Primatives/Cube.h>
@@ -425,8 +426,8 @@ private:
             .height = 1024
         }, videoURL);
 
-        std::string receiverURL = "192.168.3.142:54321";
-        poseStreamer = new PoseStreamer(&cameras[0], receiverURL);
+        std::string receiverURL = "192.168.50.114:54321";
+        poseStreamer = new PoseStreamer(&cameras, receiverURL);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.05f
@@ -481,20 +482,20 @@ private:
         scene->addPointLight(pointLight4);
 
         // Draw a floor.
-        Cube* floorMesh = new Cube({
-            .material = new PBRMaterial({
-                .albedoTexturePath = "textures/pbr/grass/albedo.png",
-                .normalTexturePath = "textures/pbr/grass/normal.png",
-                .metallicTexturePath = "textures/pbr/grass/metallic.png",
-                .roughnessTexturePath = "textures/pbr/grass/roughness.png",
-                .aoTexturePath = "textures/pbr/grass/ao.png"
-            })
-        });
-        Node* floor = new Node(floorMesh);
-        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
-        floor->frustumCulled = false;
-        scene->addChildNode(floor);
+        // Cube* floorMesh = new Cube({
+        //     .material = new PBRMaterial({
+        //         .albedoTexturePath = "textures/pbr/grass/albedo.png",
+        //         .normalTexturePath = "textures/pbr/grass/normal.png",
+        //         .metallicTexturePath = "textures/pbr/grass/metallic.png",
+        //         .roughnessTexturePath = "textures/pbr/grass/roughness.png",
+        //         .aoTexturePath = "textures/pbr/grass/ao.png"
+        //     })
+        // });
+        // Node* floor = new Node(floorMesh);
+        // floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        // floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
+        // floor->frustumCulled = false;
+        // scene->addChildNode(floor);
 
         // Draw a screen.
         Cube* screenMesh = new Cube({
@@ -507,19 +508,19 @@ private:
         scene->addChildNode(screen);
 
         // Draw a "table".
-        Cube* tableMesh = new Cube({
-            .material = new PBRMaterial({
-                .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
-                .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
-                .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
-                .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
-                .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
-            })
-        });
-        Node* table = new Node(tableMesh);
-        table->setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.6f));
-        table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
-        scene->addChildNode(table);
+        // Cube* tableMesh = new Cube({
+        //     .material = new PBRMaterial({
+        //         .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
+        //         .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
+        //         .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
+        //         .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
+        //         .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
+        //     })
+        // });
+        // Node* table = new Node(tableMesh);
+        // table->setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.6f));
+        // table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
+        // scene->addChildNode(table);
 
         // Create the hand nodes.
         Model* leftControllerMesh = new Model({
@@ -538,31 +539,33 @@ private:
         m_handNodes[1].setEntity(rightControllerMesh);
         scene->addChildNode(&m_handNodes[1]);
 
-        Model* helmetMesh = new Model({
-            .flipTextures = true,
-            .IBL = 0,
-            .path = "models/DamagedHelmet.glb"
-        });
-        Node *helmetNode = new Node(helmetMesh);
-        helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
-        helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
-        scene->addChildNode(helmetNode);
+        // Load Helmet
+        // Model* helmetMesh = new Model({
+        //     .flipTextures = true,
+        //     .IBL = 0,
+        //     .path = "models/DamagedHelmet.glb"
+        // });
+        // Node *helmetNode = new Node(helmetMesh);
+        // helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
+        // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
+        // scene->addChildNode(helmetNode);
 
-        float scale = 0.2f;
-        // Center the blocks a little way from the origin.
-        glm::vec3 center = {0.0f, -0.2f, -0.7f};
-        for (int i = 0; i < 5; i++) {
-            float x = scale * (float(i) - 1.5f) + center.x;
-            for (int j = 0; j < 5; j++) {
-                float y = scale * (float(j) - 1.5f) + center.y;
-                for (int k = 0; k < 5; k++) {
-                    float z = scale * (float(k) - 1.5f) + center.z;
 
-                    auto node = CreateBox({x, y, z});
-                    scene->addChildNode(node);
-                }
-            }
-        }
+        // Create Boxes
+        // float scale = 0.2f;
+        // glm::vec3 center = {0.0f, -0.2f, -0.7f}; // Center the blocks a little way from the origin.
+        // for (int i = 0; i < 5; i++) {
+        //     float x = scale * (float(i) - 1.5f) + center.x;
+        //     for (int j = 0; j < 5; j++) {
+        //         float y = scale * (float(j) - 1.5f) + center.y;
+        //         for (int k = 0; k < 5; k++) {
+        //             float z = scale * (float(k) - 1.5f) + center.z;
+
+        //             auto node = CreateBox({x, y, z});
+        //             scene->addChildNode(node);
+        //         }
+        //     }
+        // }
 
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
@@ -1034,22 +1037,29 @@ private:
 
         // Compute the view-projection transforms.
         // All matrices (including OpenXR's) are column-major, right-handed.
-        for (uint32_t i = 0; i < viewCount; i++) {
-            cameras[i].setProjectionMatrix(gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ));
-            cameras[i].setViewMatrix(glm::inverse(gxi::toGlm(views[i].pose)));
-        }
+        // for (uint32_t i = 0; i < viewCount; i++) {
+        //     cameras[i].setProjectionMatrix(gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ));
+        //     cameras[i].setViewMatrix(glm::inverse(gxi::toGlm(views[i].pose)));
+        // }
 
+        cameras.left.setProjectionMatrix(gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ));
+        cameras.right.setProjectionMatrix(gxi::toGLM(views[1].fov, m_apiType, nearZ, farZ));
+        glm::mat4 viewMatrices[2];
+        viewMatrices[0] = glm::inverse(gxi::toGlm(views[0].pose));
+        viewMatrices[1] = glm::inverse(gxi::toGlm(views[1].pose));
+        cameras.setViewMatrix(viewMatrices);
+        
         // Draw some blocks at the controller positions:
         for (int i = 0; i < 2; i++) {
             m_handNodes[i].visible = m_handPoseState[i].isActive;
         }
 
-        // Draw the blocks.
-        for (int i = 0; i < m_blocks.size(); i++) {
-            glm::vec3 sc = m_blocks[i]->getScale();
-            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
-                m_blocks[i]->setScale(sc * 1.05f);
-        }
+        // // Draw the blocks.
+        // for (int i = 0; i < m_blocks.size(); i++) {
+        //     glm::vec3 sc = m_blocks[i]->getScale();
+        //     if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
+        //         m_blocks[i]->setScale(sc * 1.05f);
+        // }
 
         // Draw objects.
         for (auto& child : scene->children) {
@@ -1203,7 +1213,7 @@ private:
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
 
-    Camera cameras[2];
+    VRCamera cameras;
     std::unique_ptr<Scene> scene;
 
     VideoTexture* videoTex;

@@ -410,7 +410,7 @@ public:
     virtual void SetViewports(Viewport* viewports, size_t count) = 0;
     virtual void SetScissors(Rect2D* scissors, size_t count) = 0;
 
-    virtual RenderStats DrawNode(Scene &scene, Camera cameras[], Node* node, const glm::mat4 &parentTransform,
+    virtual RenderStats DrawNode(Scene &scene, VRCamera cameras, Node* node, const glm::mat4 &parentTransform,
                                  bool frustumCull = true, const Material* overrideMaterial = nullptr) = 0;
 
 protected:
