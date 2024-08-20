@@ -499,7 +499,7 @@ private:
 
         // Draw a screen.
         Cube* screenMesh = new Cube({
-            .material = new UnlitMaterial({ .diffuseTextureID = videoTex->ID }),
+            .material = new UnlitMaterial({ .diffuseTexture = videoTex }),
         });
         Node* screen = new Node(screenMesh);
         screen->setPosition(glm::vec3(m_viewHeightM, 0.0f, 0.0f));
@@ -1047,8 +1047,8 @@ private:
         glm::mat4 viewMatrices[2];
         viewMatrices[0] = glm::inverse(gxi::toGlm(views[0].pose));
         viewMatrices[1] = glm::inverse(gxi::toGlm(views[1].pose));
-        cameras.setViewMatrix(viewMatrices);
-        
+        cameras.setViewMatrices(viewMatrices);
+
         // Draw some blocks at the controller positions:
         for (int i = 0; i < 2; i++) {
             m_handNodes[i].visible = m_handPoseState[i].isActive;
