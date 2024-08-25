@@ -23,6 +23,8 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
+static const std::string SERVER_IP = "192.168.1.211";
+
 inline glm::vec4 randomColor() {
     return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), 1.0f};
 }
@@ -422,10 +424,17 @@ private:
         std::string videoURL = "0.0.0.0:12345";
         videoTex = new VideoTexture({
             .width = 1024,
-            .height = 1024
+            .height = 1024,
+            .internalFormat = GL_SRGB8,
+            .format = GL_RGB,
+            .type = GL_UNSIGNED_BYTE,
+            .wrapS = GL_CLAMP_TO_EDGE,
+            .wrapT = GL_CLAMP_TO_EDGE,
+            .minFilter = GL_LINEAR,
+            .magFilter = GL_LINEAR
         }, videoURL);
 
-        std::string receiverURL = "192.168.50.114:54321";
+        std::string receiverURL = SERVER_IP + ":54321";
         poseStreamer = new PoseStreamer(&cameras, receiverURL);
 
         AmbientLight* ambientLight = new AmbientLight({
@@ -481,28 +490,28 @@ private:
         scene->addPointLight(pointLight4);
 
         // Draw a floor.
-        // Cube* floorMesh = new Cube({
-        //     .material = new PBRMaterial({
-        //         .albedoTexturePath = "textures/pbr/grass/albedo.png",
-        //         .normalTexturePath = "textures/pbr/grass/normal.png",
-        //         .metallicTexturePath = "textures/pbr/grass/metallic.png",
-        //         .roughnessTexturePath = "textures/pbr/grass/roughness.png",
-        //         .aoTexturePath = "textures/pbr/grass/ao.png"
-        //     })
-        // });
-        // Node* floor = new Node(floorMesh);
-        // floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        // floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
-        // floor->frustumCulled = false;
-        // scene->addChildNode(floor);
+        Cube* floorMesh = new Cube({
+            .material = new PBRMaterial({
+                .albedoTexturePath = "textures/pbr/grass/albedo.png",
+                .normalTexturePath = "textures/pbr/grass/normal.png",
+                .metallicTexturePath = "textures/pbr/grass/metallic.png",
+                .roughnessTexturePath = "textures/pbr/grass/roughness.png",
+                .aoTexturePath = "textures/pbr/grass/ao.png"
+            })
+        });
+        Node* floor = new Node(floorMesh);
+        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
+        floor->frustumCulled = false;
+        scene->addChildNode(floor);
 
         // Draw a screen.
         Cube* screenMesh = new Cube({
             .material = new UnlitMaterial({ .diffuseTexture = videoTex }),
         });
         Node* screen = new Node(screenMesh);
-        screen->setPosition(glm::vec3(m_viewHeightM, 0.0f, 0.0f));
-        screen->setScale(glm::vec3(0.05f, 1.0f, 1.0f));
+        screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+        screen->setScale(glm::vec3(1.0f, 1.0f, 0.05f));
         screen->frustumCulled = false;
         scene->addChildNode(screen);
 
@@ -549,7 +558,6 @@ private:
         // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
         // scene->addChildNode(helmetNode);
 
-
         // Create Boxes
         // float scale = 0.2f;
         // glm::vec3 center = {0.0f, -0.2f, -0.7f}; // Center the blocks a little way from the origin.
@@ -565,7 +573,6 @@ private:
         //         }
         //     }
         // }
-
 
         GraphicsAPI::PipelineCreateInfo pipelineCI;
         pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
