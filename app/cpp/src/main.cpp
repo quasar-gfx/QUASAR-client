@@ -1,6 +1,5 @@
 #include <Scene.h>
-#include <Camera.h>
-#include <VRCamera.h>
+#include <Cameras/VRCamera.h>
 #include <VideoTexture.h>
 #include <Primatives/Mesh.h>
 #include <Primatives/Cube.h>

@@ -19,6 +19,7 @@
 
 #include <Primatives/Entity.h>
 #include <Primatives/Node.h>
+#include <Cameras/VRCamera.h>
 
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,

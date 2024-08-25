@@ -73,8 +73,9 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Culling/AABB.h
     ${RENDERER}/include/Culling/BoundingSphere.h
     ${RENDERER}/include/Culling/Frustum.h
-    ${RENDERER}/include/Camera.h
-    ${RENDERER}/include/VRCamera.h
+    ${RENDERER}/include/Cameras/Camera.h
+    ${RENDERER}/include/Cameras/PerspectiveCamera.h
+    ${RENDERER}/include/Cameras/VRCamera.h
     ${RENDERER}/include/CubeMap.h
     ${RENDERER}/include/Framebuffer.h
     ${RENDERER}/include/Materials/Material.h
@@ -107,8 +108,8 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Vertex.h
 )
 set(RENDERER_SRCS
-    ${RENDERER}/src/Camera.cpp
-    ${RENDERER}/src/VRCamera.cpp
+    ${RENDERER}/src/Cameras/VRCamera.cpp
+    ${RENDERER}/src/Cameras/PerspectiveCamera.cpp
     ${RENDERER}/src/CubeMap.cpp
     ${RENDERER}/src/Materials/PBRMaterial.cpp
     ${RENDERER}/src/Materials/UnlitMaterial.cpp
