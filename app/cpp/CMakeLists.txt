@@ -70,6 +70,7 @@ add_subdirectory(shaders)
 
 # files
 set(RENDERER_HDRS
+    ${RENDERER}/include/OpenGLAppConfig.h
     ${RENDERER}/include/Culling/AABB.h
     ${RENDERER}/include/Culling/BoundingSphere.h
     ${RENDERER}/include/Culling/Frustum.h
@@ -86,6 +87,7 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Lights/DirectionalLight.h
     ${RENDERER}/include/Lights/PointLight.h
     ${RENDERER}/include/OpenGLObject.h
+    ${RENDERER}/include/Renderers/OpenGLRenderer.h
     ${RENDERER}/include/Primatives/Cube.h
     ${RENDERER}/include/Primatives/Entity.h
     ${RENDERER}/include/Primatives/FullScreenQuad.h
@@ -113,6 +115,7 @@ set(RENDERER_SRCS
     ${RENDERER}/src/CubeMap.cpp
     ${RENDERER}/src/Materials/PBRMaterial.cpp
     ${RENDERER}/src/Materials/UnlitMaterial.cpp
+    ${RENDERER}/src/Renderers/OpenGLRenderer.cpp
     ${RENDERER}/src/Primatives/Entity.cpp
     ${RENDERER}/src/Primatives/Mesh.cpp
     ${RENDERER}/src/Primatives/Model.cpp

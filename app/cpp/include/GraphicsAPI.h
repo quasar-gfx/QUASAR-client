@@ -17,9 +17,8 @@
 // OpenXR Helper
 #include <Utils/OpenXRHelper.h>
 
-#include <Primatives/Entity.h>
-#include <Primatives/Node.h>
-#include <Cameras/VRCamera.h>
+#include <OpenGLAppConfig.h>
+#include <Renderers/OpenGLRenderer.h>
 
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,
@@ -34,7 +33,7 @@ bool CheckGraphicsAPI_TypeIsValidForPlatform(GraphicsAPI_Type type);
 
 const char* GetGraphicsAPIInstanceExtensionString(GraphicsAPI_Type type);
 
-class GraphicsAPI {
+class GraphicsAPI : public OpenGLRenderer {
 public:
 // Pipeline Helpers
 #pragma region Pipeline Helpers
@@ -163,106 +162,6 @@ public:
     };
 #pragma endregion
 
-    struct ShaderCreateInfo {
-        enum class Type : uint8_t {
-            VERTEX,
-            TESSELLATION_CONTROL,
-            TESSELLATION_EVALUATION,
-            GEOMETRY,
-            FRAGMENT,
-            COMPUTE
-        } type;
-        const char* sourceData;
-        size_t sourceSize;
-    };
-    struct VertexInputAttribute {
-        uint32_t attribIndex;   // layout(location = X)
-        uint32_t bindingIndex;  // Which buffer to use when bound for draws.
-        VertexType vertexType;
-        size_t offset;
-        const char* semanticName;
-    };
-    typedef std::vector<VertexInputAttribute> VertexInputAttributes;
-    struct VertexInputBinding {
-        uint32_t bindingIndex;  // Which buffer to use when bound for draws.
-        size_t offset;
-        size_t stride;
-    };
-    typedef std::vector<VertexInputBinding> VertexInputBindings;
-    struct InputAssemblyState {
-        PrimitiveTopology topology;
-        bool primitiveRestartEnable;
-    };
-    struct RasterisationState {
-        bool depthClampEnable;
-        bool rasteriserDiscardEnable;
-        PolygonMode polygonMode;
-        CullMode cullMode;
-        FrontFace frontFace;
-        bool depthBiasEnable;
-        float depthBiasConstantFactor;
-        float depthBiasClamp;
-        float depthBiasSlopeFactor;
-        float lineWidth;
-    };
-    struct MultisampleState {
-        uint32_t rasterisationSamples;
-        bool sampleShadingEnable;
-        float minSampleShading;
-        uint32_t sampleMask;
-        bool alphaToCoverageEnable;
-        bool alphaToOneEnable;
-    };
-    struct DepthStencilState {
-        bool depthTestEnable;
-        bool depthWriteEnable;
-        CompareOp depthCompareOp;
-        bool depthBoundsTestEnable;
-        bool stencilTestEnable;
-        StencilOpState front;
-        StencilOpState back;
-        float minDepthBounds;
-        float maxDepthBounds;
-    };
-    struct ColorBlendState {
-        bool logicOpEnable;
-        LogicOp logicOp;
-        std::vector<ColorBlendAttachmentState> attachments;
-        float blendConstants[4];
-    };
-
-    struct DescriptorInfo {
-        uint32_t bindingIndex;
-        void* resource;
-        enum class Type : uint8_t {
-            BUFFER,
-            IMAGE,
-            SAMPLER
-        } type;
-        enum class Stage : uint8_t {
-            VERTEX,
-            TESSELLATION_CONTROL,
-            TESSELLATION_EVALUATION,
-            GEOMETRY,
-            FRAGMENT,
-            COMPUTE
-        } stage;
-        bool readWrite;
-        size_t bufferOffset;
-        size_t bufferSize;
-    };
-    struct PipelineCreateInfo {
-        InputAssemblyState inputAssemblyState;
-        RasterisationState rasterisationState;
-        MultisampleState multisampleState;
-        DepthStencilState depthStencilState;
-        ColorBlendState colorBlendState;
-        std::vector<int64_t> colorFormats;
-        int64_t depthFormat;
-        std::vector<DescriptorInfo> layout;
-        uint32_t viewMask = 0;
-    };
-
     struct SwapchainCreateInfo {
         uint32_t width;
         uint32_t height;
@@ -376,6 +275,7 @@ public:
     };
 
 public:
+    GraphicsAPI(const Config &config) : OpenGLRenderer(config) {}
     virtual ~GraphicsAPI() = default;
 
     int64_t SelectColorSwapchainFormat(const std::vector<int64_t>& formats);
@@ -387,9 +287,6 @@ public:
     virtual void AcquireDesktopSwapchanImage(void* swapchain, uint32_t& index) = 0;
     virtual void PresentDesktopSwapchainImage(void* swapchain, uint32_t index) = 0;
 
-    virtual int64_t GetDepthFormat() = 0;
-    virtual size_t AlignSizeForUniformBuffer(size_t size) = 0;
-
     virtual void* GetGraphicsBinding() = 0;
     virtual XrSwapchainImageBaseHeader* AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) = 0;
     virtual void FreeSwapchainImageData(XrSwapchain swapchain) = 0;
@@ -399,20 +296,14 @@ public:
     virtual void* CreateImageView(const ImageViewCreateInfo& imageViewCI) = 0;
     virtual void DestroyImageView(void*& imageView) = 0;
 
-    virtual void CreatePipeline(const PipelineCreateInfo& pipelineCI) = 0;
-
     virtual void BeginRendering() = 0;
     virtual void EndRendering() = 0;
-
-    virtual void ClearColor(void* imageView, float r, float g, float b, float a) = 0;
-    virtual void ClearDepth(void* imageView, float d) = 0;
 
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) = 0;
     virtual void SetViewports(Viewport* viewports, size_t count) = 0;
     virtual void SetScissors(Rect2D* scissors, size_t count) = 0;
 
-    virtual RenderStats DrawNode(Scene &scene, VRCamera cameras, Node* node, const glm::mat4 &parentTransform,
-                                 bool frustumCull = true, const Material* overrideMaterial = nullptr) = 0;
+    virtual RenderStats drawObjects(const Scene &scene, const Camera &camera, uint32_t clearMask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT) override = 0;
 
 protected:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() = 0;

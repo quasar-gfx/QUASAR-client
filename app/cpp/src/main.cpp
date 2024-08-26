@@ -1,3 +1,6 @@
+
+#include <OpenGLAppConfig.h>
+
 #include <Scene.h>
 #include <Cameras/VRCamera.h>
 #include <VideoTexture.h>
@@ -23,7 +26,9 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-static const std::string SERVER_IP = "192.168.1.211";
+const std::string serverIP = "192.168.1.211";
+const std::string videoURL = "0.0.0.0:12345";
+const std::string poseURL = serverIP + ":54321";
 
 inline glm::vec4 randomColor() {
     return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), 1.0f};
@@ -111,7 +116,8 @@ private:
                 // strcmp returns 0 if the strings match.
                 if (strcmp(requestLayer.c_str(), layerProperty.layerName) != 0) {
                     continue;
-                } else {
+                }
+                else {
                     m_activeAPILayers.push_back(requestLayer.c_str());
                     break;
                 }
@@ -134,7 +140,8 @@ private:
                 // strcmp returns 0 if the strings match.
                 if (strcmp(requestedInstanceExtension.c_str(), extensionProperty.extensionName) != 0) {
                     continue;
-                } else {
+                }
+                else {
                     m_activeInstanceExtensions.push_back(requestedInstanceExtension.c_str());
                     found = true;
                     break;
@@ -209,7 +216,8 @@ private:
         std::string str;
         if (res == XR_SUCCESS) {
             str = text;
-        } else {
+        }
+        else {
             OPENXR_CHECK(res, "Failed to retrieve path.");
         }
         return str;
@@ -385,8 +393,9 @@ private:
         // Create a std::unique_ptr<GraphicsAPI_...> from the instance and system.
         // This call sets up a graphics API that's suitable for use with OpenXR.
         if (m_apiType == OPENGL_ES) {
-            m_graphicsAPI = std::make_unique<OpenGLESRenderer>(m_xrInstance, m_systemID);
-        } else {
+            m_graphicsAPI = std::make_unique<OpenGLESRenderer>(config, m_xrInstance, m_systemID);
+        }
+        else {
             XR_LOG_ERROR("ERROR: Unknown Graphics API.");
             DEBUG_BREAK;
         }
@@ -421,9 +430,8 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
-        std::string videoURL = "0.0.0.0:12345";
         videoTex = new VideoTexture({
-            .width = 1024,
+            .width = 2048,
             .height = 1024,
             .internalFormat = GL_SRGB8,
             .format = GL_RGB,
@@ -434,8 +442,7 @@ private:
             .magFilter = GL_LINEAR
         }, videoURL);
 
-        std::string receiverURL = SERVER_IP + ":54321";
-        poseStreamer = new PoseStreamer(&cameras, receiverURL);
+        poseStreamer = new PoseStreamer(&cameras, poseURL);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.05f
@@ -573,20 +580,6 @@ private:
         //         }
         //     }
         // }
-
-        GraphicsAPI::PipelineCreateInfo pipelineCI;
-        pipelineCI.inputAssemblyState = {GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST, false};
-        pipelineCI.rasterisationState = {false, false, GraphicsAPI::PolygonMode::FILL, GraphicsAPI::CullMode::BACK, GraphicsAPI::FrontFace::COUNTER_CLOCKWISE, false, 0.0f, 0.0f, 0.0f, 1.0f};
-        pipelineCI.multisampleState = {1, false, 1.0f, 0xFFFFFFFF, false, false};
-        pipelineCI.depthStencilState = {true, true, GraphicsAPI::CompareOp::LESS_OR_EQUAL, false, false, {}, {}, 0.0f, 1.0f};
-        pipelineCI.colorBlendState = {false, GraphicsAPI::LogicOp::NO_OP, {{true, GraphicsAPI::BlendFactor::SRC_ALPHA, GraphicsAPI::BlendFactor::ONE_MINUS_SRC_ALPHA, GraphicsAPI::BlendOp::ADD, GraphicsAPI::BlendFactor::ONE, GraphicsAPI::BlendFactor::ZERO, GraphicsAPI::BlendOp::ADD, (GraphicsAPI::ColorComponentBit)15}}, {0.0f, 0.0f, 0.0f, 0.0f}};
-        pipelineCI.colorFormats = {m_colorSwapchainInfo.swapchainFormat};
-        pipelineCI.depthFormat = m_depthSwapchainInfo.swapchainFormat;
-        pipelineCI.layout = {{0, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX},
-                             {1, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::VERTEX},
-                             {2, nullptr, GraphicsAPI::DescriptorInfo::Type::BUFFER, GraphicsAPI::DescriptorInfo::Stage::FRAGMENT}};
-        pipelineCI.viewMask = 0b11;
-        m_graphicsAPI->CreatePipeline(pipelineCI);
     }
 
     void DestroyResources() {
@@ -708,7 +701,8 @@ private:
                     m_handNodes[i].setPosition(pose.position);
                     m_handNodes[i].setRotationQuat(pose.orientation);
 
-                } else {
+                }
+                else {
                     m_handPoseState[i].isActive = false;
                 }
             }
@@ -780,20 +774,23 @@ private:
                     if (m_grabState[i].isActive && m_grabState[i].currentState > 0.5f) {
                         m_grabbedBlock[i] = m_nearBlock[i];
                         m_buzz[i] = 1.0f;
-                    } else if (m_changeColorState[i].isActive == XR_TRUE && m_changeColorState[i].currentState == XR_FALSE && m_changeColorState[i].changedSinceLastSync == XR_TRUE) {
+                    }
+                    else if (m_changeColorState[i].isActive == XR_TRUE && m_changeColorState[i].currentState == XR_FALSE && m_changeColorState[i].changedSinceLastSync == XR_TRUE) {
                         auto &thisBlock = m_blocks[m_nearBlock[i]];
                         auto mesh = static_cast<Mesh*>(thisBlock->entity);
                         auto material = static_cast<UnlitMaterial*>(mesh->material);
                         material->baseColor = randomColor();
                     }
-                } else {
+                }
+                else {
                     // not near a block? We can spawn one.
                     if (m_spawnCubeState.isActive == XR_TRUE && m_spawnCubeState.currentState == XR_FALSE && m_spawnCubeState.changedSinceLastSync == XR_TRUE && m_blocks.size() < m_maxBlockCount) {
                         auto node = CreateBox(m_handNodes[i].getPosition());
                         scene->addChildNode(node);
                     }
                 }
-            } else {
+            }
+            else {
                 m_nearBlock[i] = m_grabbedBlock[i];
                 if (m_handPoseState[i].isActive)
                     m_blocks[m_grabbedBlock[i]]->setPosition(m_handNodes[i].getPosition());
@@ -1028,63 +1025,43 @@ private:
         // Rendering code to clear the color and depth image views.
         m_graphicsAPI->BeginRendering();
 
-        if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE) {
-            // VR mode use a background color.
-            m_graphicsAPI->ClearColor(m_colorSwapchainInfo.imageViews[colorImageIndex], 0.17f, 0.17f, 0.17f, 1.00f);
-        } else {
-            // In AR mode make the background color black.
-            m_graphicsAPI->ClearColor(m_colorSwapchainInfo.imageViews[colorImageIndex], 0.00f, 0.00f, 0.00f, 1.00f);
-        }
-        m_graphicsAPI->ClearDepth(m_depthSwapchainInfo.imageViews[depthImageIndex], 1.0f);
-
         m_graphicsAPI->SetRenderAttachments(&m_colorSwapchainInfo.imageViews[colorImageIndex], 1, m_depthSwapchainInfo.imageViews[depthImageIndex], width, height);
         m_graphicsAPI->SetViewports(&viewport, 1);
         m_graphicsAPI->SetScissors(&scissor, 1);
-
-        // Compute the view-projection transforms.
-        // All matrices (including OpenXR's) are column-major, right-handed.
-        // for (uint32_t i = 0; i < viewCount; i++) {
-        //     cameras[i].setProjectionMatrix(gxi::toGLM(views[i].fov, m_apiType, nearZ, farZ));
-        //     cameras[i].setViewMatrix(glm::inverse(gxi::toGlm(views[i].pose)));
-        // }
-
-        cameras.left.setProjectionMatrix(gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ));
-        cameras.right.setProjectionMatrix(gxi::toGLM(views[1].fov, m_apiType, nearZ, farZ));
-        glm::mat4 viewMatrices[2];
-        viewMatrices[0] = glm::inverse(gxi::toGlm(views[0].pose));
-        viewMatrices[1] = glm::inverse(gxi::toGlm(views[1].pose));
-        cameras.setViewMatrices(viewMatrices);
 
         // Draw some blocks at the controller positions:
         for (int i = 0; i < 2; i++) {
             m_handNodes[i].visible = m_handPoseState[i].isActive;
         }
 
-        // // Draw the blocks.
-        // for (int i = 0; i < m_blocks.size(); i++) {
-        //     glm::vec3 sc = m_blocks[i]->getScale();
-        //     if (i == m_nearBlock[0] || i == m_nearBlock[1]) // set scale
-        //         m_blocks[i]->setScale(sc * 1.05f);
-        // }
-
-        // Draw objects.
-        for (auto& child : scene->children) {
-            m_graphicsAPI->DrawNode(*scene, cameras, child, glm::mat4(1.0f));
+        if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE) {
+            // VR mode use a background color.
+            scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+        }  else {
+            // In AR mode make the background color black.
+            scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
 
-        // Send pose.
+        // update vr cameras
+        cameras.setProjectionMatrices({
+            gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ),
+            gxi::toGLM(views[1].fov, m_apiType, nearZ, farZ)
+        });
+        cameras.setViewMatrices({
+            glm::inverse(gxi::toGlm(views[0].pose)),
+            glm::inverse(gxi::toGlm(views[1].pose))
+        });
+
+        // draw objects
+        m_graphicsAPI->drawObjects(*scene, cameras);
+
+        // send pose
         poseStreamer->sendPose();
 
-        // Bind VideoTexture.
+        // render video to VideoTexture
         videoTex->bind();
         poseIdColor = videoTex->draw();
         videoTex->unbind();
-
-        for (int i = 0; i < m_blocks.size(); i++) {
-            glm::vec3 sc = m_blocks[i]->getScale();
-            if (i == m_nearBlock[0] || i == m_nearBlock[1]) // reset scale
-                m_blocks[i]->setScale(sc / 1.05f);
-        }
 
         m_graphicsAPI->EndRendering();
 
@@ -1167,7 +1144,8 @@ private:
                 if (source != nullptr) {
                     source->process(androidApp, source);
                 }
-            } else {
+            }
+            else {
                 break;
             }
         }
@@ -1218,6 +1196,8 @@ private:
         XrCompositionLayerProjection layerProjection = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
+
+    Config config;
 
     VRCamera cameras;
     std::unique_ptr<Scene> scene;
