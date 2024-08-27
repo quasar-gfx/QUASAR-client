@@ -430,6 +430,11 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
+        showColorShader = new Shader({
+            .vertexCodePath = "shaders/postprocess.vert",
+            .fragmentCodePath = "shaders/displayColor.frag"
+        });
+
         videoTex = new VideoTexture({
             .width = 2048,
             .height = 1024,
@@ -499,11 +504,11 @@ private:
         // Draw a floor.
         Cube* floorMesh = new Cube({
             .material = new PBRMaterial({
-                .albedoTexturePath = "textures/pbr/grass/albedo.png",
-                .normalTexturePath = "textures/pbr/grass/normal.png",
-                .metallicTexturePath = "textures/pbr/grass/metallic.png",
-                .roughnessTexturePath = "textures/pbr/grass/roughness.png",
-                .aoTexturePath = "textures/pbr/grass/ao.png"
+                .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
+                .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
+                .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
+                .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
+                .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
             })
         });
         Node* floor = new Node(floorMesh);
@@ -518,7 +523,7 @@ private:
         });
         Node* screen = new Node(screenMesh);
         screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        screen->setScale(glm::vec3(1.0f, 1.0f, 0.05f));
+        screen->setScale(glm::vec3(2.0f, 1.0f, 0.05f));
         screen->frustumCulled = false;
         scene->addChildNode(screen);
 
@@ -1022,9 +1027,7 @@ private:
             renderLayerInfo.layerProjectionViews[i].subImage.imageArrayIndex = i;  // Useful for multiview rendering.
         }
 
-        // Rendering code to clear the color and depth image views.
-        m_graphicsAPI->BeginRendering();
-
+        // Render
         m_graphicsAPI->SetRenderAttachments(&m_colorSwapchainInfo.imageViews[colorImageIndex], 1, m_depthSwapchainInfo.imageViews[depthImageIndex], width, height);
         m_graphicsAPI->SetViewports(&viewport, 1);
         m_graphicsAPI->SetScissors(&scissor, 1);
@@ -1037,7 +1040,8 @@ private:
         if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE) {
             // VR mode use a background color.
             scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
-        }  else {
+        }
+        else {
             // In AR mode make the background color black.
             scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         }
@@ -1063,7 +1067,8 @@ private:
         poseIdColor = videoTex->draw();
         videoTex->unbind();
 
-        m_graphicsAPI->EndRendering();
+        // WIP: doesnt work
+        // m_graphicsAPI->drawToScreen(*showColorShader);
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
@@ -1206,6 +1211,8 @@ private:
 
     pose_id_t poseIdColor = -1;
     PoseStreamer* poseStreamer;
+
+    Shader* showColorShader;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;

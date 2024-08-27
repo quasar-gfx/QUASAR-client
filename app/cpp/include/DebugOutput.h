@@ -130,7 +130,7 @@ private:
             for (size_t pos = 0; pos < str.length(); pos++) {
                 if (str[pos] == '\n') {
                     str[pos] = 0;
-                    rc = __android_log_write(logPriority, "openxr_tutorial", str.c_str()) > 0;
+                    rc = __android_log_write(logPriority, "quest_client", str.c_str()) > 0;
                     if (str.length() > pos + 1)
                         str = str.substr(pos + 1, str.length() - pos - 1);
                     else
@@ -154,11 +154,11 @@ public:
         auto *oldout = std::cout.rdbuf(&androidCout);
         auto *olderr = std::cerr.rdbuf(&androidCerr);
         if (oldout != &androidCout) {
-            __android_log_write(ANDROID_LOG_DEBUG, "openxr_tutorial", "redirected cout");
+            __android_log_write(ANDROID_LOG_DEBUG, "quest_client", "redirected cout");
         }
         std::cout << "Testing cout redirect." << std::endl;
         if (olderr != &androidCerr) {
-            __android_log_write(ANDROID_LOG_WARN, "openxr_tutorial", "redirected cerr");
+            __android_log_write(ANDROID_LOG_WARN, "quest_client", "redirected cerr");
         }
         std::cerr << "Testing cerr redirect." << std::endl;
     }
