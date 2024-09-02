@@ -19,232 +19,6 @@ void (*GetExtension(const char *functionName))() { return glXGetProcAddress((con
 void (*GetExtension(const char *functionName))() { return eglGetProcAddress(functionName); }
 #endif
 
-#pragma region PiplineHelpers
-
-GLenum GetGLTextureTarget(const GraphicsAPI::ImageCreateInfo &imageCI) {
-    GLenum target = 0;
-    if (imageCI.dimension == 1) {
-        if (imageCI.arrayLayers > 1) {
-            target = GL_TEXTURE_1D_ARRAY;
-        }
-        else {
-            target = GL_TEXTURE_1D;
-        }
-    }
-    else if (imageCI.dimension == 2) {
-        if (imageCI.cubemap) {
-            if (imageCI.arrayLayers > 6) {
-                target = GL_TEXTURE_CUBE_MAP_ARRAY;
-            }
-            else {
-                target = GL_TEXTURE_CUBE_MAP;
-            }
-        }
-        else {
-            if (imageCI.sampleCount > 1) {
-                if (imageCI.arrayLayers > 1) {
-                    target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
-                }
-                else {
-                    target = GL_TEXTURE_2D_MULTISAMPLE;
-                }
-            }
-            else {
-                if (imageCI.arrayLayers > 1) {
-                    target = GL_TEXTURE_2D_ARRAY;
-                }
-                else {
-                    target = GL_TEXTURE_2D;
-                }
-            }
-        }
-    }
-    else if (imageCI.dimension == 3) {
-        target = GL_TEXTURE_3D;
-    }
-    else {
-        DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Unknown Dimension for GetGLTextureTarget(): " << imageCI.dimension << std::endl;
-    }
-    return target;
-}
-
-GLint ToGLFilter(GraphicsAPI::SamplerCreateInfo::Filter filter) {
-    switch (filter) {
-    case GraphicsAPI::SamplerCreateInfo::Filter::NEAREST:
-        return GL_NEAREST;
-    case GraphicsAPI::SamplerCreateInfo::Filter::LINEAR:
-        return GL_LINEAR;
-    default:
-        return 0;
-    }
-};
-
-GLint ToGLFilterMipmap(GraphicsAPI::SamplerCreateInfo::Filter filter, GraphicsAPI::SamplerCreateInfo::MipmapMode mipmapMode) {
-    switch (filter) {
-    case GraphicsAPI::SamplerCreateInfo::Filter::NEAREST: {
-        if (mipmapMode == GraphicsAPI::SamplerCreateInfo::MipmapMode::NEAREST)
-            return GL_NEAREST_MIPMAP_LINEAR;
-        else if (mipmapMode == GraphicsAPI::SamplerCreateInfo::MipmapMode::LINEAR)
-            return GL_NEAREST_MIPMAP_NEAREST;
-        else
-            return GL_NEAREST;
-    }
-    case GraphicsAPI::SamplerCreateInfo::Filter::LINEAR: {
-        if (mipmapMode == GraphicsAPI::SamplerCreateInfo::MipmapMode::NEAREST)
-            return GL_LINEAR_MIPMAP_LINEAR;
-        else if (mipmapMode == GraphicsAPI::SamplerCreateInfo::MipmapMode::LINEAR)
-            return GL_LINEAR_MIPMAP_NEAREST;
-        else
-            return GL_LINEAR;
-    }
-    default:
-        return 0;
-    }
-};
-
-GLint ToGLAddressMode(GraphicsAPI::SamplerCreateInfo::AddressMode mode) {
-    switch (mode) {
-    case GraphicsAPI::SamplerCreateInfo::AddressMode::REPEAT:
-        return GL_REPEAT;
-    case GraphicsAPI::SamplerCreateInfo::AddressMode::MIRRORED_REPEAT:
-        return GL_MIRRORED_REPEAT;
-    case GraphicsAPI::SamplerCreateInfo::AddressMode::CLAMP_TO_EDGE:
-        return GL_CLAMP_TO_EDGE;
-    case GraphicsAPI::SamplerCreateInfo::AddressMode::CLAMP_TO_BORDER:
-        return GL_CLAMP_TO_BORDER;
-    case GraphicsAPI::SamplerCreateInfo::AddressMode::MIRROR_CLAMP_TO_EDGE:
-        return 0; // GL_MIRROR_CLAMP_TO_EDGE // None for ES
-    default:
-        return 0;
-    }
-};
-
-inline GLenum ToGLTopology(GraphicsAPI::PrimitiveTopology topology) {
-    switch (topology) {
-    case GraphicsAPI::PrimitiveTopology::POINT_LIST:
-        return GL_POINTS;
-    case GraphicsAPI::PrimitiveTopology::LINE_LIST:
-        return GL_LINES;
-    case GraphicsAPI::PrimitiveTopology::LINE_STRIP:
-        return GL_LINE_STRIP;
-    case GraphicsAPI::PrimitiveTopology::TRIANGLE_LIST:
-        return GL_TRIANGLES;
-    case GraphicsAPI::PrimitiveTopology::TRIANGLE_STRIP:
-        return GL_TRIANGLE_STRIP;
-    case GraphicsAPI::PrimitiveTopology::TRIANGLE_FAN:
-        return GL_TRIANGLE_FAN;
-    default:
-        return 0;
-    }
-};
-
-inline GLenum ToGLCullMode(GraphicsAPI::CullMode cullMode) {
-    switch (cullMode) {
-    case GraphicsAPI::CullMode::NONE:
-        return GL_BACK;
-    case GraphicsAPI::CullMode::FRONT:
-        return GL_FRONT;
-    case GraphicsAPI::CullMode::BACK:
-        return GL_BACK;
-    case GraphicsAPI::CullMode::FRONT_AND_BACK:
-        return GL_FRONT_AND_BACK;
-    default:
-        return 0;
-    }
-}
-
-inline GLenum ToGLCompareOp(GraphicsAPI::CompareOp op) {
-    switch (op) {
-    case GraphicsAPI::CompareOp::NEVER:
-        return GL_NEVER;
-    case GraphicsAPI::CompareOp::LESS:
-        return GL_LESS;
-    case GraphicsAPI::CompareOp::EQUAL:
-        return GL_EQUAL;
-    case GraphicsAPI::CompareOp::LESS_OR_EQUAL:
-        return GL_LEQUAL;
-    case GraphicsAPI::CompareOp::GREATER:
-        return GL_GREATER;
-    case GraphicsAPI::CompareOp::NOT_EQUAL:
-        return GL_NOTEQUAL;
-    case GraphicsAPI::CompareOp::GREATER_OR_EQUAL:
-        return GL_GEQUAL;
-    case GraphicsAPI::CompareOp::ALWAYS:
-        return GL_ALWAYS;
-    default:
-        return 0;
-    }
-};
-
-inline GLenum ToGLStencilCompareOp(GraphicsAPI::StencilOp op) {
-    switch (op) {
-    case GraphicsAPI::StencilOp::KEEP:
-        return GL_KEEP;
-    case GraphicsAPI::StencilOp::ZERO:
-        return GL_ZERO;
-    case GraphicsAPI::StencilOp::REPLACE:
-        return GL_REPLACE;
-    case GraphicsAPI::StencilOp::INCREMENT_AND_CLAMP:
-        return GL_INCR;
-    case GraphicsAPI::StencilOp::DECREMENT_AND_CLAMP:
-        return GL_DECR;
-    case GraphicsAPI::StencilOp::INVERT:
-        return GL_INVERT;
-    case GraphicsAPI::StencilOp::INCREMENT_AND_WRAP:
-        return GL_INCR_WRAP;
-    case GraphicsAPI::StencilOp::DECREMENT_AND_WRAP:
-        return GL_DECR_WRAP;
-    default:
-        return 0;
-    }
-};
-
-inline GLenum ToGLBlendFactor(GraphicsAPI::BlendFactor factor) {
-    switch (factor) {
-    case GraphicsAPI::BlendFactor::ZERO:
-        return GL_ZERO;
-    case GraphicsAPI::BlendFactor::ONE:
-        return GL_ONE;
-    case GraphicsAPI::BlendFactor::SRC_COLOR:
-        return GL_SRC_COLOR;
-    case GraphicsAPI::BlendFactor::ONE_MINUS_SRC_COLOR:
-        return GL_ONE_MINUS_SRC_COLOR;
-    case GraphicsAPI::BlendFactor::DST_COLOR:
-        return GL_DST_COLOR;
-    case GraphicsAPI::BlendFactor::ONE_MINUS_DST_COLOR:
-        return GL_ONE_MINUS_DST_COLOR;
-    case GraphicsAPI::BlendFactor::SRC_ALPHA:
-        return GL_SRC_ALPHA;
-    case GraphicsAPI::BlendFactor::ONE_MINUS_SRC_ALPHA:
-        return GL_ONE_MINUS_SRC_ALPHA;
-    case GraphicsAPI::BlendFactor::DST_ALPHA:
-        return GL_DST_ALPHA;
-    case GraphicsAPI::BlendFactor::ONE_MINUS_DST_ALPHA:
-        return GL_ONE_MINUS_DST_ALPHA;
-    default:
-        return 0;
-    }
-};
-
-inline GLenum ToGLBlendOp(GraphicsAPI::BlendOp op) {
-    switch (op) {
-    case GraphicsAPI::BlendOp::ADD:
-        return GL_FUNC_ADD;
-    case GraphicsAPI::BlendOp::SUBTRACT:
-        return GL_FUNC_SUBTRACT;
-    case GraphicsAPI::BlendOp::REVERSE_SUBTRACT:
-        return GL_FUNC_REVERSE_SUBTRACT;
-    case GraphicsAPI::BlendOp::MIN:
-        return GL_MIN;
-    case GraphicsAPI::BlendOp::MAX:
-        return GL_MAX;
-    default:
-        return 0;
-    }
-};
-#pragma endregion
-
 OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId) : GraphicsAPI(config) {
     OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
     XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
@@ -286,12 +60,6 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance
 OpenGLESRenderer::~OpenGLESRenderer() {
     ksGpuWindow_Destroy(&window);
 }
-
-void *OpenGLESRenderer::CreateDesktopSwapchain(const SwapchainCreateInfo &swapchainCI) { return nullptr; }
-void OpenGLESRenderer::DestroyDesktopSwapchain(void *&swapchain) {}
-void *OpenGLESRenderer::GetDesktopSwapchainImage(void *swapchain, uint32_t index) { return nullptr; }
-void OpenGLESRenderer::AcquireDesktopSwapchanImage(void *swapchain, uint32_t &index) {}
-void OpenGLESRenderer::PresentDesktopSwapchainImage(void *swapchain, uint32_t index) {}
 
 void *OpenGLESRenderer::GetGraphicsBinding() {
     graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR};
@@ -343,15 +111,12 @@ void OpenGLESRenderer::DestroyImageView(void *&imageView) {
     imageView = nullptr;
 }
 
-void OpenGLESRenderer::BeginRendering() {
-    glGenFramebuffers(1, &framebuffer);
+void OpenGLESRenderer::beginRendering() {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 }
 
-void OpenGLESRenderer::EndRendering() {
+void OpenGLESRenderer::endRendering() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &framebuffer);
-    framebuffer = 0;
 }
 
 void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewCount, void *depthStencilView, uint32_t width, uint32_t height) {
@@ -360,6 +125,7 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
     glDeleteFramebuffers(1, &framebuffer);
     framebuffer = 0;
 
+    // Create New Framebuffer
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
@@ -417,16 +183,43 @@ void OpenGLESRenderer::SetScissors(Rect2D *scissors, size_t count) {
 RenderStats OpenGLESRenderer::drawObjects(const Scene &scene, const Camera &camera, uint32_t clearMask) {
     pipeline.apply();
 
+    RenderStats stats;
+
     // dont draw shadows on mobile
 
     // draw all objects in the scene
-    RenderStats stats = GraphicsAPI::drawScene(scene, camera, clearMask);
+    stats += GraphicsAPI::drawScene(scene, camera, clearMask);
 
     // draw lights for debugging
     stats += GraphicsAPI::drawLights(scene, camera);
 
     // draw skybox
     stats += GraphicsAPI::drawSkyBox(scene, camera);
+
+    return stats;
+}
+
+void OpenGLESRenderer::setScreenShaderUniforms(const Shader &screenShader) {
+    // screenShader.setTexture("screenColor", gBuffer.colorBuffer, 0);
+    // screenShader.setTexture("screenDepth", gBuffer.depthBuffer, 1);
+}
+
+RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const RenderTarget* overrideRenderTarget) {
+    pipeline.apply();
+
+    FullScreenQuad outputFsQuad;
+
+    beginRendering();
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    screenShader.bind();
+    setScreenShaderUniforms(screenShader);
+    RenderStats stats = outputFsQuad.draw();
+    screenShader.unbind();
+
+    endRendering();
 
     return stats;
 }

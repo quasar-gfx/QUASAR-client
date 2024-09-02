@@ -9,12 +9,6 @@ public:
     OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId);
     ~OpenGLESRenderer();
 
-    virtual void* CreateDesktopSwapchain(const SwapchainCreateInfo& swapchainCI) override;
-    virtual void DestroyDesktopSwapchain(void*& swapchain) override;
-    virtual void* GetDesktopSwapchainImage(void* swapchain, uint32_t index) override;
-    virtual void AcquireDesktopSwapchanImage(void* swapchain, uint32_t& index) override;
-    virtual void PresentDesktopSwapchainImage(void* swapchain, uint32_t index) override;
-
     virtual void* GetGraphicsBinding() override;
     virtual XrSwapchainImageBaseHeader* AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) override;
     virtual void FreeSwapchainImageData(XrSwapchain swapchain) override {
@@ -27,15 +21,19 @@ public:
     virtual void* CreateImageView(const ImageViewCreateInfo& imageViewCI) override;
     virtual void DestroyImageView(void*& imageView) override;
 
-    virtual void BeginRendering() override;
-    virtual void EndRendering() override;
-
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) override;
     virtual void SetViewports(Viewport* viewports, size_t count) override;
     virtual void SetScissors(Rect2D* scissors, size_t count) override;
 
+    // OpenGLRenderer-related functions:
+    virtual void setScreenShaderUniforms(const Shader &screenShader) override;
+
+    virtual void beginRendering() override;
+    virtual void endRendering() override;
+
     virtual RenderStats drawObjects(const Scene &scene, const Camera &camera,
                                     uint32_t clearMask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT) override;
+    virtual RenderStats drawToScreen(const Shader &screenShader, const RenderTarget* overrideRenderTarget = nullptr) override;
 
 private:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() override;
@@ -48,7 +46,6 @@ private:
 
     std::unordered_map <XrSwapchain, std::pair<SwapchainType, std::vector<XrSwapchainImageOpenGLESKHR>>> swapchainImagesMap{};
 
-    std::unordered_map<GLuint, BufferCreateInfo> buffers{};
     std::unordered_map<GLuint, ImageCreateInfo> images{};
     std::unordered_map<GLuint, ImageViewCreateInfo> imageViews{};
 
