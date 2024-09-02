@@ -207,6 +207,8 @@ void OpenGLESRenderer::setScreenShaderUniforms(const Shader &screenShader) {
 RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const RenderTarget* overrideRenderTarget) {
     pipeline.apply();
 
+    FullScreenQuad outputFsQuad;
+
     beginRendering();
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);

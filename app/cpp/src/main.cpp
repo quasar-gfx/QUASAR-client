@@ -26,7 +26,7 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-const std::string serverIP = "192.168.4.140";
+const std::string serverIP = "192.168.1.211";
 const std::string videoURL = "0.0.0.0:12345";
 const std::string poseURL = serverIP + ":54321";
 
@@ -430,7 +430,7 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
-        showColorShader = new Shader({
+        showVideoShader = new Shader({
             .vertexCodePath = "shaders/postprocess.vert",
             .fragmentCodePath = "shaders/displayColor.frag"
         });
@@ -517,13 +517,13 @@ private:
         floor->frustumCulled = false;
         scene->addChildNode(floor);
 
-        // Draw a screen.
-        Cube* screenMesh = new Cube({
+        // Draw a screen for the video.
+        Cube* videoScreen = new Cube({
             .material = new UnlitMaterial({ .diffuseTexture = videoTex }),
         });
-        Node* screen = new Node(screenMesh);
+        Node* screen = new Node(videoScreen);
         screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        screen->setScale(glm::vec3(2.0f, 1.0f, 0.05f));
+        screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
         screen->frustumCulled = false;
         scene->addChildNode(screen);
 
@@ -1056,9 +1056,6 @@ private:
             glm::inverse(gxi::toGlm(views[1].pose))
         });
 
-        // draw objects
-        m_graphicsAPI->drawObjects(*scene, cameras);
-
         // send pose
         poseStreamer->sendPose();
 
@@ -1067,8 +1064,15 @@ private:
         poseIdColor = videoTex->draw();
         videoTex->unbind();
 
-        // WIP: doesnt work
-        // m_graphicsAPI->drawToScreen(*showColorShader);
+        showVideoShader->bind();
+        showVideoShader->setTexture("videoTexture", *videoTex, 0);
+        showVideoShader->unbind();
+
+        // draw video to screen
+        m_graphicsAPI->drawToScreen(*showVideoShader);
+
+        // draw objects (uncomment to debug)
+        // m_graphicsAPI->drawObjects(*scene, cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
@@ -1212,7 +1216,7 @@ private:
     pose_id_t poseIdColor = -1;
     PoseStreamer* poseStreamer;
 
-    Shader* showColorShader;
+    Shader* showVideoShader;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
