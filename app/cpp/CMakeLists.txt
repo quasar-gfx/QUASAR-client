@@ -125,6 +125,7 @@ set(RENDERER_SRCS
     ${RENDERER}/src/Shaders/Shader.cpp
     ${RENDERER}/src/Texture.cpp
     ${RENDERER}/src/Utils/FileIO.cpp
+    ${RENDERER}/src/Vertex.cpp
 )
 
 file(GLOB_RECURSE COMMON_HDRS
