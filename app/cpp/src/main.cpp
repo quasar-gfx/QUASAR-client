@@ -26,7 +26,7 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-const std::string serverIP = "192.168.1.211";
+const std::string serverIP = "192.168.4.140";
 const std::string videoURL = "0.0.0.0:12345";
 const std::string poseURL = serverIP + ":54321";
 
@@ -1064,18 +1064,18 @@ private:
         poseID = videoTex->draw();
         videoTex->unbind();
 
+        // set uniforms for both eyes
         atwShader->bind();
         atwShader->setBool("atwEnabled", true);
         atwShader->setTexture("videoTexture", *videoTex, 0);
 
-        // Set uniforms for both eyes
+        atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras.left.getProjectionMatrix()));
+        atwShader->setMat4("projectionInverseRight", glm::inverse(cameras.right.getProjectionMatrix()));
+
+        atwShader->setMat4("viewInverseLeft", glm::inverse(cameras.left.getViewMatrix()));
+        atwShader->setMat4("viewInverseRight", glm::inverse(cameras.right.getViewMatrix()));
+
         if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapedTime)) {
-            atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras.left.getProjectionMatrix()));
-            atwShader->setMat4("projectionInverseRight", glm::inverse(cameras.right.getProjectionMatrix()));
-
-            atwShader->setMat4("viewInverseLeft", glm::inverse(cameras.left.getViewMatrix()));
-            atwShader->setMat4("viewInverseRight", glm::inverse(cameras.right.getViewMatrix()));
-
             atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
             atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
 
@@ -1087,7 +1087,7 @@ private:
 
         prevPoseID = poseID;
 
-        // Draw both eyes in a single pass
+        // draw both eyes in a single pass
         m_graphicsAPI->drawToScreen(*atwShader);
 
         // draw objects (uncomment to debug)
