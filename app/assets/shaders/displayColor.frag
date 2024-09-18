@@ -1,1 +1,0 @@
-../../cpp/shaders/displayColor.frag

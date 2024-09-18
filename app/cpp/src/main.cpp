@@ -26,7 +26,7 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-const std::string serverIP = "192.168.50.114";
+const std::string serverIP = "192.168.1.211";
 const std::string videoURL = "0.0.0.0:12345";
 const std::string poseURL = serverIP + ":54321";
 
@@ -430,9 +430,9 @@ private:
     void CreateResources() {
         scene = std::make_unique<Scene>();
 
-        showVideoShader = new Shader({
+        atwShader = new Shader({
             .vertexCodePath = "shaders/postprocess.vert",
-            .fragmentCodePath = "shaders/displayColor.frag"
+            .fragmentCodePath = "shaders/atw.frag"
         });
 
         videoTex = new VideoTexture({
@@ -1061,28 +1061,34 @@ private:
 
         // render video to VideoTexture
         videoTex->bind();
-        poseIdColor = videoTex->draw();
+        poseID = videoTex->draw();
         videoTex->unbind();
 
-        showVideoShader->bind();
-        showVideoShader->setBool("atwEnabled", true);
-        showVideoShader->setTexture("videoTexture", *videoTex, 0);
+        atwShader->bind();
+        atwShader->setBool("atwEnabled", true);
+        atwShader->setTexture("videoTexture", *videoTex, 0);
 
         // Set uniforms for both eyes
-        poseStreamer->getPose(poseIdColor, &currentFramePose, &elapedTime);
-        showVideoShader->setMat4("projectionInverseLeft", glm::inverse(cameras.left.getProjectionMatrix()));
-        showVideoShader->setMat4("viewInverseLeft", glm::inverse(cameras.left.getViewMatrix()));
-        showVideoShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
-        showVideoShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
-        
-        showVideoShader->setMat4("projectionInverseRight", glm::inverse(cameras.right.getProjectionMatrix()));
-        showVideoShader->setMat4("viewInverseRight", glm::inverse(cameras.right.getViewMatrix()));
-        showVideoShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
-        showVideoShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
-        showVideoShader->unbind();
-        
+        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapedTime)) {
+            atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras.left.getProjectionMatrix()));
+            atwShader->setMat4("projectionInverseRight", glm::inverse(cameras.right.getProjectionMatrix()));
+
+            atwShader->setMat4("viewInverseLeft", glm::inverse(cameras.left.getViewMatrix()));
+            atwShader->setMat4("viewInverseRight", glm::inverse(cameras.right.getViewMatrix()));
+
+            atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
+            atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
+
+            atwShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
+            atwShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
+
+            poseStreamer->removePosesLessThan(poseID);
+        }
+
+        prevPoseID = poseID;
+
         // Draw both eyes in a single pass
-        m_graphicsAPI->drawToScreen(*showVideoShader);
+        m_graphicsAPI->drawToScreen(*atwShader);
 
         // draw objects (uncomment to debug)
         // m_graphicsAPI->drawObjects(*scene, cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -1226,13 +1232,13 @@ private:
 
     VideoTexture* videoTex;
 
-    pose_id_t poseIdColor = -1;
-    pose_id_t prevPoseIdColor = -1;
+    pose_id_t poseID = -1;
+    pose_id_t prevPoseID = -1;
 
     PoseStreamer* poseStreamer;
     Pose currentFramePose;
     double elapedTime;
-    Shader* showVideoShader;
+    Shader* atwShader;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.5f;
