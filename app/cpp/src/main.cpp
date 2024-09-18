@@ -501,23 +501,23 @@ private:
         });
         scene->addPointLight(pointLight4);
 
-        // Draw a floor.
-        Cube* floorMesh = new Cube({
-            .material = new PBRMaterial({
-                .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
-                .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
-                .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
-                .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
-                .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
-            })
-        });
-        Node* floor = new Node(floorMesh);
-        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
-        floor->frustumCulled = false;
-        scene->addChildNode(floor);
+        // add a floor.
+        // Cube* floorMesh = new Cube({
+        //     .material = new PBRMaterial({
+        //         .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
+        //         .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
+        //         .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
+        //         .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
+        //         .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
+        //     })
+        // });
+        // Node* floor = new Node(floorMesh);
+        // floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        // floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
+        // floor->frustumCulled = false;
+        // scene->addChildNode(floor);
 
-        // Draw a screen for the video.
+        // add a screen for the video.
         Cube* videoScreen = new Cube({
             .material = new UnlitMaterial({ .diffuseTexture = videoTex }),
         });
@@ -527,7 +527,7 @@ private:
         screen->frustumCulled = false;
         scene->addChildNode(screen);
 
-        // Draw a "table".
+        // add a "table".
         // Cube* tableMesh = new Cube({
         //     .material = new PBRMaterial({
         //         .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
@@ -542,7 +542,7 @@ private:
         // table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
         // scene->addChildNode(table);
 
-        // Create the hand nodes.
+        // add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -559,7 +559,7 @@ private:
         m_handNodes[1].setEntity(rightControllerMesh);
         scene->addChildNode(&m_handNodes[1]);
 
-        // Load Helmet
+        // add Helmet
         // Model* helmetMesh = new Model({
         //     .flipTextures = true,
         //     .IBL = 0,
@@ -570,7 +570,7 @@ private:
         // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
         // scene->addChildNode(helmetNode);
 
-        // Create Boxes
+        // add Boxes
         // float scale = 0.2f;
         // glm::vec3 center = {0.0f, -0.2f, -0.7f}; // Center the blocks a little way from the origin.
         // for (int i = 0; i < 5; i++) {
