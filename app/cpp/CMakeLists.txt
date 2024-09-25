@@ -12,13 +12,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 
-message("Using graphics API: " ${XR_TUTORIAL_GRAPHICS_API})
-
 # set required libs
 set(RENDERER_LIBS )
-
-# For FetchContent_Declare() and FetchContent_MakeAvailable()
-include(FetchContent)
 
 # add third party libraries
 add_subdirectory(${EXTERNAL}/libassimp/tnt)
@@ -29,6 +24,9 @@ set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 
 add_subdirectory(${EXTERNAL}/jsmn/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
+
+# For FetchContent_Declare() and FetchContent_MakeAvailable()
+include(FetchContent)
 
 # openxr_loader - From github.com/KhronosGroup
 set(BUILD_TESTS
@@ -82,6 +80,8 @@ set(RENDERER_HDRS
     ${RENDERER}/include/Materials/Material.h
     ${RENDERER}/include/Materials/PBRMaterial.h
     ${RENDERER}/include/Materials/UnlitMaterial.h
+    ${RENDERER}/include/Materials/DirShadowMapMaterial.h
+    ${RENDERER}/include/Materials/PointShadowMapMaterial.h
     ${RENDERER}/include/Lights/AmbientLight.h
     ${RENDERER}/include/Lights/Light.h
     ${RENDERER}/include/Lights/DirectionalLight.h
@@ -115,6 +115,8 @@ set(RENDERER_SRCS
     ${RENDERER}/src/CubeMap.cpp
     ${RENDERER}/src/Materials/PBRMaterial.cpp
     ${RENDERER}/src/Materials/UnlitMaterial.cpp
+    ${RENDERER}/src/Materials/DirShadowMapMaterial.cpp
+    ${RENDERER}/src/Materials/PointShadowMapMaterial.cpp
     ${RENDERER}/src/Renderers/OpenGLRenderer.cpp
     ${RENDERER}/src/Primatives/Entity.cpp
     ${RENDERER}/src/Primatives/Mesh.cpp
