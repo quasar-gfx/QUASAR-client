@@ -26,7 +26,7 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-const std::string serverIP = "192.168.4.140";
+const std::string serverIP = "192.168.1.211";
 const std::string videoURL = "0.0.0.0:12345";
 const std::string poseURL = serverIP + ":54321";
 
@@ -501,22 +501,6 @@ private:
         });
         scene->addPointLight(pointLight4);
 
-        // add a floor.
-        // Cube* floorMesh = new Cube({
-        //     .material = new PBRMaterial({
-        //         .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
-        //         .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
-        //         .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
-        //         .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
-        //         .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
-        //     })
-        // });
-        // Node* floor = new Node(floorMesh);
-        // floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        // floor->setScale(glm::vec3(1.0f, 0.05f, 1.0f));
-        // floor->frustumCulled = false;
-        // scene->addChildNode(floor);
-
         // add a screen for the video.
         Cube* videoScreen = new Cube({
             .material = new UnlitMaterial({ .diffuseTexture = videoTex }),
@@ -526,21 +510,6 @@ private:
         screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
         screen->frustumCulled = false;
         scene->addChildNode(screen);
-
-        // add a "table".
-        // Cube* tableMesh = new Cube({
-        //     .material = new PBRMaterial({
-        //         .albedoTexturePath = "textures/pbr/rusted_iron/albedo.png",
-        //         .normalTexturePath = "textures/pbr/rusted_iron/normal.png",
-        //         .metallicTexturePath = "textures/pbr/rusted_iron/metallic.png",
-        //         .roughnessTexturePath = "textures/pbr/rusted_iron/roughness.png",
-        //         .aoTexturePath = "textures/pbr/rusted_iron/ao.png"
-        //     })
-        // });
-        // Node* table = new Node(tableMesh);
-        // table->setPosition(glm::vec3(0.0f, -m_viewHeightM + 0.9f, -0.6f));
-        // table->setScale(glm::vec3(0.5f, 0.05f, 0.5f));
-        // scene->addChildNode(table);
 
         // add the hand nodes.
         Model* leftControllerMesh = new Model({
@@ -569,22 +538,6 @@ private:
         // helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
         // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
         // scene->addChildNode(helmetNode);
-
-        // add Boxes
-        // float scale = 0.2f;
-        // glm::vec3 center = {0.0f, -0.2f, -0.7f}; // Center the blocks a little way from the origin.
-        // for (int i = 0; i < 5; i++) {
-        //     float x = scale * (float(i) - 1.5f) + center.x;
-        //     for (int j = 0; j < 5; j++) {
-        //         float y = scale * (float(j) - 1.5f) + center.y;
-        //         for (int k = 0; k < 5; k++) {
-        //             float z = scale * (float(k) - 1.5f) + center.z;
-
-        //             auto node = CreateBox({x, y, z});
-        //             scene->addChildNode(node);
-        //         }
-        //     }
-        // }
     }
 
     void DestroyResources() {
