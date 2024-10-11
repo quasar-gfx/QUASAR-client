@@ -100,6 +100,7 @@ set(RENDERER_HDRS
     ${RENDERER}/include/RenderTargets/RenderTargetBase.h
     ${RENDERER}/include/Renderbuffer.h
     ${RENDERER}/include/Scene.h
+    ${RENDERER}/include/SceneLoader.h
     ${RENDERER}/include/Shaders/ComputeShader.h
     ${RENDERER}/include/Shaders/Shader.h
     ${RENDERER}/include/Shaders/ShaderBase.h
@@ -123,6 +124,7 @@ set(RENDERER_SRCS
     ${RENDERER}/src/Primatives/Model.cpp
     ${RENDERER}/src/Primatives/Node.cpp
     ${RENDERER}/src/Scene.cpp
+    ${RENDERER}/src/SceneLoader.cpp
     ${RENDERER}/src/Shaders/ComputeShader.cpp
     ${RENDERER}/src/Shaders/Shader.cpp
     ${RENDERER}/src/Texture.cpp

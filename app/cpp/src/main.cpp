@@ -26,7 +26,7 @@
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
 
-const std::string serverIP = "192.168.1.211";
+const std::string serverIP = "192.168.4.140";
 const std::string videoURL = "0.0.0.0:12345";
 const std::string poseURL = serverIP + ":54321";
 
