@@ -204,7 +204,7 @@ void OpenGLESRenderer::setScreenShaderUniforms(const Shader &screenShader) {
     // screenShader.setTexture("screenDepth", gBuffer.depthBuffer, 1);
 }
 
-RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const RenderTarget* overrideRenderTarget) {
+RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const RenderTargetBase* overrideRenderTarget) {
     pipeline.apply();
 
     FullScreenQuad outputFsQuad;
