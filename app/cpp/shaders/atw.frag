@@ -15,8 +15,6 @@ uniform mat4 remoteProjectionRight;
 uniform mat4 remoteViewLeft;
 uniform mat4 remoteViewRight;
 
-uniform float screenWidth;
-
 uniform bool atwEnabled;
 
 vec3 ndcToView(mat4 projectionInverse, vec2 ndc, float depth) {
