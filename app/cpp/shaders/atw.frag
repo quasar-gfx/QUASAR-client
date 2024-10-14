@@ -76,13 +76,13 @@ void main() {
     vec2 TexCoordsRemote;
     if (IsLeftEye > 0.5) {
         viewCoord = ndcToView(projectionInverseLeft, ndc, 1.0);
-        worldCoord = viewToWorld(viewInverseLeft, viewCoord);
+        worldCoord = viewToWorld(mat4(mat3(viewInverseLeft)), viewCoord);
         TexCoordsRemote = worldToScreen(remoteViewLeft, remoteProjectionLeft, worldCoord);
         TexCoordsRemote.x = clamp(TexCoordsRemote.x / 2.0, 0.0, 0.4999);
     }
     else {
         viewCoord = ndcToView(projectionInverseRight, ndc, 1.0);
-        worldCoord = viewToWorld(viewInverseRight, viewCoord);
+        worldCoord = viewToWorld(mat4(mat3(viewInverseRight)), viewCoord);
         TexCoordsRemote = worldToScreen(remoteViewRight, remoteProjectionRight, worldCoord);
         TexCoordsRemote.x = clamp(TexCoordsRemote.x / 2.0 + 0.5, 0.5, 0.9999);
     }

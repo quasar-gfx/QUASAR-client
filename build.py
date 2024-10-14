@@ -39,8 +39,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build, install, and debug an Android app")
-    parser.add_argument("--build", action="store_true", help="Build and launch the APK")
-    parser.add_argument("--launch", action="store_true", help="Launch the APK")
+    parser.add_argument("--build", action="store_true", help="Build the APK")
+    parser.add_argument("--launch", action="store_true", help="Build and launch the APK")
     parser.add_argument("--debug", action="store_true", help="Build, launch, and debug the app")
     args = parser.parse_args()
 

@@ -88,7 +88,7 @@ private:
         // Fill out an XrApplicationInfo structure detailing the names and OpenXR version.
         // The application/engine name and version are user-definied. These may help IHVs or runtimes.
         XrApplicationInfo AI;
-        strncpy(AI.applicationName, "OculusClient", XR_MAX_APPLICATION_NAME_SIZE);
+        strncpy(AI.applicationName, "QuestClient", XR_MAX_APPLICATION_NAME_SIZE);
         AI.applicationVersion = 1;
         strncpy(AI.engineName, "OpenXR Engine", XR_MAX_ENGINE_NAME_SIZE);
         AI.engineVersion = 1;
