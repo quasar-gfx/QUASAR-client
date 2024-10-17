@@ -21,6 +21,8 @@
 #include <Utils/OpenXRDebugUtils.h>
 #include <Utils/GLM_XR_Interop.h>
 
+#include <shaders_common.h>
+
 #include <random>
 static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
 static std::mt19937 pseudo_random_generator;
@@ -410,8 +412,10 @@ private:
         scene = std::make_unique<Scene>();
 
         atwShader = new Shader({
-            .vertexCodePath = "shaders/postprocess.vert",
-            .fragmentCodePath = "shaders/atw.frag"
+            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
+            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
+            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
+            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
         });
 
         videoTexture = new VideoTexture({
@@ -480,7 +484,8 @@ private:
         });
         scene->addPointLight(pointLight4);
 
-        // add a screen for the video.
+        // add a screen for the
+        // video.
         Cube* videoScreen = new Cube({
             .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
         });

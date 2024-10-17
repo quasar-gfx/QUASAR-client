@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 project(cpp)
 
-set(OGL_REMOTE_RENDERING ${CMAKE_CURRENT_SOURCE_DIR}/libs/opengl-remote-rendering)
+set(OGL_REMOTE_RENDERING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/opengl-remote-rendering)
+set(OGL_REMOTE_RENDERING_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/libs/opengl-remote-rendering)
 
-set(RENDERER ${OGL_REMOTE_RENDERING}/renderer)
-set(SHADERS ${OGL_REMOTE_RENDERING}/shaders)
-set(EXTERNAL ${OGL_REMOTE_RENDERING}/third_party)
+set(RENDERER_DIR ${OGL_REMOTE_RENDERING_DIR}/renderer)
+set(RENDERER_SHADERS_DIR ${RENDERER_DIR}/shaders)
+set(EXTERNAL_DIR ${OGL_REMOTE_RENDERING_DIR}/third_party)
+set(APP_COMMON_DIR ${OGL_REMOTE_RENDERING_DIR}/apps/Common)
+set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
 
 # additional Directories for find_package() to search within.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -16,13 +19,13 @@ include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 set(RENDERER_LIBS )
 
 # add third party libraries
-add_subdirectory(${EXTERNAL}/libassimp/tnt)
+add_subdirectory(${EXTERNAL_DIR}/libassimp/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
 
-add_subdirectory(${EXTERNAL}/stb/tnt)
+add_subdirectory(${EXTERNAL_DIR}/stb/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 
-add_subdirectory(${EXTERNAL}/jsmn/tnt)
+add_subdirectory(${EXTERNAL_DIR}/jsmn/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
 
 # For FetchContent_Declare() and FetchContent_MakeAvailable()
@@ -61,84 +64,102 @@ foreach(LIB_NAME ${FFMPEG_LIBS})
 endforeach()
 
 # renderer shaders
-add_subdirectory(${SHADERS})
+add_subdirectory(${RENDERER_SHADERS_DIR})
+
+# common shaders
+add_subdirectory(${APP_COMMON_SHADERS_DIR})
 
 # our shaders
 add_subdirectory(shaders)
 
 # files
 set(RENDERER_HDRS
-    ${RENDERER}/include/OpenGLAppConfig.h
-    ${RENDERER}/include/Culling/AABB.h
-    ${RENDERER}/include/Culling/BoundingSphere.h
-    ${RENDERER}/include/Culling/Frustum.h
-    ${RENDERER}/include/Cameras/Camera.h
-    ${RENDERER}/include/Cameras/PerspectiveCamera.h
-    ${RENDERER}/include/Cameras/VRCamera.h
-    ${RENDERER}/include/CubeMap.h
-    ${RENDERER}/include/Framebuffer.h
-    ${RENDERER}/include/Materials/Material.h
-    ${RENDERER}/include/Materials/PBRMaterial.h
-    ${RENDERER}/include/Materials/UnlitMaterial.h
-    ${RENDERER}/include/Materials/DirShadowMapMaterial.h
-    ${RENDERER}/include/Materials/PointShadowMapMaterial.h
-    ${RENDERER}/include/Lights/AmbientLight.h
-    ${RENDERER}/include/Lights/Light.h
-    ${RENDERER}/include/Lights/DirectionalLight.h
-    ${RENDERER}/include/Lights/PointLight.h
-    ${RENDERER}/include/OpenGLObject.h
-    ${RENDERER}/include/Renderers/OpenGLRenderer.h
-    ${RENDERER}/include/Primatives/Cube.h
-    ${RENDERER}/include/Primatives/Entity.h
-    ${RENDERER}/include/Primatives/FullScreenQuad.h
-    ${RENDERER}/include/Primatives/Mesh.h
-    ${RENDERER}/include/Primatives/Model.h
-    ${RENDERER}/include/Primatives/Node.h
-    ${RENDERER}/include/Primatives/Plane.h
-    ${RENDERER}/include/Primatives/Sphere.h
-    ${RENDERER}/include/RenderTargets/RenderTarget.h
-    ${RENDERER}/include/RenderTargets/RenderTargetBase.h
-    ${RENDERER}/include/Renderbuffer.h
-    ${RENDERER}/include/Scene.h
-    ${RENDERER}/include/SceneLoader.h
-    ${RENDERER}/include/Shaders/ComputeShader.h
-    ${RENDERER}/include/Shaders/Shader.h
-    ${RENDERER}/include/Shaders/ShaderBase.h
-    ${RENDERER}/include/Texture.h
-    ${RENDERER}/include/Utils/FileIO.h
-    ${RENDERER}/include/Utils/Platform.h
-    ${RENDERER}/include/Utils/TimeUtils.h
-    ${RENDERER}/include/Vertex.h
+    ${RENDERER_DIR}/include/OpenGLAppConfig.h
+    ${RENDERER_DIR}/include/Culling/AABB.h
+    ${RENDERER_DIR}/include/Culling/BoundingSphere.h
+    ${RENDERER_DIR}/include/Culling/Frustum.h
+    ${RENDERER_DIR}/include/Cameras/Camera.h
+    ${RENDERER_DIR}/include/Cameras/PerspectiveCamera.h
+    ${RENDERER_DIR}/include/Cameras/VRCamera.h
+    ${RENDERER_DIR}/include/CubeMap.h
+    ${RENDERER_DIR}/include/Framebuffer.h
+    ${RENDERER_DIR}/include/Materials/Material.h
+    ${RENDERER_DIR}/include/Materials/PBRMaterial.h
+    ${RENDERER_DIR}/include/Materials/UnlitMaterial.h
+    ${RENDERER_DIR}/include/Materials/DirShadowMapMaterial.h
+    ${RENDERER_DIR}/include/Materials/PointShadowMapMaterial.h
+    ${RENDERER_DIR}/include/Lights/AmbientLight.h
+    ${RENDERER_DIR}/include/Lights/Light.h
+    ${RENDERER_DIR}/include/Lights/DirectionalLight.h
+    ${RENDERER_DIR}/include/Lights/PointLight.h
+    ${RENDERER_DIR}/include/OpenGLObject.h
+    ${RENDERER_DIR}/include/Renderers/OpenGLRenderer.h
+    ${RENDERER_DIR}/include/Primatives/Cube.h
+    ${RENDERER_DIR}/include/Primatives/Entity.h
+    ${RENDERER_DIR}/include/Primatives/FullScreenQuad.h
+    ${RENDERER_DIR}/include/Primatives/Mesh.h
+    ${RENDERER_DIR}/include/Primatives/Model.h
+    ${RENDERER_DIR}/include/Primatives/Node.h
+    ${RENDERER_DIR}/include/Primatives/Plane.h
+    ${RENDERER_DIR}/include/Primatives/Sphere.h
+    ${RENDERER_DIR}/include/RenderTargets/RenderTarget.h
+    ${RENDERER_DIR}/include/RenderTargets/RenderTargetBase.h
+    ${RENDERER_DIR}/include/Renderbuffer.h
+    ${RENDERER_DIR}/include/Scene.h
+    ${RENDERER_DIR}/include/SceneLoader.h
+    ${RENDERER_DIR}/include/Shaders/ComputeShader.h
+    ${RENDERER_DIR}/include/Shaders/Shader.h
+    ${RENDERER_DIR}/include/Shaders/ShaderBase.h
+    ${RENDERER_DIR}/include/Texture.h
+    ${RENDERER_DIR}/include/Utils/FileIO.h
+    ${RENDERER_DIR}/include/Utils/Platform.h
+    ${RENDERER_DIR}/include/Utils/TimeUtils.h
+    ${RENDERER_DIR}/include/Vertex.h
 )
 set(RENDERER_SRCS
-    ${RENDERER}/src/Cameras/VRCamera.cpp
-    ${RENDERER}/src/Cameras/PerspectiveCamera.cpp
-    ${RENDERER}/src/CubeMap.cpp
-    ${RENDERER}/src/Materials/PBRMaterial.cpp
-    ${RENDERER}/src/Materials/UnlitMaterial.cpp
-    ${RENDERER}/src/Materials/DirShadowMapMaterial.cpp
-    ${RENDERER}/src/Materials/PointShadowMapMaterial.cpp
-    ${RENDERER}/src/Renderers/OpenGLRenderer.cpp
-    ${RENDERER}/src/Primatives/Entity.cpp
-    ${RENDERER}/src/Primatives/Mesh.cpp
-    ${RENDERER}/src/Primatives/Model.cpp
-    ${RENDERER}/src/Primatives/Node.cpp
-    ${RENDERER}/src/Scene.cpp
-    ${RENDERER}/src/SceneLoader.cpp
-    ${RENDERER}/src/Shaders/ComputeShader.cpp
-    ${RENDERER}/src/Shaders/Shader.cpp
-    ${RENDERER}/src/Texture.cpp
-    ${RENDERER}/src/Utils/FileIO.cpp
-    ${RENDERER}/src/Vertex.cpp
+    ${RENDERER_DIR}/src/Cameras/VRCamera.cpp
+    ${RENDERER_DIR}/src/Cameras/PerspectiveCamera.cpp
+    ${RENDERER_DIR}/src/CubeMap.cpp
+    ${RENDERER_DIR}/src/Materials/PBRMaterial.cpp
+    ${RENDERER_DIR}/src/Materials/UnlitMaterial.cpp
+    ${RENDERER_DIR}/src/Materials/DirShadowMapMaterial.cpp
+    ${RENDERER_DIR}/src/Materials/PointShadowMapMaterial.cpp
+    ${RENDERER_DIR}/src/Renderers/OpenGLRenderer.cpp
+    ${RENDERER_DIR}/src/Primatives/Entity.cpp
+    ${RENDERER_DIR}/src/Primatives/Mesh.cpp
+    ${RENDERER_DIR}/src/Primatives/Model.cpp
+    ${RENDERER_DIR}/src/Primatives/Node.cpp
+    ${RENDERER_DIR}/src/Scene.cpp
+    ${RENDERER_DIR}/src/SceneLoader.cpp
+    ${RENDERER_DIR}/src/Shaders/ComputeShader.cpp
+    ${RENDERER_DIR}/src/Shaders/Shader.cpp
+    ${RENDERER_DIR}/src/Texture.cpp
+    ${RENDERER_DIR}/src/Utils/FileIO.cpp
+    ${RENDERER_DIR}/src/Vertex.cpp
 )
 
-file(GLOB_RECURSE COMMON_HDRS
-    "${OGL_REMOTE_RENDERING}/apps/Common/include/*.h"
+set(COMMON_HDRS
+    ${APP_COMMON_DIR}/include/Networking/DataPacketUDP.h
+    ${APP_COMMON_DIR}/include/Networking/DataReceiverTCP.h
+    ${APP_COMMON_DIR}/include/Networking/DataReceiverUDP.h
+    ${APP_COMMON_DIR}/include/Networking/DataStreamerTCP.h
+    ${APP_COMMON_DIR}/include/Networking/DataStreamerUDP.h
+    ${APP_COMMON_DIR}/include/Networking/Socket.h
+    ${APP_COMMON_DIR}/include/Utils/Utils.h
+    ${APP_COMMON_DIR}/include/CameraPose.h
+    ${APP_COMMON_DIR}/include/PoseReceiver.h
+    ${APP_COMMON_DIR}/include/PoseStreamer.h
+    ${APP_COMMON_DIR}/include/VideoTexture.h
 )
-file(GLOB_RECURSE COMMON_SRCS
-    "${OGL_REMOTE_RENDERING}/apps/Common/src/*.cpp"
+set(COMMON_SRCS
+    ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
+    ${APP_COMMON_DIR}/src/DataReceiverUDP.cpp
+    ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
+    ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${APP_COMMON_DIR}/src/VideoTexture.cpp
 )
 
+# our code
 file(GLOB_RECURSE PRIVATE_HDRS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
 )
@@ -152,20 +173,21 @@ target_include_directories(${TARGET} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 
     # Renderer related includes
-    ${RENDERER}/include
-    ${OGL_REMOTE_RENDERING}/apps/Common/include
-    ${EXTERNAL}
-    ${CMAKE_BINARY_DIR}/shaders
+    ${RENDERER_DIR}/include
+    ${OGL_REMOTE_RENDERING_DIR}/apps/Common/include
+    ${EXTERNAL_DIR}
+    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/renderer/shaders
+    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
 
     # For ffmpeg-android
-    "libs/ffmpeg/include/${ANDROID_ABI}"
+    libs/ffmpeg/include/${ANDROID_ABI}
 
     # From OpenXR repo
-    "${openxr_SOURCE_DIR}/src/common"
-    "${openxr_SOURCE_DIR}/external/include"
+    ${openxr_SOURCE_DIR}/src/common
+    ${openxr_SOURCE_DIR}/external/include
 )
 
-add_dependencies(${TARGET} shaders)
+add_dependencies(${TARGET} shaders_builtin shaders_common)
 
 add_definitions(-DVR)
 

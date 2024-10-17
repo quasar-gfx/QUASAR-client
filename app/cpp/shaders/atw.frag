@@ -1,1 +1,0 @@
-../libs/opengl-remote-rendering/apps/atw/receiver/shaders/atw.frag
