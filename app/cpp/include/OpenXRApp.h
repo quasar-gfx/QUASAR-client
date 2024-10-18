@@ -224,7 +224,7 @@ private:
         return str;
     }
 
-    void CreateActionSet() {
+    virtual void CreateActionSet() {
         XrActionSetCreateInfo actionSetCI{XR_TYPE_ACTION_SET_CREATE_INFO};
         // The internal name the runtime uses for this Action Set.
         strncpy(actionSetCI.actionSetName, "openxr-app-actionset", XR_MAX_ACTION_SET_NAME_SIZE);
@@ -262,7 +262,7 @@ private:
         m_handPaths[1] = CreateXrPath("/user/hand/right");
     }
 
-    void SuggestBindings() {
+    virtual void SuggestBindings() {
         auto SuggestBindings = [this](const char* profile_path, std::vector<XrActionSuggestedBinding> bindings) -> bool {
             // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports.
             XrInteractionProfileSuggestedBinding interactionProfileSuggestedBinding{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
@@ -408,7 +408,7 @@ private:
         OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
     }
 
-    void CreateResources() {
+    virtual void CreateResources() {
         scene = std::make_unique<Scene>();
 
         atwShader = new Shader({
@@ -524,7 +524,7 @@ private:
         // scene->addChildNode(helmetNode);
     }
 
-    void DestroyResources() {
+    virtual void DestroyResources() {
     }
 
     void PollEvents() {
@@ -614,7 +614,7 @@ private:
         }
     }
 
-    void PollActions(XrTime predictedTime) {
+    virtual void PollActions(XrTime predictedTime) {
         // Update our action set with up-to-date input data.
         // First, we specify the actionSet we are polling.
         XrActiveActionSet activeActionSet{};
@@ -795,7 +795,7 @@ private:
         OPENXR_CHECK(xrDestroySwapchain(m_depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
 
-    void HandleInteractions() {
+    virtual void HandleInteractions() {
         // For each hand:
         for (int i = 0; i < 2; i++) {
             if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
@@ -806,7 +806,7 @@ private:
         }
     }
 
-    void OnRender() {
+    virtual void OnRender() {
         // send pose
         poseStreamer->sendPose();
 
