@@ -1,42 +1,20 @@
-#include <OpenGLAppConfig.h>
+#ifndef OPENXR_APP_H
+#define OPENXR_APP_H
 
+#include <map>
+
+#include <OpenGLAppConfig.h>
+#include <OpenGLESRenderer.h>
 #include <Scene.h>
 #include <Cameras/VRCamera.h>
-#include <VideoTexture.h>
-#include <Primatives/Mesh.h>
-#include <Primatives/Cube.h>
-#include <Primatives/Model.h>
-
-#include <Materials/UnlitMaterial.h>
-#include <Lights/AmbientLight.h>
-#include <Lights/DirectionalLight.h>
-#include <Lights/PointLight.h>
 #include <Utils/FileIO.h>
-
-#include <PoseStreamer.h>
-
-#include <OpenGLESRenderer.h>
 
 #include <Utils/DebugOutput.h>
 #include <Utils/OpenXRDebugUtils.h>
 #include <Utils/GLM_XR_Interop.h>
 
-#include <shaders_common.h>
-
-#include <random>
-static std::uniform_real_distribution<float> pseudorandom_distribution(0, 1.0f);
-static std::mt19937 pseudo_random_generator;
-
-const std::string serverIP = "192.168.1.211";
-const std::string videoURL = "0.0.0.0:12345";
-const std::string poseURL = serverIP + ":54321";
-
-inline glm::vec4 randomColor() {
-    return {pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), pseudorandom_distribution(pseudo_random_generator), 1.0f};
-}
-
 class OpenXRApp {
-private:
+protected:
     struct RenderLayerInfo;
 
 public:
@@ -55,8 +33,8 @@ public:
 
         GetInstanceProperties();
         GetSystemID();
-        CreateActionSet();
-        SuggestBindings();
+        CreateActionSetInternal();
+        SuggestBindingsInternal();
         GetViewConfigurationViews();
         GetEnvironmentBlendModes();
         CreateSession();
@@ -66,7 +44,8 @@ public:
 
         CreateReferenceSpace();
         CreateSwapchains();
-        CreateResources();
+
+        CreateResourcesInternal();
 
         while (m_applicationRunning) {
             PollSystemEvents();
@@ -85,7 +64,7 @@ public:
         DestroyInstance();
     }
 
-private:
+protected:
     void CreateInstance() {
         // Fill out an XrApplicationInfo structure detailing the names and OpenXR version.
         // The application/engine name and version are user-definied. These may help IHVs or runtimes.
@@ -224,7 +203,25 @@ private:
         return str;
     }
 
-    virtual void CreateActionSet() {
+    void CreateAction(XrAction &xrAction, const char* name, XrActionType xrActionType, std::vector<const char*> subaction_paths = {}) {
+        XrActionCreateInfo actionCI{XR_TYPE_ACTION_CREATE_INFO};
+        // The type of action: float input, pose, haptic output etc.
+        actionCI.actionType = xrActionType;
+        // Subaction paths, e.g. left and right hand. To distinguish the same action performed on different devices.
+        std::vector<XrPath> subaction_xrpaths;
+        for (auto p : subaction_paths) {
+            subaction_xrpaths.push_back(CreateXrPath(p));
+        }
+        actionCI.countSubactionPaths = (uint32_t)subaction_xrpaths.size();
+        actionCI.subactionPaths = subaction_xrpaths.data();
+        // The internal name the runtime uses for this Action.
+        strncpy(actionCI.actionName, name, XR_MAX_ACTION_NAME_SIZE);
+        // Localized names are required so there is a human-readable action name to show the user if they are rebinding the Action in an options screen.
+        strncpy(actionCI.localizedActionName, name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
+        OPENXR_CHECK(xrCreateAction(m_actionSet, &actionCI, &xrAction), "Failed to create Action.");
+    };
+
+    virtual void CreateActionSetInternal() {
         XrActionSetCreateInfo actionSetCI{XR_TYPE_ACTION_SET_CREATE_INFO};
         // The internal name the runtime uses for this Action Set.
         strncpy(actionSetCI.actionSetName, "openxr-app-actionset", XR_MAX_ACTION_SET_NAME_SIZE);
@@ -234,64 +231,48 @@ private:
         // Set a priority: this comes into play when we have multiple Action Sets, and determines which Action takes priority in binding to a specific input.
         actionSetCI.priority = 0;
 
-        auto CreateAction = [this](XrAction &xrAction, const char* name, XrActionType xrActionType, std::vector<const char*> subaction_paths = {}) -> void {
-            XrActionCreateInfo actionCI{XR_TYPE_ACTION_CREATE_INFO};
-            // The type of action: float input, pose, haptic output etc.
-            actionCI.actionType = xrActionType;
-            // Subaction paths, e.g. left and right hand. To distinguish the same action performed on different devices.
-            std::vector<XrPath> subaction_xrpaths;
-            for (auto p : subaction_paths) {
-                subaction_xrpaths.push_back(CreateXrPath(p));
-            }
-            actionCI.countSubactionPaths = (uint32_t)subaction_xrpaths.size();
-            actionCI.subactionPaths = subaction_xrpaths.data();
-            // The internal name the runtime uses for this Action.
-            strncpy(actionCI.actionName, name, XR_MAX_ACTION_NAME_SIZE);
-            // Localized names are required so there is a human-readable action name to show the user if they are rebinding the Action in an options screen.
-            strncpy(actionCI.localizedActionName, name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
-            OPENXR_CHECK(xrCreateAction(m_actionSet, &actionCI, &xrAction), "Failed to create Action.");
-        };
-        // An Action for grabbing cubes.
-        CreateAction(m_clickAction, "change-color", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
         // An Action for the position of the palm of the user's hand - appropriate for the location of a grabbing Actions.
         CreateAction(m_palmPoseAction, "palm-pose", XR_ACTION_TYPE_POSE_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for a vibration output on one or other hand.
-        CreateAction(m_buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
         // For later convenience we create the XrPaths for the subaction path names.
         m_handPaths[0] = CreateXrPath("/user/hand/left");
         m_handPaths[1] = CreateXrPath("/user/hand/right");
+
+        CreateActionSet();
+    }
+    virtual void CreateActionSet() {}
+
+    bool SuggestBindingsForPath(const char* profilePath, std::vector<XrActionSuggestedBinding> bindings) {
+        // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports.
+        XrInteractionProfileSuggestedBinding interactionProfileSuggestedBinding{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
+        interactionProfileSuggestedBinding.interactionProfile = CreateXrPath(profilePath);
+        interactionProfileSuggestedBinding.suggestedBindings = bindings.data();
+        interactionProfileSuggestedBinding.countSuggestedBindings = (uint32_t)bindings.size();
+        if (xrSuggestInteractionProfileBindings(m_xrInstance, &interactionProfileSuggestedBinding) == XrResult::XR_SUCCESS)
+            return true;
+        XR_LOG("Failed to suggest bindings with " << profilePath);
+        return false;
     }
 
-    virtual void SuggestBindings() {
-        auto SuggestBindings = [this](const char* profile_path, std::vector<XrActionSuggestedBinding> bindings) -> bool {
-            // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports.
-            XrInteractionProfileSuggestedBinding interactionProfileSuggestedBinding{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
-            interactionProfileSuggestedBinding.interactionProfile = CreateXrPath(profile_path);
-            interactionProfileSuggestedBinding.suggestedBindings = bindings.data();
-            interactionProfileSuggestedBinding.countSuggestedBindings = (uint32_t)bindings.size();
-            if (xrSuggestInteractionProfileBindings(m_xrInstance, &interactionProfileSuggestedBinding) == XrResult::XR_SUCCESS)
-                return true;
-            XR_LOG("Failed to suggest bindings with " << profile_path);
-            return false;
-        };
+    virtual void SuggestBindingsInternal() {
+        std::map<std::string, std::vector<XrActionSuggestedBinding>> bindings;
+
+        // Each Action here has two paths, one for each SubAction path.
+        bindings["/interaction_profiles/khr/simple_controller"] = {{m_palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
+                                                                   {m_palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")}};
+        // Each Action here has two paths, one for each SubAction path.
+        bindings["/interaction_profiles/oculus/touch_controller"] = {{m_palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
+                                                                     {m_palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")}};
+        SuggestBindings(bindings);
+
         bool any_ok = false;
-        // Each Action here has two paths, one for each SubAction path.
-        any_ok |= SuggestBindings("/interaction_profiles/khr/simple_controller", {{m_clickAction, CreateXrPath("/user/hand/left/input/select/click")},
-                                                                                  {m_palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
-                                                                                  {m_palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")},
-                                                                                  {m_buzzAction, CreateXrPath("/user/hand/left/output/haptic")},
-                                                                                  {m_buzzAction, CreateXrPath("/user/hand/right/output/haptic")}});
-        // Each Action here has two paths, one for each SubAction path.
-        any_ok |= SuggestBindings("/interaction_profiles/oculus/touch_controller", {{m_clickAction, CreateXrPath("/user/hand/left/input/trigger/value")},
-                                                                                    {m_clickAction, CreateXrPath("/user/hand/right/input/trigger/value")},
-                                                                                    {m_palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
-                                                                                    {m_palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")},
-                                                                                    {m_buzzAction, CreateXrPath("/user/hand/left/output/haptic")},
-                                                                                    {m_buzzAction, CreateXrPath("/user/hand/right/output/haptic")}});
+        for (auto& [profilePath, bindings] : bindings) {
+            any_ok |= SuggestBindingsForPath(profilePath.c_str(), bindings);
+        }
         if (!any_ok) {
             DEBUG_BREAK;
         }
     }
+    virtual void SuggestBindings(std::map<std::string, std::vector<XrActionSuggestedBinding>>& bindings) {}
 
     void RecordCurrentBindings() {
         if (m_session) {
@@ -408,124 +389,16 @@ private:
         OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
     }
 
-    virtual void CreateResources() {
+    void CreateResourcesInternal() {
+        cameras = std::make_unique<VRCamera>();
         scene = std::make_unique<Scene>();
-
-        atwShader = new Shader({
-            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
-            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
-            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
-            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
-        });
-
-        videoTexture = new VideoTexture({
-            .width = 2048,
-            .height = 1024,
-            .internalFormat = GL_SRGB8,
-            .format = GL_RGB,
-            .type = GL_UNSIGNED_BYTE,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        poseStreamer = new PoseStreamer(&cameras, poseURL);
-
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.05f
-        });
-        scene->setAmbientLight(ambientLight);
-
-        DirectionalLight* directionalLight = new DirectionalLight({
-            .color = glm::vec3(1.0f, 1.0f, 1.0f),
-            .direction = glm::vec3(-0.5f, -1.0f, 0.5f),
-            .intensity = 3.0f
-        });
-        scene->setDirectionalLight(directionalLight);
-
-        PointLight* pointLight1 = new PointLight({
-            .color = glm::vec3(0.0f, 0.0f, 1.0f),
-            .position = glm::vec3(2.0f, 0.0f, 2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight1);
-
-        PointLight* pointLight2 = new PointLight({
-            .color = glm::vec3(0.0f, 1.0f, 0.0f),
-            .position = glm::vec3(2.0f, 0.0f, -2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight2);
-
-        PointLight* pointLight3 = new PointLight({
-            .color = glm::vec3(1.0f, 0.0f, 0.0f),
-            .position = glm::vec3(-2.0f, 0.0f, 2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight3);
-
-        PointLight* pointLight4 = new PointLight({
-            .color = glm::vec3(1.0f, 1.0f, 0.0f),
-            .position = glm::vec3(-2.0f, 0.0f, -2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight4);
-
-        // add a screen for the
-        // video.
-        Cube* videoScreen = new Cube({
-            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
-        });
-        Node* screen = new Node(videoScreen);
-        screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
-        screen->frustumCulled = false;
-        scene->addChildNode(screen);
-
-        // add the hand nodes.
-        Model* leftControllerMesh = new Model({
-            .flipTextures = true,
-            .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-left.glb"
-        });
-        m_handNodes[0].setEntity(leftControllerMesh);
         scene->addChildNode(&m_handNodes[0]);
-
-        Model* rightControllerMesh = new Model({
-            .flipTextures = true,
-            .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-right.glb"
-        });
-        m_handNodes[1].setEntity(rightControllerMesh);
         scene->addChildNode(&m_handNodes[1]);
-
-        // add Helmet
-        // Model* helmetMesh = new Model({
-        //     .flipTextures = true,
-        //     .IBL = 0,
-        //     .path = "models/DamagedHelmet.glb"
-        // });
-        // Node *helmetNode = new Node(helmetMesh);
-        // helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
-        // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
-        // scene->addChildNode(helmetNode);
+        CreateResources();
     }
+    virtual void CreateResources() {}
 
-    virtual void DestroyResources() {
-    }
+    virtual void DestroyResources() {}
 
     void PollEvents() {
         // Poll OpenXR for a new event.
@@ -614,17 +487,19 @@ private:
         }
     }
 
-    virtual void PollActions(XrTime predictedTime) {
+    void PollActionsInternal(XrTime predictedTime) {
         // Update our action set with up-to-date input data.
         // First, we specify the actionSet we are polling.
         XrActiveActionSet activeActionSet{};
         activeActionSet.actionSet = m_actionSet;
         activeActionSet.subactionPath = XR_NULL_PATH;
+
         // Now we sync the Actions to make sure they have current data.
         XrActionsSyncInfo actionsSyncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
         actionsSyncInfo.countActiveActionSets = 1;
         actionsSyncInfo.activeActionSets = &activeActionSet;
         OPENXR_CHECK(xrSyncActions(m_session, &actionsSyncInfo), "Failed to sync Actions.");
+
         XrActionStateGetInfo actionStateGetInfo{XR_TYPE_ACTION_STATE_GET_INFO};
         // We pose a single Action, twice - once for each subAction Path.
         actionStateGetInfo.action = m_palmPoseAction;
@@ -637,38 +512,22 @@ private:
                 XrSpaceLocation spaceLocation{XR_TYPE_SPACE_LOCATION};
                 XrResult res = xrLocateSpace(m_handPoseSpace[i], m_localSpace, predictedTime, &spaceLocation);
                 if (XR_UNQUALIFIED_SUCCESS(res) &&
-                    (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
-                    (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
+                        (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
+                        (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
                     gxi::Pose pose = gxi::toGLM(spaceLocation.pose);
                     m_handNodes[i].setPosition(pose.position);
                     m_handNodes[i].setRotationQuat(pose.orientation);
-
                 }
                 else {
                     m_handPoseState[i].isActive = false;
                 }
             }
         }
-        for (int i = 0; i < 2; i++) {
-            actionStateGetInfo.action = m_clickAction;
-            actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]), "Failed to get Boolean State of Click action.");
-        }
-        for (int i = 0; i < 2; i++) {
-            m_buzz[i] *= 0.5f;
-            if (m_buzz[i] < 0.01f)
-                m_buzz[i] = 0.0f;
-            XrHapticVibration vibration{XR_TYPE_HAPTIC_VIBRATION};
-            vibration.amplitude = m_buzz[i];
-            vibration.duration = XR_MIN_HAPTIC_DURATION;
-            vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
 
-            XrHapticActionInfo hapticActionInfo{XR_TYPE_HAPTIC_ACTION_INFO};
-            hapticActionInfo.action = m_buzzAction;
-            hapticActionInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader* )&vibration), "Failed to apply haptic feedback.");
-        }
+        PollActions(predictedTime);
     }
+
+    virtual void PollActions(XrTime predictedTime) {}
 
     void CreateReferenceSpace() {
         // Fill out an XrReferenceSpaceCreateInfo structure and create a reference XrSpace, specifying a Local space with an identity pose as the origin.
@@ -795,53 +654,9 @@ private:
         OPENXR_CHECK(xrDestroySwapchain(m_depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
 
-    virtual void HandleInteractions() {
-        // For each hand:
-        for (int i = 0; i < 2; i++) {
-            if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
-                XR_LOG("Click action triggered for hand: " << i);
-                m_buzz[i] = 0.5f;
-                atwEnabled = !atwEnabled;
-            }
-        }
-    }
+    virtual void HandleInteractions() {}
 
-    virtual void OnRender() {
-        // send pose
-        poseStreamer->sendPose();
-
-        // render video to VideoTexture
-        videoTexture->bind();
-        poseID = videoTexture->draw();
-        videoTexture->unbind();
-
-        // set uniforms for both eyes
-        atwShader->bind();
-        atwShader->setBool("atwEnabled", atwEnabled);
-
-        atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras.left.getProjectionMatrix()));
-        atwShader->setMat4("projectionInverseRight", glm::inverse(cameras.right.getProjectionMatrix()));
-
-        atwShader->setMat4("viewInverseLeft", glm::inverse(cameras.left.getViewMatrix()));
-        atwShader->setMat4("viewInverseRight", glm::inverse(cameras.right.getViewMatrix()));
-
-        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapedTime)) {
-            atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
-            atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
-
-            atwShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
-            atwShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
-
-            poseStreamer->removePosesLessThan(poseID);
-        }
-
-        atwShader->setTexture("videoTexture", *videoTexture, 0);
-
-        // draw both eyes in a single pass
-        m_graphicsAPI->drawToScreen(*atwShader);
-
-        prevPoseID = poseID;
-    }
+    virtual void OnRender() {}
 
     void RenderFrame() {
         // Get the XrFrameState for timing and rendering info.
@@ -862,7 +677,7 @@ private:
         bool sessionActive = (m_sessionState == XR_SESSION_STATE_SYNCHRONIZED || m_sessionState == XR_SESSION_STATE_VISIBLE || m_sessionState == XR_SESSION_STATE_FOCUSED);
         if (sessionActive && frameState.shouldRender) {
             // poll actions here because they require a predicted display time, which we've only just obtained.
-            PollActions(frameState.predictedDisplayTime);
+            PollActionsInternal(frameState.predictedDisplayTime);
             // Handle interactions.
             HandleInteractions();
             // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure.
@@ -942,11 +757,6 @@ private:
         m_graphicsAPI->SetViewports(&viewport, 1);
         m_graphicsAPI->SetScissors(&scissor, 1);
 
-        // Draw controllers:
-        for (int i = 0; i < 2; i++) {
-            m_handNodes[i].visible = m_handPoseState[i].isActive;
-        }
-
         if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE) {
             // VR mode use a background color.
             scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
@@ -957,19 +767,16 @@ private:
         }
 
         // update vr cameras
-        cameras.setProjectionMatrices({
+        cameras->setProjectionMatrices({
             gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ),
             gxi::toGLM(views[1].fov, m_apiType, nearZ, farZ)
         });
-        cameras.setViewMatrices({
+        cameras->setViewMatrices({
             glm::inverse(gxi::toGlm(views[0].pose)),
             glm::inverse(gxi::toGlm(views[1].pose))
         });
 
         OnRender();
-
-        // draw objects (uncomment to debug)
-        // m_graphicsAPI->drawObjects(*scene, cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
@@ -1033,7 +840,7 @@ public:
         }
     }
 
-private:
+protected:
     void PollSystemEvents() {
         // Checks whether Android has requested that application should by destroyed.
         if (androidApp->destroyRequested != 0) {
@@ -1057,7 +864,6 @@ private:
         }
     }
 
-private:
     XrInstance m_xrInstance = XR_NULL_HANDLE;
     std::vector<const char*> m_activeAPILayers = {};
     std::vector<const char*> m_activeInstanceExtensions = {};
@@ -1105,31 +911,13 @@ private:
 
     Config config;
 
-    VRCamera cameras;
+    std::unique_ptr<VRCamera> cameras;
     std::unique_ptr<Scene> scene;
-    VideoTexture* videoTexture;
-
-    pose_id_t poseID = -1;
-    pose_id_t prevPoseID = -1;
-
-    PoseStreamer* poseStreamer;
-    Pose currentFramePose;
-    double elapedTime;
-    Shader* atwShader;
-    bool atwEnabled = true;
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.6f;
 
     XrActionSet m_actionSet;
-    // Actions.
-    XrAction m_clickAction;
-    // The realtime states of these actions.
-    XrActionStateBoolean m_clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
-    // The haptic output action for grabbing cubes.
-    XrAction m_buzzAction;
-    // The current haptic output value for each controller.
-    float m_buzz[2] = {0, 0};
     // The action for getting the hand or controller position and orientation.
     XrAction m_palmPoseAction;
     // The XrPaths for left and right hand hands or controllers.
@@ -1140,3 +928,5 @@ private:
     // The current poses obtained from the XrSpaces.
     Node m_handNodes[2];
 };
+
+#endif // OPENXR_APP_H
