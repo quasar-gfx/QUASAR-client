@@ -1,4 +1,6 @@
-#include <ATWClient.h>
+// #include <ATWClient.h>
+//#include <MeshWarpClient.h>
+#include <MeshWarpClientLive.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
@@ -7,7 +9,9 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput; // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
     XR_LOG("Starting QuestClient...");
 
-    ATWClient app(apiType);
+    // ATWClient app(apiType);
+    //MeshWarpClient app(apiType);
+    MeshWarpClientLive app(apiType);
     app.Run();
 }
 
