@@ -1,5 +1,5 @@
-#ifndef ATW_CLIENT_H
-#define ATW_CLIENT_H
+#ifndef QUADS_VIEWER_H
+#define QUADS_VIEWER_H
 
 #include <OpenXRApp.h>
 
@@ -12,56 +12,26 @@
 
 #include <PoseStreamer.h>
 #include <VideoTexture.h>
+#include <QuadMaterial.h>
 
-#include <shaders_common.h>
-
-class ATWClient final : public OpenXRApp {
+class QuadsViewer final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.4.140";
-    std::string poseURL = serverIP + ":54321";
-    std::string videoURL = "0.0.0.0:12345";
+    std::string verticesFileName = "quads/vertices.bin";
+    std::string indicesFileName = "quads/indices.bin";
+    std::string colorFileName = "quads/color.png";
 
 public:
-    ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
-    ~ATWClient() = default;
+    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    ~QuadsViewer() = default;
 
 private:
     void CreateResources() override {
-        atwShader = new Shader({
-            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
-            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
-            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
-            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
-        });
-
-        videoTexture = new VideoTexture({
-            .width = 2048,
-            .height = 1024,
-            .internalFormat = GL_SRGB8,
-            .format = GL_RGB,
-            .type = GL_UNSIGNED_BYTE,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
+        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 1.0f
         });
         scene->setAmbientLight(ambientLight);
-
-        // add a screen for the video.
-        Cube* videoScreen = new Cube({
-            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
-        });
-        Node* screen = new Node(videoScreen);
-        screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
-        screen->frustumCulled = false;
-        scene->addChildNode(screen);
 
         // add the hand nodes.
         Model* leftControllerMesh = new Model({
@@ -78,16 +48,41 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        // add Helmet
-        // Model* helmetMesh = new Model({
-        //     .flipTextures = true,
-        //     .IBL = 0,
-        //     .path = "models/DamagedHelmet.glb"
-        // });
-        // Node *helmetNode = new Node(helmetMesh);
-        // helmetNode->setPosition(glm::vec3(0.0f, 0.0f, -0.5f));
-        // helmetNode->setScale(glm::vec3(0.1f, 0.1f, 0.1f));
-        // scene->addChildNode(helmetNode);
+        colorTexture = new Texture({
+            .wrapS = GL_REPEAT,
+            .wrapT = GL_REPEAT,
+            .minFilter = GL_NEAREST,
+            .magFilter = GL_NEAREST,
+            .flipVertically = true,
+            .path = colorFileName
+        });
+
+        auto vertexData = FileIO::loadBinaryFile(verticesFileName);
+        auto indexData = FileIO::loadBinaryFile(indicesFileName);
+
+        std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
+        std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+
+        std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
+        std::memcpy(indices.data(), indexData.data(), indexData.size());
+
+        mesh = new Mesh({
+            .vertices = vertices,
+            .indices = indices,
+            .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
+        });
+        node = new Node(mesh);
+        node->frustumCulled = false;
+        node->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
+        scene->addChildNode(node);
+
+        // nodeWireframe = new Node(mesh);
+        // nodeWireframe->frustumCulled = false;
+        // nodeWireframe->wireframe = true;
+        // nodeWireframe->visible = false;
+        // nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        // nodeWireframe->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
+        // scene->addChildNode(nodeWireframe);
     }
 
     void CreateActionSet() override {
@@ -143,72 +138,22 @@ private:
             if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
-                atwEnabled = !atwEnabled;
+                // nodeWireframe->visible = !nodeWireframe->visible;
             }
         }
     }
 
     void OnRender() override {
-        // send pose
-        poseStreamer->sendPose();
-
-        // render video to VideoTexture
-        videoTexture->bind();
-        poseID = videoTexture->draw();
-        videoTexture->unbind();
-
-        // set uniforms for both eyes
-        atwShader->bind();
-        atwShader->setBool("atwEnabled", atwEnabled);
-
-        atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras->left.getProjectionMatrix()));
-        atwShader->setMat4("projectionInverseRight", glm::inverse(cameras->right.getProjectionMatrix()));
-
-        atwShader->setMat4("viewInverseLeft", glm::inverse(cameras->left.getViewMatrix()));
-        atwShader->setMat4("viewInverseRight", glm::inverse(cameras->right.getViewMatrix()));
-
-        double elapsedTime;
-        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapsedTime)) {
-            atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
-            atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
-
-            atwShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
-            atwShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
-
-            poseStreamer->removePosesLessThan(poseID);
-        }
-
-        atwShader->setTexture("videoTexture", *videoTexture, 0);
-
-        // draw both eyes in a single pass
-        m_graphicsAPI->drawToScreen(*atwShader);
-
-        prevPoseID = poseID;
-
-        // draw objects (uncomment to debug)
-        // m_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        if (glm::abs(elapsedTime) > 1e-5f) {
-            XR_LOG("E2E Latency: " << elapsedTime << "ms");
-        }
+        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
     }
 
     void DestroyResources() override {
-        delete videoTexture;
-        delete atwShader;
     }
 
-    // Shader for the ATW effect.
-    Shader* atwShader;
-    bool atwEnabled = true;
-
-    VideoTexture* videoTexture;
-
-    // Pose streaming.
-    pose_id_t poseID = -1;
-    pose_id_t prevPoseID = -1;
-    std::unique_ptr<PoseStreamer> poseStreamer;
-    Pose currentFramePose;
+    Mesh* mesh;
+    Texture* colorTexture;
+    Node* node;
+    // Node* nodeWireframe;
 
     // Actions.
     XrAction m_clickAction;
@@ -220,4 +165,4 @@ private:
     float m_buzz[2] = {0, 0};
 };
 
-#endif // ATW_CLIENT_H
+#endif // QUADS_VIEWER_H

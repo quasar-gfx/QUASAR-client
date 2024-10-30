@@ -757,15 +757,6 @@ protected:
         m_graphicsAPI->SetViewports(&viewport, 1);
         m_graphicsAPI->SetScissors(&scissor, 1);
 
-        if (m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE) {
-            // VR mode use a background color.
-            scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
-        }
-        else {
-            // In AR mode make the background color black.
-            scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-        }
-
         // update vr cameras
         cameras->setProjectionMatrices({
             gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ),
