@@ -151,6 +151,7 @@ set(COMMON_HDRS
     ${APP_COMMON_DIR}/include/PoseStreamer.h
     ${APP_COMMON_DIR}/include/VideoTexture.h
     ${APP_COMMON_DIR}/include/QuadMaterial.h
+    ${APP_COMMON_DIR}/include/BC4DepthVideoTexture.h
 )
 set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
@@ -159,6 +160,7 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
     ${APP_COMMON_DIR}/src/VideoTexture.cpp
     ${APP_COMMON_DIR}/src/QuadMaterial.cpp
+    ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
 )
 
 # our code
