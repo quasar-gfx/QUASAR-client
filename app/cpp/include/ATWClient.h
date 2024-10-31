@@ -17,7 +17,7 @@
 
 class ATWClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.4.105";//"192.168.1.211";
+    std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 
@@ -29,6 +29,8 @@ public:
 
 private:
     void CreateResources() override {
+        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+
         atwShader = new Shader({
             .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
             .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
