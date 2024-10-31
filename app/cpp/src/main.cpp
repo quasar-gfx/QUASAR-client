@@ -1,6 +1,6 @@
 // #include <ATWClient.h>
-//#include <MeshWarpClient.h>
-#include <MeshWarpClientLive.h>
+//#include <MeshWarpClientStatic.h>
+#include <MeshWarpClient.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
@@ -10,8 +10,8 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     XR_LOG("Starting QuestClient...");
 
     // ATWClient app(apiType);
-    //MeshWarpClient app(apiType);
-    MeshWarpClientLive app(apiType);
+    //MeshWarpClientStatic app(apiType);
+    MeshWarpClient app(apiType);
     app.Run();
 }
 
