@@ -150,7 +150,11 @@ set(COMMON_HDRS
     ${APP_COMMON_DIR}/include/PoseReceiver.h
     ${APP_COMMON_DIR}/include/PoseStreamer.h
     ${APP_COMMON_DIR}/include/VideoTexture.h
+<<<<<<< HEAD
     ${APP_COMMON_DIR}/include/QuadMaterial.h
+=======
+    ${APP_COMMON_DIR}/include/BC4DepthVideoTexture.h
+>>>>>>> 532c237 (mwClient live update)
 )
 set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
@@ -158,7 +162,11 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
     ${APP_COMMON_DIR}/src/VideoTexture.cpp
+<<<<<<< HEAD
     ${APP_COMMON_DIR}/src/QuadMaterial.cpp
+=======
+    ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
+>>>>>>> 532c237 (mwClient live update)
 )
 
 # our code
