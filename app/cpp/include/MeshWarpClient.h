@@ -20,7 +20,7 @@
 
 class MeshWarpClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.4.140";
+    std::string serverIP = "192.168.1.211";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
     std::string depthURL = serverIP + ":65432";
@@ -30,11 +30,11 @@ private:
     float fov = 120.0f;
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
 
+    bool meshWarpEnabled = true;
+
 public:
     MeshWarpClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
-    ~MeshWarpClient() {
-        cleanup();
-    }
+    ~MeshWarpClient() = default
 
 private:
     void CreateResources() override {
@@ -55,8 +55,8 @@ private:
 
         // Initialize BC4 depth texture
         videoTextureDepth = new BC4DepthVideoTexture({
-            .width = windowSize.x/depthFactor,
-            .height = windowSize.y/depthFactor,
+            .width = windowSize.x / depthFactor,
+            .height = windowSize.y / depthFactor,
             .internalFormat = GL_R16F,
             .format = GL_RED,
             .type = GL_FLOAT,
@@ -125,7 +125,11 @@ private:
     }
 
     void CreateActionSet() override {
+        // An Action for clicking on the controller.
         CreateAction(m_clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
+        // An Action for the position of the thumbstick.
+        CreateAction(m_thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
+        // An Action for a vibration output on one or other hand.
         CreateAction(m_buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
@@ -137,6 +141,8 @@ private:
 
         bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/left/input/trigger/value")});
         bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/right/input/trigger/value")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_thumbstickAction, CreateXrPath("/user/hand/left/input/thumbstick")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_thumbstickAction, CreateXrPath("/user/hand/right/input/thumbstick")});
         bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/left/output/haptic")});
         bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/right/output/haptic")});
     }
@@ -149,9 +155,12 @@ private:
             actionStateGetInfo.subactionPath = m_handPaths[i];
             OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]),
                         "Failed to get Boolean State of Click action.");
-        }
 
-        for (int i = 0; i < 2; i++) {
+            actionStateGetInfo.action = m_thumbstickAction;
+            actionStateGetInfo.subactionPath = m_handPaths[i];
+            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]),
+                                                 "Failed to get Vector2f State of Thumbstick action.");
+
             m_buzz[i] *= 0.5f;
             if (m_buzz[i] < 0.01f) {
                 m_buzz[i] = 0.0f;
@@ -178,6 +187,12 @@ private:
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+            }
+
+            if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
+                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f)
+                    cameraPositionOffset += movementSpeed * glm::vec3(m_thumbstickState[i].currentState.x, 0.0f, -m_thumbstickState[i].currentState.y);
+                XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
     }
@@ -239,7 +254,7 @@ private:
         }
     }
 
-    void cleanup() {
+    void DestroyResources() override {
         delete videoTextureColor;
         delete videoTextureDepth;
         delete mesh;
@@ -269,11 +284,18 @@ private:
 
     RenderStats renderStats;
 
-    bool meshWarpEnabled = true;
-
-    XrAction m_clickAction{XR_NULL_HANDLE};
-    XrAction m_buzzAction{XR_NULL_HANDLE};
+    // Actions.
+    XrAction m_clickAction;
+    // The realtime states of these actions.
     XrActionStateBoolean m_clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
+    // The thumbstick input action.
+    XrAction m_thumbstickAction;
+    // The current thumbstick state for each controller.
+    XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
+    float movementSpeed = 0.01f;
+    // The haptic output action for grabbing cubes.
+    XrAction m_buzzAction;
+    // The current haptic output value for each controller.
     float m_buzz[2] = {0, 0};
 };
 

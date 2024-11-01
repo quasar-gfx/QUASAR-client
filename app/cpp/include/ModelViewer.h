@@ -1,38 +1,84 @@
-#ifndef QUADS_VIEWER_H
-#define QUADS_VIEWER_H
+#ifndef MODEL_VIEWER_H
+#define MODEL_VIEWER_H
 
 #include <OpenXRApp.h>
 
 #include <Primatives/Mesh.h>
+#include <Primatives/Cube.h>
 #include <Primatives/Model.h>
 
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
+#include <Lights/DirectionalLight.h>
+#include <Lights/PointLight.h>
 
-#include <PoseStreamer.h>
-#include <VideoTexture.h>
-#include <QuadMaterial.h>
-
-class QuadsViewer final : public OpenXRApp {
+class ModelViewer final : public OpenXRApp {
 private:
-    std::string verticesFileName = "quads/vertices.bin";
-    std::string indicesFileName = "quads/indices.bin";
-    std::string colorFileName = "quads/color.png";
+    unsigned int surfelSize = 2;
+    glm::uvec2 windowSize = glm::uvec2(1024, 1024);
+
+    bool meshWarpEnabled = true;
 
 public:
-    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
-    ~QuadsViewer() = default;
+    ModelViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    ~ModelViewer() = default;
 
 private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
+            .intensity = 0.01f
         });
         scene->setAmbientLight(ambientLight);
 
-        // add the hand nodes.
+        DirectionalLight* directionalLight = new DirectionalLight({
+            .color = glm::vec3(1.0f, 1.0f, 1.0f),
+            .direction = glm::vec3(-0.5f, -1.0f, 0.5f),
+            .intensity = 3.0f
+        });
+        scene->setDirectionalLight(directionalLight);
+
+        PointLight* pointLight1 = new PointLight({
+            .color = glm::vec3(0.0f, 0.0f, 1.0f),
+            .position = glm::vec3(2.0f, 0.0f, 2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight1);
+
+        PointLight* pointLight2 = new PointLight({
+            .color = glm::vec3(0.0f, 1.0f, 0.0f),
+            .position = glm::vec3(2.0f, 0.0f, -2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight2);
+
+        PointLight* pointLight3 = new PointLight({
+            .color = glm::vec3(1.0f, 0.0f, 0.0f),
+            .position = glm::vec3(-2.0f, 0.0f, 2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight3);
+
+        PointLight* pointLight4 = new PointLight({
+            .color = glm::vec3(1.0f, 0.0f, 1.0f),
+            .position = glm::vec3(-2.0f, 0.0f, -2.0f),
+            .intensity = 1.0f,
+            .constant = 1.0f,
+            .linear = 0.09f,
+            .quadratic = 0.032f
+        });
+        scene->addPointLight(pointLight4);
+
+        // add the hand nodes
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -47,41 +93,32 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        colorTexture = new Texture({
-            .wrapS = GL_REPEAT,
-            .wrapT = GL_REPEAT,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST,
-            .flipVertically = true,
-            .path = colorFileName
+        // add floor
+        Cube* floorMesh = new Cube({
+            .material = new PBRMaterial({
+                .albedoTexturePath = "textures/pbr/gold/albedo.png",
+                .normalTexturePath = "textures/pbr/gold/normal.png",
+                .metallicTexturePath = "textures/pbr/gold/metallic.png",
+                .roughnessTexturePath = "textures/pbr/gold/roughness.png",
+                .aoTexturePath = "textures/pbr/gold/ao.png"
+            })
         });
+        Node* floor = new Node(floorMesh);
+        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
+        floor->setScale(glm::vec3(2.5f, 0.05f, 2.5f));
+        floor->frustumCulled = false;
+        scene->addChildNode(floor);
 
-        auto vertexData = FileIO::loadBinaryFile(verticesFileName);
-        auto indexData = FileIO::loadBinaryFile(indicesFileName);
-
-        std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
-        std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
-
-        std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
-        std::memcpy(indices.data(), indexData.data(), indexData.size());
-
-        mesh = new Mesh({
-            .vertices = vertices,
-            .indices = indices,
-            .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
+        // add helmet
+        Model* helmetMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/DamagedHelmet.glb"
         });
-        node = new Node(mesh);
-        node->frustumCulled = false;
-        node->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
-        scene->addChildNode(node);
-
-        // nodeWireframe = new Node(mesh);
-        // nodeWireframe->frustumCulled = false;
-        // nodeWireframe->wireframe = true;
-        // nodeWireframe->visible = false;
-        // nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        // nodeWireframe->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
-        // scene->addChildNode(nodeWireframe);
+        Node* helmet = new Node(helmetMesh);
+        helmet->setPosition(glm::vec3(0.0f, 0.0f, -1.0f));
+        helmet->setScale(glm::vec3(0.25f, 0.25f, 0.25f));
+        scene->addChildNode(helmet);
     }
 
     void CreateActionSet() override {
@@ -113,15 +150,18 @@ private:
         for (int i = 0; i < 2; i++) {
             actionStateGetInfo.action = m_clickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]), "Failed to get Boolean State of Click action.");
+            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]),
+                                                 "Failed to get Boolean State of Click action.");
 
             actionStateGetInfo.action = m_thumbstickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]), "Failed to get Vector2f State of Thumbstick action.");
+            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]),
+                                                 "Failed to get Vector2f State of Thumbstick action.");
 
             m_buzz[i] *= 0.5f;
-            if (m_buzz[i] < 0.01f)
+            if (m_buzz[i] < 0.01f) {
                 m_buzz[i] = 0.0f;
+            }
             XrHapticVibration vibration{XR_TYPE_HAPTIC_VIBRATION};
             vibration.amplitude = m_buzz[i];
             vibration.duration = XR_MIN_HAPTIC_DURATION;
@@ -130,7 +170,8 @@ private:
             XrHapticActionInfo hapticActionInfo{XR_TYPE_HAPTIC_ACTION_INFO};
             hapticActionInfo.action = m_buzzAction;
             hapticActionInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader* )&vibration), "Failed to apply haptic feedback.");
+            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader*)&vibration),
+                        "Failed to apply haptic feedback.");
         }
     }
 
@@ -140,10 +181,12 @@ private:
             // Draw the controllers:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
 
-            if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
+            if (m_clickState[i].isActive == XR_TRUE &&
+                m_clickState[i].currentState == XR_FALSE &&
+                m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
-                // nodeWireframe->visible = !nodeWireframe->visible;
+                meshWarpEnabled = !meshWarpEnabled;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -161,11 +204,6 @@ private:
     void DestroyResources() override {
     }
 
-    Mesh* mesh;
-    Texture* colorTexture;
-    Node* node;
-    // Node* nodeWireframe;
-
     // Actions.
     XrAction m_clickAction;
     // The realtime states of these actions.
@@ -181,4 +219,5 @@ private:
     float m_buzz[2] = {0, 0};
 };
 
-#endif // QUADS_VIEWER_H
+
+#endif // MODEL_VIEWER_H

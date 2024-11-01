@@ -1,6 +1,7 @@
 // #include <ATWClient.h>
+#include <ModelViewer.h>
 // #include <MeshWarpClientStatic.h>
-#include <MeshWarpClient.h>
+// #include <MeshWarpClient.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
@@ -10,8 +11,9 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     XR_LOG("Starting QuestClient...");
 
     // ATWClient app(apiType);
+    ModelViewer app(apiType);
     // MeshWarpClientStatic app(apiType);
-    MeshWarpClient app(apiType);
+    // MeshWarpClient app(apiType);
     app.Run();
 }
 
@@ -26,7 +28,7 @@ void android_main(struct android_app* app) {
     // Without this, there's is no loader and thus our function calls to OpenXR would fail.
     XrInstance m_xrInstance = XR_NULL_HANDLE;  // Dummy XrInstance variable for OPENXR_CHECK macro.
     PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
-    OPENXR_CHECK(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction* )&xrInitializeLoaderKHR), "Failed to get InstanceProcAddr for xrInitializeLoaderKHR.");
+    OPENXR_CHECK(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*)&xrInitializeLoaderKHR), "Failed to get InstanceProcAddr for xrInitializeLoaderKHR.");
     if (!xrInitializeLoaderKHR) {
         return;
     }
@@ -35,7 +37,7 @@ void android_main(struct android_app* app) {
     XrLoaderInitInfoAndroidKHR loaderInitializeInfoAndroid{XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR};
     loaderInitializeInfoAndroid.applicationVM = app->activity->vm;
     loaderInitializeInfoAndroid.applicationContext = app->activity->clazz;
-    OPENXR_CHECK(xrInitializeLoaderKHR((XrLoaderInitInfoBaseHeaderKHR* )&loaderInitializeInfoAndroid), "Failed to initialize Loader for Android.");
+    OPENXR_CHECK(xrInitializeLoaderKHR((XrLoaderInitInfoBaseHeaderKHR*)&loaderInitializeInfoAndroid), "Failed to initialize Loader for Android.");
 
     // Set userData and Callback for PollSystemEvents().
     app->userData = &OpenXRApp::androidAppState;

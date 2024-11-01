@@ -5,6 +5,7 @@
 
 #include <OpenGLAppConfig.h>
 #include <OpenGLESRenderer.h>
+
 #include <Scene.h>
 #include <Cameras/VRCamera.h>
 #include <Utils/FileIO.h>
@@ -168,9 +169,9 @@ protected:
         OPENXR_CHECK(xrGetInstanceProperties(m_xrInstance, &instanceProperties), "Failed to get InstanceProperties.");
 
         XR_LOG("OpenXR Runtime: " << instanceProperties.runtimeName << " - "
-                                    << XR_VERSION_MAJOR(instanceProperties.runtimeVersion) << "."
-                                    << XR_VERSION_MINOR(instanceProperties.runtimeVersion) << "."
-                                    << XR_VERSION_PATCH(instanceProperties.runtimeVersion));
+                                  << XR_VERSION_MAJOR(instanceProperties.runtimeVersion) << "."
+                                  << XR_VERSION_MINOR(instanceProperties.runtimeVersion) << "."
+                                  << XR_VERSION_PATCH(instanceProperties.runtimeVersion));
     }
 
     void GetSystemID() {
@@ -715,6 +716,16 @@ protected:
         // Resize the layer projection views to match the view count. The layer projection views are used in the layer projection.
         renderLayerInfo.layerProjectionViews.resize(viewCount, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW});
 
+        for (uint32_t i = 0; i < viewCount; i++) {
+            // Apply the camera position offset to the view.
+            views[i].pose.position.x += cameraPositionOffset.x;
+            views[i].pose.position.y += cameraPositionOffset.y;
+            views[i].pose.position.z += cameraPositionOffset.z;
+        }
+        for (int i = 0; i < 2; i++) {
+            m_handNodes[i].setPosition(m_handNodes[i].getPosition() + cameraPositionOffset);
+        }
+
         // Acquire and wait for an image from the swapchains.
         // Get the image index of an image in the swapchains.
         // The timeout is infinite.
@@ -904,6 +915,8 @@ protected:
 
     std::unique_ptr<VRCamera> cameras;
     std::unique_ptr<Scene> scene;
+
+    glm::vec3 cameraPositionOffset{0.0f, 0.0f, 0.0f};
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
     float m_viewHeightM = 1.6f;
