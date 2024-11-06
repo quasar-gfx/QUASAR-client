@@ -22,6 +22,7 @@ private:
     std::string videoURL = "0.0.0.0:12345";
 
     std::string videoFormat = "mpegts";
+    glm::uvec2 videoSize = glm::uvec2(2048, 1080);
 
 public:
     ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -39,8 +40,8 @@ private:
         });
 
         videoTexture = new VideoTexture({
-            .width = 2048,
-            .height = 1024,
+            .width = videoSize.x,
+            .height = videoSize.y,
             .internalFormat = GL_SRGB8,
             .format = GL_RGB,
             .type = GL_UNSIGNED_BYTE,

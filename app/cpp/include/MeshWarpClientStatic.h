@@ -184,8 +184,8 @@ private:
         genMeshFromBC4Shader->setMat4("projection", remoteCamera->getProjectionMatrix());
         genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera->getProjectionMatrix()));
         genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(remoteCamera->getViewMatrix()));
-        genMeshFromBC4Shader->setFloat("near", remoteCamera->near);
-        genMeshFromBC4Shader->setFloat("far", remoteCamera->far);
+        genMeshFromBC4Shader->setFloat("near", remoteCamera->getNear());
+        genMeshFromBC4Shader->setFloat("far", remoteCamera->getFar());
 
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);

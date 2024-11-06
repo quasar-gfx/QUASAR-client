@@ -28,7 +28,7 @@ private:
     unsigned int surfelSize = 1;
     unsigned int depthFactor = 8;
     float fov = 120.0f;
-    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    glm::uvec2 videoSize = glm::uvec2(1920, 1080);
 
     bool meshWarpEnabled = true;
 
@@ -42,8 +42,8 @@ private:
 
         // Initialize video texture for color stream
         videoTextureColor = new VideoTexture({
-            .width = windowSize.x,
-            .height = windowSize.y,
+            .width = videoSize.x,
+            .height = videoSize.y,
             .internalFormat = GL_SRGB8,
             .format = GL_RGB,
             .type = GL_UNSIGNED_BYTE,
@@ -55,8 +55,8 @@ private:
 
         // Initialize BC4 depth texture
         videoTextureDepth = new BC4DepthVideoTexture({
-            .width = windowSize.x / depthFactor,
-            .height = windowSize.y / depthFactor,
+            .width = videoSize.x / depthFactor,
+            .height = videoSize.y / depthFactor,
             .internalFormat = GL_R16F,
             .format = GL_RED,
             .type = GL_FLOAT,
@@ -76,9 +76,9 @@ private:
         poseStreamer = new PoseStreamer(cameras.get(), poseURL);
 
         // Setup scene & mesh
-        glm::uvec2 adjustedWindowSize = windowSize / surfelSize;
-        unsigned int maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
-        unsigned int numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
+        glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
+        unsigned int maxVertices = adjustedvideoSize.x * adjustedvideoSize.y;
+        unsigned int numTriangles = (adjustedvideoSize.x-1) * (adjustedvideoSize.y-1) * 2;
         unsigned int maxIndices = numTriangles * 3;
 
         mesh = new Mesh({
@@ -214,7 +214,7 @@ private:
         genMeshFromBC4Shader->bind();
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
-        genMeshFromBC4Shader->setVec2("screenSize", windowSize);
+        genMeshFromBC4Shader->setVec2("screenSize", videoSize);
         genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(videoTextureDepth->width, videoTextureDepth->height));
         genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
 
@@ -228,8 +228,8 @@ private:
             genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(currentDepthFramePose.mono.view));
         }
 
-        genMeshFromBC4Shader->setFloat("near", remoteCamera.near);
-        genMeshFromBC4Shader->setFloat("far", remoteCamera.far);
+        genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
+        genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
 
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
