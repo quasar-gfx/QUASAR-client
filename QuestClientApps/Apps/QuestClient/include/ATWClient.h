@@ -22,7 +22,7 @@ private:
     std::string videoURL = "0.0.0.0:12345";
 
     std::string videoFormat = "mpegts";
-    glm::uvec2 videoSize = glm::uvec2(2048, 1080);
+    glm::uvec2 videoSize = glm::uvec2(2048, 1024);
 
 public:
     ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}

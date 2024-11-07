@@ -1,3 +1,3 @@
-[submodule "app/cpp/libs/opengl-remote-rendering"]
-	path = app/cpp/libs/opengl-remote-rendering
+[submodule "QuestClientApps/libs/opengl-remote-rendering"]
+	path = QuestClientApps/libs/opengl-remote-rendering
 	url = git@github.com:EdwardLu2018/opengl-remote-rendering.git
