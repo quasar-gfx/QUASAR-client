@@ -1,5 +1,5 @@
-#ifndef MODEL_VIEWER_H
-#define MODEL_VIEWER_H
+#ifndef SCENE_VIEWER_H
+#define SCENE_VIEWER_H
 
 #include <OpenXRApp.h>
 
@@ -11,7 +11,7 @@
 #include <Lights/DirectionalLight.h>
 #include <Lights/PointLight.h>
 
-class ModelViewer final : public OpenXRApp {
+class SceneViewer final : public OpenXRApp {
 private:
     unsigned int surfelSize = 2;
     glm::uvec2 windowSize = glm::uvec2(1024, 1024);
@@ -19,8 +19,8 @@ private:
     bool meshWarpEnabled = true;
 
 public:
-    ModelViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
-    ~ModelViewer() = default;
+    SceneViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    ~SceneViewer() = default;
 
 private:
     void CreateResources() override {
@@ -190,8 +190,12 @@ private:
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
-                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f)
-                    cameraPositionOffset += movementSpeed * glm::vec3(m_thumbstickState[i].currentState.x, 0.0f, -m_thumbstickState[i].currentState.y);
+                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
+                    const glm::vec3 &forward = cameras.get()->left.getForwardVector();
+                    const glm::vec3 &right = cameras.get()->left.getRightVector();
+                    cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
+                    cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
+                }
                 XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
@@ -212,7 +216,7 @@ private:
     XrAction m_thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.01f;
+    float movementSpeed = 0.02f;
     // The haptic output action for grabbing cubes.
     XrAction m_buzzAction;
     // The current haptic output value for each controller.
@@ -220,4 +224,4 @@ private:
 };
 
 
-#endif // MODEL_VIEWER_H
+#endif // SCENE_VIEWER_H

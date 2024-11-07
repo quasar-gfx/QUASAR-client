@@ -746,7 +746,7 @@ protected:
         GraphicsAPI::Viewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
         GraphicsAPI::Rect2D scissor = {{(int32_t)0, (int32_t)0}, {width, height}};
         float nearZ = 0.05f;
-        float farZ = 100.0f;
+        float farZ = 1000.0f;
 
         // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view.
         // This also associates the swapchain image with this layer projection view.

@@ -17,12 +17,12 @@
 
 class ATWClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.1.211";
+    std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 
-    std::string videoFormat = "mpegts";
-    glm::uvec2 videoSize = glm::uvec2(2048, 1024);
+    std::string videoFormat = "rtp";
+    glm::uvec2 videoSize = glm::uvec2(2688, 1408);
 
 public:
     ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -150,8 +150,12 @@ private:
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
-                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f)
-                    cameraPositionOffset += movementSpeed * glm::vec3(m_thumbstickState[i].currentState.x, 0.0f, -m_thumbstickState[i].currentState.y);
+                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
+                    const glm::vec3 &forward = cameras.get()->left.getForwardVector();
+                    const glm::vec3 &right = cameras.get()->left.getRightVector();
+                    cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
+                    cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
+                }
                 XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
@@ -227,7 +231,7 @@ private:
     XrAction m_thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.01f;
+    float movementSpeed = 0.02f;
     // The haptic output action for grabbing cubes.
     XrAction m_buzzAction;
     // The current haptic output value for each controller.

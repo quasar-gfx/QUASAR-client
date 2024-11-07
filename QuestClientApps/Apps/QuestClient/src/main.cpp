@@ -1,5 +1,5 @@
 #include <ATWClient.h>
-// #include <ModelViewer.h>
+// #include <SceneViewer.h>
 // #include <MeshWarpClientStatic.h>
 // #include <MeshWarpClient.h>
 
@@ -11,7 +11,7 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     XR_LOG("Starting QuestClient...");
 
     ATWClient app(apiType);
-    // ModelViewer app(apiType);
+    // SceneViewer app(apiType);
     // MeshWarpClientStatic app(apiType);
     // MeshWarpClient app(apiType);
     app.Run();
