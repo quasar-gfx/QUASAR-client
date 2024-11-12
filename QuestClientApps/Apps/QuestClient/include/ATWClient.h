@@ -17,12 +17,12 @@
 
 class ATWClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.4.140";
+    std::string serverIP = "192.168.1.211";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 
-    std::string videoFormat = "rtp";
-    glm::uvec2 videoSize = glm::uvec2(2688, 1408);
+    std::string videoFormat = "mpegts";
+    glm::uvec2 videoSize = glm::uvec2(2048, 1024);
 
 public:
     ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
