@@ -17,7 +17,7 @@
 
 class ATWClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.1.211";
+    std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 

@@ -30,14 +30,21 @@ set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
 set(RENDERER_LIBS )
 
 # add third party libraries
+# assimp
 add_subdirectory(${EXTERNAL_DIR}/libassimp/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
 
+# stb
 add_subdirectory(${EXTERNAL_DIR}/stb/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} stb)
 
+# jsmn
 add_subdirectory(${EXTERNAL_DIR}/jsmn/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
+
+# lz4
+add_subdirectory(${EXTERNAL_DIR}/lz4_stream)
+set(RENDERER_LIBS ${RENDERER_LIBS} lz4_stream)
 
 # for FetchContent_Declare() and FetchContent_MakeAvailable()
 include(FetchContent)
@@ -113,6 +120,22 @@ foreach(LIB_NAME ${FFMPEG_LIBS})
     add_library(${LIB_NAME} SHARED IMPORTED)
     set_target_properties(${LIB_NAME} PROPERTIES IMPORTED_LOCATION ${FFMPEG_LIBS_DIR}/lib${LIB_NAME}.so)
 endforeach()
+
+include_directories(
+    # Renderer related includes
+    ${RENDERER_DIR}/include
+    ${OGL_REMOTE_RENDERING_DIR}/apps/Common/include
+    ${EXTERNAL_DIR}
+    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/renderer/shaders
+    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
+
+    # For ffmpeg-android
+    ${FFMPEG_INCLUDE_DIR}/${ANDROID_ABI}
+
+    # From OpenXR repo
+    ${openxr_SOURCE_DIR}/src/common
+    ${openxr_SOURCE_DIR}/external/include
+)
 
 add_definitions(-DVR)
 

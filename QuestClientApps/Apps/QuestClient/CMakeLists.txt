@@ -11,20 +11,6 @@ add_library(${TARGET} SHARED ${SRCS} ${RENDERER_SRCS} ${COMMON_SRCS})
 target_include_directories(${TARGET} PRIVATE
     # In this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-
-    # Renderer related includes
-    ${RENDERER_DIR}/include
-    ${OGL_REMOTE_RENDERING_DIR}/apps/Common/include
-    ${EXTERNAL_DIR}
-    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/renderer/shaders
-    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
-
-    # For ffmpeg-android
-    ${FFMPEG_INCLUDE_DIR}/${ANDROID_ABI}
-
-    # From OpenXR repo
-    ${openxr_SOURCE_DIR}/src/common
-    ${openxr_SOURCE_DIR}/external/include
 )
 
 add_dependencies(${TARGET} shaders_builtin shaders_common)
