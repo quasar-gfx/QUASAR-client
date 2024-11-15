@@ -57,7 +57,7 @@ private:
         videoTextureDepth = new BC4DepthVideoTexture({
             .width = videoSize.x / depthFactor,
             .height = videoSize.y / depthFactor,
-            .internalFormat = GL_R16F,
+            .internalFormat = GL_R32F,
             .format = GL_RED,
             .type = GL_FLOAT,
             .wrapS = GL_CLAMP_TO_EDGE,

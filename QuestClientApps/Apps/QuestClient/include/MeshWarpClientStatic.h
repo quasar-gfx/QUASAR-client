@@ -55,7 +55,7 @@ private:
         colorTexture = new Texture({
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR_MIPMAP_LINEAR,
+            .minFilter = GL_LINEAR,
             .magFilter = GL_LINEAR,
             .flipVertically = true,
             .gammaCorrected = true,
