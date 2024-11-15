@@ -79,9 +79,9 @@ protected:
         // Add additional instance layers/extensions that the application wants.
         // Add both required and requested instance extensions.
         {
-            m_instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
             // Ensure m_apiType is already defined when we call this line.
             m_instanceExtensions.push_back(GetGraphicsAPIInstanceExtensionString(m_apiType));
+            m_instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
         // Get all the API Layers from the OpenXR runtime.

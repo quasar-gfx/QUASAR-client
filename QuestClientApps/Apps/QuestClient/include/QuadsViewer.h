@@ -9,15 +9,12 @@
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
-#include <PoseStreamer.h>
-#include <VideoTexture.h>
 #include <QuadMaterial.h>
 
 class QuadsViewer final : public OpenXRApp {
 private:
-    std::string verticesFileName = "quads/vertices.bin";
-    std::string indicesFileName = "quads/indices.bin";
-    std::string colorFileName = "quads/color.png";
+    std::string dataPath = "quadwarp/";
+    unsigned int numAdditionalViews = 0;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -47,41 +44,52 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        colorTexture = new Texture({
-            .wrapS = GL_REPEAT,
-            .wrapT = GL_REPEAT,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST,
-            .flipVertically = true,
-            .path = colorFileName
-        });
+        unsigned int numViews = 1 + numAdditionalViews;
 
-        auto vertexData = FileIO::loadBinaryFile(verticesFileName);
-        auto indexData = FileIO::loadBinaryFile(indicesFileName);
+        colorTextures.resize(numViews);
+        meshes.resize(numViews);
+        nodes.resize(numViews);
+        for (int view = 0; view < numViews; view++) {
+            std::string viewStr = numAdditionalViews == 0 ? "" : std::to_string(view);
+            std::string colorFileName = dataPath + "color" + viewStr + ".png";
 
-        std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
-        std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+            std::cout << "Loading color texture: " << colorFileName << std::endl;
 
-        std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
-        std::memcpy(indices.data(), indexData.data(), indexData.size());
+            colorTextures[view] = new Texture({
+                .wrapS = GL_REPEAT,
+                .wrapT = GL_REPEAT,
+                .minFilter = GL_NEAREST,
+                .magFilter = GL_NEAREST,
+                .flipVertically = true,
+                .path = colorFileName
+            });
 
-        mesh = new Mesh({
-            .vertices = vertices,
-            .indices = indices,
-            .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
-        });
-        node = new Node(mesh);
-        node->frustumCulled = false;
-        node->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
-        scene->addChildNode(node);
+            std::string verticesFileName = dataPath + "vertices" + viewStr + ".bin";
+            auto vertexData = FileIO::loadBinaryFile(verticesFileName);
 
-        // nodeWireframe = new Node(mesh);
-        // nodeWireframe->frustumCulled = false;
-        // nodeWireframe->wireframe = true;
-        // nodeWireframe->visible = false;
-        // nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        // nodeWireframe->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
-        // scene->addChildNode(nodeWireframe);
+            std::cout << "Loading vertices: " << verticesFileName << std::endl;
+
+            std::string indicesFileName = dataPath + "indices" + viewStr + ".bin";
+            auto indexData = FileIO::loadBinaryFile(indicesFileName);
+
+            std::cout << "Loading indices: " << indicesFileName << std::endl;
+
+            std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
+            std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+
+            std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
+            std::memcpy(indices.data(), indexData.data(), indexData.size());
+
+            meshes[view] = new Mesh({
+                .vertices = vertices,
+                .indices = indices,
+                .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] }),
+            });
+            nodes[view] = new Node(meshes[view]);
+            nodes[view]->frustumCulled = false;
+            nodes[view]->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
+            scene->addChildNode(nodes[view]);
+        }
     }
 
     void CreateActionSet() override {
@@ -143,7 +151,6 @@ private:
             if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
-                // nodeWireframe->visible = !nodeWireframe->visible;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -163,12 +170,20 @@ private:
     }
 
     void DestroyResources() override {
+        for (auto mesh : meshes) {
+            delete mesh;
+        }
+        for (auto texture : colorTextures) {
+            delete texture;
+        }
+        for (auto node : nodes) {
+            delete node;
+        }
     }
 
-    Mesh* mesh;
-    Texture* colorTexture;
-    Node* node;
-    // Node* nodeWireframe;
+    std::vector<Mesh*> meshes;
+    std::vector<Texture*> colorTextures;
+    std::vector<Node*> nodes;
 
     // Actions.
     XrAction m_clickAction;

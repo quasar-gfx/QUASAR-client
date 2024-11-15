@@ -2,6 +2,7 @@
 // #include <SceneViewer.h>
 // #include <MeshWarpClientStatic.h>
 // #include <MeshWarpClient.h>
+// #include <QuadsViewer.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
@@ -14,6 +15,7 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     // SceneViewer app(apiType);
     // MeshWarpClientStatic app(apiType);
     // MeshWarpClient app(apiType);
+    // QuadsViewer app(apiType);
     app.Run();
 }
 
