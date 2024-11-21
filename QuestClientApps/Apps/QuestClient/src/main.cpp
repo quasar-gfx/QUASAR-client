@@ -1,5 +1,5 @@
-#include <ATWClient.h>
 // #include <SceneViewer.h>
+#include <ATWClient.h>
 // #include <MeshWarpClientStatic.h>
 // #include <MeshWarpClient.h>
 // #include <QuadsViewer.h>
@@ -11,8 +11,8 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput; // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
     XR_LOG("Starting QuestClient...");
 
-    ATWClient app(apiType);
     // SceneViewer app(apiType);
+    ATWClient app(apiType);
     // MeshWarpClientStatic app(apiType);
     // MeshWarpClient app(apiType);
     // QuadsViewer app(apiType);
@@ -49,5 +49,5 @@ void android_main(struct android_app* app) {
     FileIO::registerIOSystem(app->activity);
 
     OpenXRApp::androidApp = app;
-    OpenXRApp_Main(XR_TUTORIAL_GRAPHICS_API);
+    OpenXRApp_Main(QUEST_CLIENT_GRAPHICS_API);
 }

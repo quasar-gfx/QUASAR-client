@@ -635,6 +635,8 @@ protected:
             imageViewCI.layerCount = viewCount;
             m_depthSwapchainInfo.imageViews.push_back(m_graphicsAPI->CreateImageView(imageViewCI));
         }
+
+        XR_LOG("Created swapchains with reccomended resolution: " << viewConfigurationView.recommendedImageRectWidth << "x" << viewConfigurationView.recommendedImageRectHeight);
     }
 
     void DestroySwapchains() {
