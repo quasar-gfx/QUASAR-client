@@ -3,8 +3,8 @@
 
 #include <OpenXRApp.h>
 
-#include <Primatives/Mesh.h>
-#include <Primatives/Model.h>
+#include <Primitives/Mesh.h>
+#include <Primitives/Model.h>
 
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>

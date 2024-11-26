@@ -3,8 +3,8 @@
 
 #include <OpenXRApp.h>
 
-#include <Primatives/Mesh.h>
-#include <Primatives/Cube.h>
+#include <Primitives/Mesh.h>
+#include <Primitives/Cube.h>
 #include <Materials/UnlitMaterial.h>
 
 #include <Cameras/PerspectiveCamera.h>
@@ -16,7 +16,7 @@
 
 #include <shaders_common.h>
 
-#define THREADS_PER_LOCALGROUP 16
+#define THREADS_PER_LOCALGROUP 64
 
 class MeshWarpClient final : public OpenXRApp {
 private:

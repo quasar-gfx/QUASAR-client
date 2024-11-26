@@ -1,6 +1,6 @@
 #include <Shaders/Shader.h>
-#include <Primatives/Mesh.h>
-#include <Primatives/Model.h>
+#include <Primitives/Mesh.h>
+#include <Primitives/Model.h>
 
 #include <OpenGLESRenderer.h>
 

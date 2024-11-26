@@ -84,10 +84,10 @@ set(RENDERER_SRCS
     ${RENDERER_DIR}/src/Materials/DirShadowMapMaterial.cpp
     ${RENDERER_DIR}/src/Materials/PointShadowMapMaterial.cpp
     ${RENDERER_DIR}/src/Renderers/OpenGLRenderer.cpp
-    ${RENDERER_DIR}/src/Primatives/Entity.cpp
-    ${RENDERER_DIR}/src/Primatives/Mesh.cpp
-    ${RENDERER_DIR}/src/Primatives/Model.cpp
-    ${RENDERER_DIR}/src/Primatives/Node.cpp
+    ${RENDERER_DIR}/src/Primitives/Entity.cpp
+    ${RENDERER_DIR}/src/Primitives/Mesh.cpp
+    ${RENDERER_DIR}/src/Primitives/Model.cpp
+    ${RENDERER_DIR}/src/Primitives/Node.cpp
     ${RENDERER_DIR}/src/Scene.cpp
     ${RENDERER_DIR}/src/SceneLoader.cpp
     ${RENDERER_DIR}/src/Shaders/ComputeShader.cpp
