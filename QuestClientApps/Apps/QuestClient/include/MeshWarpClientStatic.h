@@ -14,7 +14,7 @@
 
 #include <shaders_common.h>
 
-#define THREADS_PER_LOCALGROUP 64
+#define THREADS_PER_LOCALGROUP 32
 
 class MeshWarpClientStatic final : public OpenXRApp {
 private:
@@ -59,7 +59,7 @@ private:
             .magFilter = GL_LINEAR,
             .flipVertically = true,
             .gammaCorrected = true,
-            .path = "static/color.png"
+            .path = "meshwarp/color.png"
         });
 
         // remote camera
@@ -67,7 +67,7 @@ private:
         remoteCamera->updateViewMatrix();
 
         // Load BC4 depth buffer
-        auto depthData = FileIO::loadBinaryFile("static/depth.bc4");
+        auto depthData = FileIO::loadBinaryFile("meshwarp/depth.bc4");
 
         bc4BufferData = new Buffer<BC4DepthVideoTexture::Block>(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, windowSize.x/8*windowSize.y/8, reinterpret_cast<BC4DepthVideoTexture::Block*>(depthData.data()));
 

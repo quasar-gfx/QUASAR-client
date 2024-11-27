@@ -16,8 +16,6 @@
 
 #include <shaders_common.h>
 
-#define THREADS_PER_LOCALGROUP 64
-
 class MeshWarpClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";
@@ -33,12 +31,17 @@ private:
     bool meshWarpEnabled = true;
 
 public:
-    MeshWarpClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    MeshWarpClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(videoSize.x, videoSize.y) {}
     ~MeshWarpClient() = default;
 
 private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+
+        AmbientLight* ambientLight = new AmbientLight({
+            .intensity = 0.05f
+        });
+        scene->setAmbientLight(ambientLight);
 
         // Initialize video texture for color stream
         videoTextureColor = new VideoTexture({
@@ -66,16 +69,14 @@ private:
             .magFilter = GL_NEAREST
         }, depthURL);
 
-
         // remote camera
-        remoteCamera = PerspectiveCamera(videoTextureColor->width, videoTextureColor->height);
         remoteCamera.setFovyDegrees(fov);
         remoteCamera.updateViewMatrix();
 
         // Initialize pose streamer
         poseStreamer = new PoseStreamer(cameras.get(), poseURL);
 
-        // Setup scene & mesh
+        // Setup scene and mesh
         glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
         unsigned int maxVertices = adjustedvideoSize.x * adjustedvideoSize.y;
         unsigned int numTriangles = (adjustedvideoSize.x-1) * (adjustedvideoSize.y-1) * 2;
@@ -99,9 +100,9 @@ private:
         nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(nodeWireframe);
 
-        // add a screen for the video.
+        // // add a screen for the video.
         // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
+        //     .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
         // });
         // Node* screen = new Node(videoScreen);
         // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
@@ -116,12 +117,6 @@ private:
                 "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
             }
         });
-
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.05f
-        });
-        scene->setAmbientLight(ambientLight);
-
     }
 
     void CreateActionSet() override {
@@ -277,8 +272,6 @@ private:
     Pose currentColorFramePose, currentDepthFramePose;
 
     PerspectiveCamera remoteCamera;
-
-    Texture* colorTexture;
 
     Mesh* mesh;
     Node* node;

@@ -5,19 +5,24 @@
 
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
+#include <Primitives/Cube.h>
 
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
 #include <QuadMaterial.h>
+#include <MeshFromQuads.h>
 
 class QuadsViewer final : public OpenXRApp {
 private:
     std::string dataPath = "quadwarp/";
     unsigned int numAdditionalViews = 0;
 
+    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    float loadMesh = true;
+
 public:
-    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType), meshFromQuads(windowSize), remoteCamera(windowSize.x, windowSize.y) {}
     ~QuadsViewer() = default;
 
 private:
@@ -44,6 +49,15 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
+        remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
+        remoteCamera.updateViewMatrix();
+
+        unsigned int maxQuads = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+        Buffer<unsigned int> inputNormalSphericalsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
+        Buffer<float> inputDepthsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
+        Buffer<unsigned int> inputUVsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
+        Buffer<unsigned int> inputOffsetSizeFlattenedsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
+
         unsigned int numViews = 1 + numAdditionalViews;
 
         colorTextures.resize(numViews);
@@ -52,8 +66,6 @@ private:
         for (int view = 0; view < numViews; view++) {
             std::string viewStr = numAdditionalViews == 0 ? "" : std::to_string(view);
             std::string colorFileName = dataPath + "color" + viewStr + ".png";
-
-            std::cout << "Loading color texture: " << colorFileName << std::endl;
 
             colorTextures[view] = new Texture({
                 .wrapS = GL_REPEAT,
@@ -64,27 +76,86 @@ private:
                 .path = colorFileName
             });
 
-            std::string verticesFileName = dataPath + "vertices" + viewStr + ".bin";
-            auto vertexData = FileIO::loadBinaryFile(verticesFileName);
+            // // add a screen for the texture.
+            // Cube* videoScreen = new Cube({
+            //     .material = new UnlitMaterial({ .baseColorTexture = colorTextures[view] }),
+            // });
+            // Node* screen = new Node(videoScreen);
+            // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+            // screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
+            // screen->frustumCulled = false;
+            // scene->addChildNode(screen);
 
-            std::cout << "Loading vertices: " << verticesFileName << std::endl;
+            if (loadMesh) {
+                std::string verticesFileName = dataPath + "vertices" + viewStr + ".bin";
+                std::string indicesFileName = dataPath + "indices" + viewStr + ".bin";
 
-            std::string indicesFileName = dataPath + "indices" + viewStr + ".bin";
-            auto indexData = FileIO::loadBinaryFile(indicesFileName);
+                auto vertexData = FileIO::loadBinaryFile(verticesFileName);
+                auto indexData = FileIO::loadBinaryFile(indicesFileName);
 
-            std::cout << "Loading indices: " << indicesFileName << std::endl;
+                std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
+                std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
 
-            std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
-            std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+                std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
+                std::memcpy(indices.data(), indexData.data(), indexData.size());
 
-            std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
-            std::memcpy(indices.data(), indexData.data(), indexData.size());
+                meshes[view] = new Mesh({
+                    .vertices = vertices,
+                    .indices = indices,
+                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
+                });
+            }
+            else {
+                std::string quadProxiesFileName = dataPath + "quads" + viewStr + ".bin";
+                auto quadProxiesData = FileIO::loadBinaryFile(quadProxiesFileName);
 
-            meshes[view] = new Mesh({
-                .vertices = vertices,
-                .indices = indices,
-                .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] }),
-            });
+                // first uint in the file is the number of proxies
+                unsigned int numProxies = *reinterpret_cast<unsigned int*>(quadProxiesData.data());
+                unsigned int bufferOffset = sizeof(unsigned int);
+
+                meshes[view] = new Mesh({
+                    .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
+                    .numIndices = numProxies * NUM_SUB_QUADS * 2 * 3,
+                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
+                });
+
+                // next batch is the normalSphericals
+                auto normalSphericalsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
+                inputNormalSphericalsBuffer.bind();
+                inputNormalSphericalsBuffer.setData(numProxies, normalSphericalsPtr);
+                bufferOffset += numProxies * sizeof(unsigned int);
+
+                // next batch is the depths
+                auto depthsPtr = reinterpret_cast<float*>(quadProxiesData.data() + bufferOffset);
+                inputDepthsBuffer.bind();
+                inputDepthsBuffer.setData(numProxies, depthsPtr);
+                bufferOffset += numProxies * sizeof(float);
+
+                // next batch is the uvs
+                auto uvsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
+                inputUVsBuffer.bind();
+                inputUVsBuffer.setData(numProxies, uvsPtr);
+                bufferOffset += numProxies * sizeof(unsigned int);
+
+                // last batch is the offsets
+                auto offsetSizeFlattenedsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
+                inputOffsetSizeFlattenedsBuffer.bind();
+                inputOffsetSizeFlattenedsBuffer.setData(numProxies, offsetSizeFlattenedsPtr);
+
+                glm::uvec2 depthBufferSize = 4u * windowSize;
+
+                meshFromQuads.createMeshFromProxies(
+                    numProxies, depthBufferSize, remoteCamera,
+                    inputNormalSphericalsBuffer, inputDepthsBuffer, inputUVsBuffer, inputOffsetSizeFlattenedsBuffer,
+                    *meshes[view]
+                );
+
+                std::cout << "Loaded " << numProxies << " proxies (" << numProxies * NUM_SUB_QUADS * 2 << " triangles)" << std::endl;
+                std::cout << "Time to create mesh: " << meshFromQuads.stats.timeToCreateMeshMs << "ms" << std::endl;
+            }
+        }
+
+        for (int view = 0; view < numViews; view++) {
             nodes[view] = new Node(meshes[view]);
             nodes[view]->frustumCulled = false;
             nodes[view]->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
@@ -184,6 +255,10 @@ private:
     std::vector<Mesh*> meshes;
     std::vector<Texture*> colorTextures;
     std::vector<Node*> nodes;
+
+    PerspectiveCamera remoteCamera;
+
+    MeshFromQuads meshFromQuads;
 
     // Actions.
     XrAction m_clickAction;
