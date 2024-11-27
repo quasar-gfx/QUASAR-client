@@ -19,10 +19,10 @@ private:
     unsigned int numAdditionalViews = 0;
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-    float loadMesh = true;
+    float loadMesh = false;
 
 public:
-    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType), meshFromQuads(windowSize), remoteCamera(windowSize.x, windowSize.y) {}
+    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(windowSize.x, windowSize.y) {}
     ~QuadsViewer() = default;
 
 private:
@@ -51,6 +51,8 @@ private:
 
         remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera.updateViewMatrix();
+
+        meshFromQuads = new MeshFromQuads(windowSize);
 
         unsigned int maxQuads = windowSize.x * windowSize.y * NUM_SUB_QUADS;
         Buffer<unsigned int> inputNormalSphericalsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
@@ -144,14 +146,14 @@ private:
 
                 glm::uvec2 depthBufferSize = 4u * windowSize;
 
-                meshFromQuads.createMeshFromProxies(
+                meshFromQuads->createMeshFromProxies(
                     numProxies, depthBufferSize, remoteCamera,
                     inputNormalSphericalsBuffer, inputDepthsBuffer, inputUVsBuffer, inputOffsetSizeFlattenedsBuffer,
                     *meshes[view]
                 );
 
                 std::cout << "Loaded " << numProxies << " proxies (" << numProxies * NUM_SUB_QUADS * 2 << " triangles)" << std::endl;
-                std::cout << "Time to create mesh: " << meshFromQuads.stats.timeToCreateMeshMs << "ms" << std::endl;
+                std::cout << "Time to create mesh: " << meshFromQuads->stats.timeToCreateMeshMs << "ms" << std::endl;
             }
         }
 
@@ -258,7 +260,7 @@ private:
 
     PerspectiveCamera remoteCamera;
 
-    MeshFromQuads meshFromQuads;
+    MeshFromQuads* meshFromQuads;
 
     // Actions.
     XrAction m_clickAction;
