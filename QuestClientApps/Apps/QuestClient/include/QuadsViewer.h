@@ -149,6 +149,7 @@ private:
                 meshFromQuads->createMeshFromProxies(
                     numProxies, depthBufferSize, remoteCamera,
                     inputNormalSphericalsBuffer, inputDepthsBuffer, inputUVsBuffer, inputOffsetSizeFlattenedsBuffer,
+                    *colorTextures[view],
                     *meshes[view]
                 );
 

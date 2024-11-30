@@ -76,6 +76,7 @@ add_subdirectory(${APP_COMMON_SHADERS_DIR})
 
 # files
 set(RENDERER_SRCS
+    ${RENDERER_DIR}/src/Animation.cpp
     ${RENDERER_DIR}/src/Cameras/VRCamera.cpp
     ${RENDERER_DIR}/src/Cameras/PerspectiveCamera.cpp
     ${RENDERER_DIR}/src/CubeMap.cpp
@@ -98,13 +99,14 @@ set(RENDERER_SRCS
 )
 
 set(COMMON_SRCS
+    ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
     ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
     ${APP_COMMON_DIR}/src/DataReceiverUDP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${APP_COMMON_DIR}/src/MeshFromQuads.cpp
     ${APP_COMMON_DIR}/src/VideoTexture.cpp
     ${APP_COMMON_DIR}/src/QuadMaterial.cpp
-    ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
 )
 
 # FFMPEG-android-maker
