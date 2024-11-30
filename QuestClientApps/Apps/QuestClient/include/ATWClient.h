@@ -72,14 +72,14 @@ private:
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-left.glb"
+            .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-right.glb"
+            .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
     }

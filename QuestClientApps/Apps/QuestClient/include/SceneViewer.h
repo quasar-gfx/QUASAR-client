@@ -26,99 +26,67 @@ private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
+        // add lights
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.01f
+            .intensity = 0.1f
         });
         scene->setAmbientLight(ambientLight);
 
-        DirectionalLight* directionalLight = new DirectionalLight({
+        DirectionalLightCreateParams directionalLightParams{
             .color = glm::vec3(1.0f, 1.0f, 1.0f),
-            .direction = glm::vec3(-0.5f, -1.0f, 0.5f),
-            .intensity = 3.0f
-        });
+            .direction = glm::vec3(0.75f, 0.5f, -5.0f),
+            .distance = 0.5f,
+            .intensity = 1.0f
+        };
+        DirectionalLight* directionalLight = new DirectionalLight(directionalLightParams);
         scene->setDirectionalLight(directionalLight);
 
-        PointLight* pointLight1 = new PointLight({
-            .color = glm::vec3(0.0f, 0.0f, 1.0f),
-            .position = glm::vec3(2.0f, 0.0f, 2.0f),
-            .intensity = 1.0f,
+        PointLightCreateParams pointLightParams{
+            .color = glm::vec3(0.95f, 0.95f, 1.0f),
+            .position = glm::vec3(5.0f, 5.0f, 5.0f),
+            .intensity = 2.5f,
             .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight1);
+            .linear = 0.07f,
+            .quadratic = 0.017f
+        };
+        PointLight* pointLight = new PointLight(pointLightParams);
+        scene->addPointLight(pointLight);
 
-        PointLight* pointLight2 = new PointLight({
-            .color = glm::vec3(0.0f, 1.0f, 0.0f),
-            .position = glm::vec3(2.0f, 0.0f, -2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight2);
+        pointLightParams.position = glm::vec3(-5.0f, 5.0f, 5.0f);
+        pointLight = new PointLight(pointLightParams);
+        scene->addPointLight(pointLight);
 
-        PointLight* pointLight3 = new PointLight({
-            .color = glm::vec3(1.0f, 0.0f, 0.0f),
-            .position = glm::vec3(-2.0f, 0.0f, 2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight3);
+        pointLightParams.position = glm::vec3(5.0f, 5.0f, -5.0f);
+        pointLight = new PointLight(pointLightParams);
+        scene->addPointLight(pointLight);
 
-        PointLight* pointLight4 = new PointLight({
-            .color = glm::vec3(1.0f, 0.0f, 1.0f),
-            .position = glm::vec3(-2.0f, 0.0f, -2.0f),
-            .intensity = 1.0f,
-            .constant = 1.0f,
-            .linear = 0.09f,
-            .quadratic = 0.032f
-        });
-        scene->addPointLight(pointLight4);
+        pointLightParams.position = glm::vec3(-5.0f, 5.0f, -5.0f);
+        pointLight = new PointLight(pointLightParams);
+        scene->addPointLight(pointLight);
 
         // add the hand nodes
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-left.glb"
+            .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
-            .path = "models/oculus-touch-controller-v3-right.glb"
+            .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        // add floor
-        Cube* floorMesh = new Cube({
-            .material = new PBRMaterial({
-                .albedoTexturePath = "textures/pbr/gold/albedo.png",
-                .normalTexturePath = "textures/pbr/gold/normal.png",
-                .metallicTexturePath = "textures/pbr/gold/metallic.png",
-                .roughnessTexturePath = "textures/pbr/gold/roughness.png",
-                .aoTexturePath = "textures/pbr/gold/ao.png"
-            })
-        });
-        Node* floor = new Node(floorMesh);
-        floor->setPosition(glm::vec3(0.0f, -m_viewHeightM, 0.0f));
-        floor->setScale(glm::vec3(2.5f, 0.05f, 2.5f));
-        floor->frustumCulled = false;
-        scene->addChildNode(floor);
-
-        // add helmet
-        Model* helmetMesh = new Model({
-            .flipTextures = true,
+        Model* robotLab = new Model({
             .IBL = 0,
-            .path = "models/DamagedHelmet.glb"
+            .flipTextures = true,
+            .gammaCorrected = true,
+            .path = "models/RobotLab.glb"
         });
-        Node* helmet = new Node(helmetMesh);
-        helmet->setPosition(glm::vec3(0.0f, 0.0f, -1.0f));
-        helmet->setScale(glm::vec3(0.25f, 0.25f, 0.25f));
-        scene->addChildNode(helmet);
+        scene->addChildNode(new Node(robotLab));
+        cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
     }
 
     void CreateActionSet() override {

@@ -131,8 +131,6 @@ public:
     virtual void DestroyImageView(void*& imageView) = 0;
 
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) = 0;
-    virtual void SetViewports(Viewport* viewports, size_t count) = 0;
-    virtual void SetScissors(Rect2D* scissors, size_t count) = 0;
 
     // OpenGLRenderer-related functions:
     virtual void setScreenShaderUniforms(const Shader &screenShader) override = 0;

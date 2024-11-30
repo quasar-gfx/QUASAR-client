@@ -745,10 +745,6 @@ protected:
         // Get the width and height and construct the viewport and scissors.
         const uint32_t &width = m_viewConfigurationViews[0].recommendedImageRectWidth;
         const uint32_t &height = m_viewConfigurationViews[0].recommendedImageRectHeight;
-        GraphicsAPI::Viewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
-        GraphicsAPI::Rect2D scissor = {{(int32_t)0, (int32_t)0}, {width, height}};
-        float nearZ = 0.05f;
-        float farZ = 1000.0f;
 
         // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view.
         // This also associates the swapchain image with this layer projection view.
@@ -765,12 +761,12 @@ protected:
             renderLayerInfo.layerProjectionViews[i].subImage.imageArrayIndex = i;  // Useful for multiview rendering.
         }
 
-        // Render
+        // Prepare to render
+        glViewport(0, 0, width, height);
+        m_graphicsAPI->resize(width, height);
         m_graphicsAPI->SetRenderAttachments(&m_colorSwapchainInfo.imageViews[colorImageIndex], 1, m_depthSwapchainInfo.imageViews[depthImageIndex], width, height);
-        m_graphicsAPI->SetViewports(&viewport, 1);
-        m_graphicsAPI->SetScissors(&scissor, 1);
 
-        // update vr cameras
+        // Update vr cameras
         cameras->setProjectionMatrices({
             gxi::toGLM(views[0].fov, m_apiType, nearZ, farZ),
             gxi::toGLM(views[1].fov, m_apiType, nearZ, farZ)
@@ -912,6 +908,9 @@ protected:
         XrCompositionLayerProjection layerProjection = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
+
+    float nearZ = 0.05f;
+    float farZ = 1000.0f;
 
     Config config;
 

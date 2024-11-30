@@ -169,25 +169,16 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
     }
 }
 
-void OpenGLESRenderer::SetViewports(Viewport *viewports, size_t count) {
-    Viewport viewport = viewports[0];
-    glViewport((GLint)viewport.x, (GLint)viewport.y, (GLsizei)viewport.width, (GLsizei)viewport.height);
-    glDepthRangef(viewport.minDepth, viewport.maxDepth);
-}
-
-void OpenGLESRenderer::SetScissors(Rect2D *scissors, size_t count) {
-    Rect2D scissor = scissors[0];
-    glScissor((GLint)scissor.offset.x, (GLint)scissor.offset.y, (GLsizei)scissor.extent.width, (GLsizei)scissor.extent.height);
-}
-
 RenderStats OpenGLESRenderer::drawObjects(const Scene &scene, const Camera &camera, uint32_t clearMask) {
     pipeline.apply();
 
     RenderStats stats;
 
-    // dont draw shadows on mobile
+    updateDirLightShadow(scene, camera);
+    // point light shadows are not implemented yet
 
     // draw all objects in the scene
+    glViewport(0, 0, width, height); // restore viewport
     stats += GraphicsAPI::drawScene(scene, camera, clearMask);
 
     // draw lights for debugging

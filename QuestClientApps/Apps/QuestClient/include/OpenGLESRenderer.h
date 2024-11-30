@@ -22,8 +22,6 @@ public:
     virtual void DestroyImageView(void*& imageView) override;
 
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) override;
-    virtual void SetViewports(Viewport* viewports, size_t count) override;
-    virtual void SetScissors(Rect2D* scissors, size_t count) override;
 
     // OpenGLRenderer-related functions:
     virtual void setScreenShaderUniforms(const Shader &screenShader) override;
