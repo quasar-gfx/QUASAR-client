@@ -176,7 +176,7 @@ private:
         }
     }
 
-    void OnRender() override {
+    void OnRender(double now, double dt) override {
         genMeshFromBC4Shader->bind();
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);

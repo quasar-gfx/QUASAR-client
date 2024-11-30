@@ -34,9 +34,10 @@ private:
 
         DirectionalLightCreateParams directionalLightParams{
             .color = glm::vec3(1.0f, 1.0f, 1.0f),
-            .direction = glm::vec3(0.75f, 0.5f, -5.0f),
-            .distance = 0.5f,
-            .intensity = 1.0f
+            .direction = glm::vec3(1.0f, 0.3f, -6.0f),
+            .distance = 1.0f,
+            .intensity = 1.25f,
+            .orthoBoxSize = 50.0f
         };
         DirectionalLight* directionalLight = new DirectionalLight(directionalLightParams);
         scene->setDirectionalLight(directionalLight);
@@ -44,7 +45,7 @@ private:
         PointLightCreateParams pointLightParams{
             .color = glm::vec3(0.95f, 0.95f, 1.0f),
             .position = glm::vec3(5.0f, 5.0f, 5.0f),
-            .intensity = 2.5f,
+            .intensity = 2.0f,
             .constant = 1.0f,
             .linear = 0.07f,
             .quadratic = 0.017f
@@ -87,6 +88,21 @@ private:
         });
         scene->addChildNode(new Node(robotLab));
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
+
+        // animations
+        Node* arm = robotLab->findNodeByName("prop_robotArm_body");
+        if (arm) {
+            Animation* animation = new Animation();
+            animation->setRotation(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 360.0, 0.0), 60.0, false, true);
+            arm->animation = animation;
+        }
+
+        Node* vehicle = robotLab->findNodeByName("vehicle_rcFlyer_clean");
+        if (vehicle) {
+            Animation* animation = new Animation();
+            animation->setTranslation(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 5.0, 0.0), 5.0, true, true);
+            vehicle->animation = animation;
+        }
     }
 
     void CreateActionSet() override {
@@ -169,7 +185,8 @@ private:
         }
     }
 
-    void OnRender() override {
+    void OnRender(double now, double dt) override {
+        scene->updateAnimations(dt);
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
     }
 

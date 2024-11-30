@@ -196,7 +196,7 @@ private:
         }
     }
 
-    void OnRender() override {
+    void OnRender(double now, double dt) override {
         // Update pose and stream it
         poseStreamer->sendPose();
 

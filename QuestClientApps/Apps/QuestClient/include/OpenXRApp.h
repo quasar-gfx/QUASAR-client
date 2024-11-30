@@ -659,7 +659,7 @@ protected:
 
     virtual void HandleInteractions() {}
 
-    virtual void OnRender() {}
+    virtual void OnRender(double now, double dt) {}
 
     void RenderFrame() {
         // Get the XrFrameState for timing and rendering info.
@@ -776,7 +776,11 @@ protected:
             glm::inverse(gxi::toGlm(views[1].pose))
         });
 
-        OnRender();
+        double now = renderLayerInfo.predictedDisplayTime / 1e+9; // Convert nanoseconds to seconds.
+        static double lastTime = now;
+        double dt = (now - lastTime);
+        OnRender(now, dt);
+        lastTime = now;
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};

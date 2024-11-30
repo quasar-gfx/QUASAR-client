@@ -239,7 +239,7 @@ private:
         }
     }
 
-    void OnRender() override {
+    void OnRender(double now, double dt) override {
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
     }
 
