@@ -16,6 +16,8 @@
 
 #include <shaders_common.h>
 
+#define THREADS_PER_LOCALGROUP 16
+
 class MeshWarpClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";
@@ -24,7 +26,7 @@ private:
     std::string depthURL = serverIP + ":65432";
 
     unsigned int surfelSize = 1;
-    unsigned int depthFactor = 8;
+    unsigned int depthFactor = 4;
     float fov = 120.0f;
     glm::uvec2 videoSize = glm::uvec2(1920, 1080);
 

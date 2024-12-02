@@ -168,10 +168,10 @@ private:
         // render video to VideoTexture
         videoTexture->bind();
         poseID = videoTexture->draw();
-        videoTexture->unbind();
 
         // set uniforms for both eyes
         atwShader->bind();
+
         atwShader->setBool("atwEnabled", atwEnabled);
 
         atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras->left.getProjectionMatrix()));
