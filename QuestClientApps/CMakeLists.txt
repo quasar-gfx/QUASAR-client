@@ -92,6 +92,7 @@ set(RENDERER_SRCS
     ${RENDERER_DIR}/src/Scene.cpp
     ${RENDERER_DIR}/src/SceneLoader.cpp
     ${RENDERER_DIR}/src/Shaders/ComputeShader.cpp
+    ${RENDERER_DIR}/src/Shaders/ShaderBase.cpp
     ${RENDERER_DIR}/src/Shaders/Shader.cpp
     ${RENDERER_DIR}/src/Texture.cpp
     ${RENDERER_DIR}/src/Utils/FileIO.cpp
