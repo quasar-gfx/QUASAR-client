@@ -10,8 +10,10 @@
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
-#include <QuadMaterial.h>
-#include <MeshFromQuads.h>
+#include <Quads/QuadMaterial.h>
+#include <Quads/QuadsBuffers.h>
+#include <Quads/DepthOffsets.h>
+#include <Quads/MeshFromQuads.h>
 
 class QuadsViewer final : public OpenXRApp {
 private:
@@ -105,8 +107,16 @@ private:
                 });
             }
             else {
+                const glm::uvec2 depthBufferSize = 2u * windowSize;
+                DepthOffsets depthOffsets(depthBufferSize);
+
+                // Load the quad proxies.
                 std::string quadProxiesFileName = dataPath + "quads" + viewStr + ".bin";
                 unsigned int numProxies = quadBuffers.loadFromFile(quadProxiesFileName);
+
+                // Load depth offsets.
+                std::string depthOffsetsFileName = dataPath + "depthOffsets" + viewStr + ".bin";
+                depthOffsets.loadFromFile(depthOffsetsFileName);
 
                 meshes[view] = new Mesh({
                     .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
@@ -114,11 +124,10 @@ private:
                     .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
                 });
 
-                glm::uvec2 depthBufferSize = 4u * windowSize;
-
                 meshFromQuads->createMeshFromProxies(
                     numProxies, depthBufferSize,
-                    remoteCamera, quadBuffers, *colorTextures[view],
+                    remoteCamera, quadBuffers, depthOffsets,
+                    *colorTextures[view],
                     *meshes[view]
                 );
 
