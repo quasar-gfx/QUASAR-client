@@ -55,10 +55,7 @@ private:
         meshFromQuads = new MeshFromQuads(windowSize);
 
         unsigned int maxQuads = windowSize.x * windowSize.y * NUM_SUB_QUADS;
-        Buffer<unsigned int> inputNormalSphericalsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
-        Buffer<float> inputDepthsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
-        Buffer<unsigned int> inputUVsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
-        Buffer<unsigned int> inputOffsetSizeFlattenedsBuffer(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_COPY, maxQuads, nullptr);
+        QuadBuffers quadBuffers(maxQuads);
 
         unsigned int numViews = 1 + numAdditionalViews;
 
@@ -109,11 +106,7 @@ private:
             }
             else {
                 std::string quadProxiesFileName = dataPath + "quads" + viewStr + ".bin";
-                auto quadProxiesData = FileIO::loadBinaryFile(quadProxiesFileName);
-
-                // first uint in the file is the number of proxies
-                unsigned int numProxies = *reinterpret_cast<unsigned int*>(quadProxiesData.data());
-                unsigned int bufferOffset = sizeof(unsigned int);
+                unsigned int numProxies = quadBuffers.loadFromFile(quadProxiesFileName);
 
                 meshes[view] = new Mesh({
                     .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
@@ -121,35 +114,11 @@ private:
                     .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
                 });
 
-                // next batch is the normalSphericals
-                auto normalSphericalsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
-                inputNormalSphericalsBuffer.bind();
-                inputNormalSphericalsBuffer.setData(numProxies, normalSphericalsPtr);
-                bufferOffset += numProxies * sizeof(unsigned int);
-
-                // next batch is the depths
-                auto depthsPtr = reinterpret_cast<float*>(quadProxiesData.data() + bufferOffset);
-                inputDepthsBuffer.bind();
-                inputDepthsBuffer.setData(numProxies, depthsPtr);
-                bufferOffset += numProxies * sizeof(float);
-
-                // next batch is the uvs
-                auto uvsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
-                inputUVsBuffer.bind();
-                inputUVsBuffer.setData(numProxies, uvsPtr);
-                bufferOffset += numProxies * sizeof(unsigned int);
-
-                // last batch is the offsets
-                auto offsetSizeFlattenedsPtr = reinterpret_cast<unsigned int*>(quadProxiesData.data() + bufferOffset);
-                inputOffsetSizeFlattenedsBuffer.bind();
-                inputOffsetSizeFlattenedsBuffer.setData(numProxies, offsetSizeFlattenedsPtr);
-
                 glm::uvec2 depthBufferSize = 4u * windowSize;
 
                 meshFromQuads->createMeshFromProxies(
-                    numProxies, depthBufferSize, remoteCamera,
-                    inputNormalSphericalsBuffer, inputDepthsBuffer, inputUVsBuffer, inputOffsetSizeFlattenedsBuffer,
-                    *colorTextures[view],
+                    numProxies, depthBufferSize,
+                    remoteCamera, quadBuffers, *colorTextures[view],
                     *meshes[view]
                 );
 

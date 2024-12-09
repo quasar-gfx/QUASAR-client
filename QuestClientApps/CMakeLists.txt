@@ -105,6 +105,7 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataReceiverUDP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${APP_COMMON_DIR}/src/QuadsBuffers.cpp
     ${APP_COMMON_DIR}/src/MeshFromQuads.cpp
     ${APP_COMMON_DIR}/src/VideoTexture.cpp
     ${APP_COMMON_DIR}/src/QuadMaterial.cpp
