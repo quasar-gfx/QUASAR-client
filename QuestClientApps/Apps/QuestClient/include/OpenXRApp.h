@@ -3,6 +3,8 @@
 
 #include <map>
 
+#include <spdlog/spdlog.h>
+
 #include <OpenGLAppConfig.h>
 #include <OpenGLESRenderer.h>
 

@@ -21,7 +21,7 @@ private:
     unsigned int numAdditionalViews = 0;
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-    float loadMesh = false;
+    float loadProxies = true;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(windowSize.x, windowSize.y) {}
@@ -56,8 +56,11 @@ private:
 
         meshFromQuads = new MeshFromQuads(windowSize);
 
-        unsigned int maxQuads = windowSize.x * windowSize.y * NUM_SUB_QUADS;
-        QuadBuffers quadBuffers(maxQuads);
+        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+        QuadBuffers quadBuffers(maxProxies);
+
+        const glm::uvec2 depthBufferSize = 2u * windowSize;
+        DepthOffsets depthOffsets(depthBufferSize);
 
         unsigned int numViews = 1 + numAdditionalViews;
 
@@ -83,11 +86,11 @@ private:
             // });
             // Node* screen = new Node(videoScreen);
             // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-            // screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
+            // screen->setScale(glm::vec3(1.0f, 0.5f, 0.01f));
             // screen->frustumCulled = false;
             // scene->addChildNode(screen);
 
-            if (loadMesh) {
+            if (!loadProxies) {
                 std::string verticesFileName = dataPath + "vertices" + viewStr + ".bin";
                 std::string indicesFileName = dataPath + "indices" + viewStr + ".bin";
 
@@ -107,39 +110,42 @@ private:
                 });
             }
             else {
-                const glm::uvec2 depthBufferSize = 2u * windowSize;
-                DepthOffsets depthOffsets(depthBufferSize);
-
-                // Load the quad proxies.
                 std::string quadProxiesFileName = dataPath + "quads" + viewStr + ".bin";
-                unsigned int numProxies = quadBuffers.loadFromFile(quadProxiesFileName);
-
-                // Load depth offsets.
                 std::string depthOffsetsFileName = dataPath + "depthOffsets" + viewStr + ".bin";
-                depthOffsets.loadFromFile(depthOffsetsFileName);
 
+                // load the quad proxies
+                unsigned int numProxies = quadBuffers.loadFromFile(quadProxiesFileName);
+                // load depth offsets
+                unsigned int numDepthOffsets = depthOffsets.loadFromFile(depthOffsetsFileName);
+
+                unsigned int maxVertices = MAX_NUM_PROXIES * VERTICES_IN_A_QUAD;
+                unsigned int maxIndices = MAX_NUM_PROXIES * INDICES_IN_A_QUAD;
                 meshes[view] = new Mesh({
-                    .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
-                    .numIndices = numProxies * NUM_SUB_QUADS * 2 * 3,
-                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
+                    .numVertices = maxVertices,
+                    .numIndices = maxIndices,
+                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] }),
+                    .usage = GL_DYNAMIC_DRAW,
+                    .indirectDraw = true
                 });
 
+                meshFromQuads->appendProxies(numProxies, quadBuffers);
                 meshFromQuads->createMeshFromProxies(
-                    numProxies, depthBufferSize,
-                    remoteCamera, quadBuffers, depthOffsets,
-                    *colorTextures[view],
+                    numProxies, depthOffsets,
+                    remoteCamera,
                     *meshes[view]
                 );
 
-                std::cout << "Loaded " << numProxies << " proxies (" << numProxies * NUM_SUB_QUADS * 2 << " triangles)" << std::endl;
-                std::cout << "Time to create mesh: " << meshFromQuads->stats.timeToCreateMeshMs << "ms" << std::endl;
+                spdlog::info("Loaded {} proxies and {} depth offsets", numProxies, numDepthOffsets);
+                spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
+                spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
+                spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
             }
         }
 
         for (int view = 0; view < numViews; view++) {
             nodes[view] = new Node(meshes[view]);
             nodes[view]->frustumCulled = false;
-            nodes[view]->setPosition(glm::vec3(0.0f, -3.0f, -10.0f));
+            nodes[view]->setPosition(-1.0f * remoteCamera.getPosition());
             scene->addChildNode(nodes[view]);
         }
     }

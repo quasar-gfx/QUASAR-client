@@ -30,6 +30,11 @@ set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
 set(RENDERER_LIBS )
 
 # add third party libraries
+
+# spdlog
+add_subdirectory(${EXTERNAL_DIR}/spdlog)
+set(RENDERER_LIBS ${RENDERER_LIBS} spdlog)
+
 # assimp
 add_subdirectory(${EXTERNAL_DIR}/libassimp/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
