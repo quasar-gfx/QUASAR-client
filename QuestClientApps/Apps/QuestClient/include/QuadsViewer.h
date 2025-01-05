@@ -18,7 +18,6 @@
 class QuadsViewer final : public OpenXRApp {
 private:
     std::string dataPath = "quadwarp/";
-    unsigned int numAdditionalViews = 0;
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
     float loadProxies = true;
@@ -56,98 +55,75 @@ private:
 
         meshFromQuads = new MeshFromQuads(windowSize);
 
-        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
-        QuadBuffers quadBuffers(maxProxies);
+        std::string colorFileName = dataPath + "color.png";
+        colorTexture = new Texture({
+            .wrapS = GL_REPEAT,
+            .wrapT = GL_REPEAT,
+            .minFilter = GL_NEAREST,
+            .magFilter = GL_NEAREST,
+            .flipVertically = true,
+            .path = colorFileName
+        });
 
-        const glm::uvec2 depthBufferSize = 2u * windowSize;
-        DepthOffsets depthOffsets(depthBufferSize);
+        // // add a screen for the texture.
+        // Cube* videoScreen = new Cube({
+        //     .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
+        // });
+        // Node* screen = new Node(videoScreen);
+        // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+        // screen->setScale(glm::vec3(1.0f, 0.5f, 0.01f));
+        // screen->frustumCulled = false;
+        // scene->addChildNode(screen);
 
-        unsigned int numViews = 1 + numAdditionalViews;
+        if (!loadProxies) {
+            std::string verticesFileName = dataPath + "vertices.bin";
+            std::string indicesFileName = dataPath + "indices.bin";
 
-        colorTextures.resize(numViews);
-        meshes.resize(numViews);
-        nodes.resize(numViews);
-        for (int view = 0; view < numViews; view++) {
-            std::string viewStr = numAdditionalViews == 0 ? "" : std::to_string(view);
-            std::string colorFileName = dataPath + "color" + viewStr + ".png";
+            auto vertexData = FileIO::loadBinaryFile(verticesFileName);
+            auto indexData = FileIO::loadBinaryFile(indicesFileName);
 
-            colorTextures[view] = new Texture({
-                .wrapS = GL_REPEAT,
-                .wrapT = GL_REPEAT,
-                .minFilter = GL_NEAREST,
-                .magFilter = GL_NEAREST,
-                .flipVertically = true,
-                .path = colorFileName
+            std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
+            std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+
+            std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
+            std::memcpy(indices.data(), indexData.data(), indexData.size());
+
+            mesh = new Mesh({
+                .vertices = vertices,
+                .indices = indices,
+                .material = new QuadMaterial({ .baseColorTexture = colorTexture })
+            });
+        }
+        else {
+            unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+            quadBuffers = new QuadBuffers(maxProxies);
+
+            const glm::uvec2 depthBufferSize = 2u * windowSize;
+            depthOffsets = new DepthOffsets(depthBufferSize);
+
+            std::string quadProxiesFileName = dataPath + "quads.bin";
+            std::string depthOffsetsFileName = dataPath + "depthOffsets.bin";
+
+            // load the quad proxies
+            numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
+            // load depth offsets
+            numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
+
+            mesh = new Mesh({
+                .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
+                .numIndices = numProxies * NUM_SUB_QUADS * INDICES_IN_A_QUAD,
+                .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
+                .usage = GL_DYNAMIC_DRAW,
+                .indirectDraw = true
             });
 
-            // // add a screen for the texture.
-            // Cube* videoScreen = new Cube({
-            //     .material = new UnlitMaterial({ .baseColorTexture = colorTextures[view] }),
-            // });
-            // Node* screen = new Node(videoScreen);
-            // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-            // screen->setScale(glm::vec3(1.0f, 0.5f, 0.01f));
-            // screen->frustumCulled = false;
-            // scene->addChildNode(screen);
-
-            if (!loadProxies) {
-                std::string verticesFileName = dataPath + "vertices" + viewStr + ".bin";
-                std::string indicesFileName = dataPath + "indices" + viewStr + ".bin";
-
-                auto vertexData = FileIO::loadBinaryFile(verticesFileName);
-                auto indexData = FileIO::loadBinaryFile(indicesFileName);
-
-                std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
-                std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
-
-                std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
-                std::memcpy(indices.data(), indexData.data(), indexData.size());
-
-                meshes[view] = new Mesh({
-                    .vertices = vertices,
-                    .indices = indices,
-                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] })
-                });
-            }
-            else {
-                std::string quadProxiesFileName = dataPath + "quads" + viewStr + ".bin";
-                std::string depthOffsetsFileName = dataPath + "depthOffsets" + viewStr + ".bin";
-
-                // load the quad proxies
-                unsigned int numProxies = quadBuffers.loadFromFile(quadProxiesFileName);
-                // load depth offsets
-                unsigned int numDepthOffsets = depthOffsets.loadFromFile(depthOffsetsFileName);
-
-                unsigned int maxVertices = MAX_NUM_PROXIES * VERTICES_IN_A_QUAD;
-                unsigned int maxIndices = MAX_NUM_PROXIES * INDICES_IN_A_QUAD;
-                meshes[view] = new Mesh({
-                    .numVertices = maxVertices,
-                    .numIndices = maxIndices,
-                    .material = new QuadMaterial({ .baseColorTexture = colorTextures[view] }),
-                    .usage = GL_DYNAMIC_DRAW,
-                    .indirectDraw = true
-                });
-
-                meshFromQuads->appendProxies(numProxies, quadBuffers);
-                meshFromQuads->createMeshFromProxies(
-                    numProxies, depthOffsets,
-                    remoteCamera,
-                    *meshes[view]
-                );
-
-                spdlog::info("Loaded {} proxies and {} depth offsets", numProxies, numDepthOffsets);
-                spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
-                spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
-                spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
-            }
+            spdlog::info("Loaded {} proxies and {} depth offsets", numProxies, numDepthOffsets);
         }
 
-        for (int view = 0; view < numViews; view++) {
-            nodes[view] = new Node(meshes[view]);
-            nodes[view]->frustumCulled = false;
-            nodes[view]->setPosition(-1.0f * remoteCamera.getPosition());
-            scene->addChildNode(nodes[view]);
-        }
+        node = new Node(mesh);
+        node->frustumCulled = false;
+        node->setPosition(-1.0f * remoteCamera.getPosition());
+        scene->addChildNode(node);
     }
 
     void CreateActionSet() override {
@@ -224,28 +200,48 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        meshFromQuads->appendProxies(
+            windowSize,
+            numProxies,
+            *quadBuffers
+        );
+        meshFromQuads->createMeshFromProxies(
+            windowSize,
+            numProxies, *depthOffsets,
+            remoteCamera,
+            *mesh
+        );
+
+        auto start = std::chrono::high_resolution_clock::now();
+        auto renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        auto end = std::chrono::high_resolution_clock::now();
+
+        spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
+        spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
+        spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
+        spdlog::info("Rendering time: {:.3f}ms", std::chrono::duration<double, std::milli>(end - start).count());
     }
 
     void DestroyResources() override {
-        for (auto mesh : meshes) {
-            delete mesh;
-        }
-        for (auto texture : colorTextures) {
-            delete texture;
-        }
-        for (auto node : nodes) {
-            delete node;
-        }
+        delete meshFromQuads;
+        delete colorTexture;
+        delete mesh;
+        delete node;
     }
-
-    std::vector<Mesh*> meshes;
-    std::vector<Texture*> colorTextures;
-    std::vector<Node*> nodes;
 
     PerspectiveCamera remoteCamera;
 
     MeshFromQuads* meshFromQuads;
+
+    unsigned int numProxies;
+    unsigned int numDepthOffsets;
+
+    QuadBuffers* quadBuffers;
+    DepthOffsets* depthOffsets;
+
+    Mesh* mesh;
+    Texture* colorTexture;
+    Node* node;
 
     // Actions.
     XrAction m_clickAction;
