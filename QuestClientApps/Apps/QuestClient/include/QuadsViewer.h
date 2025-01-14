@@ -101,8 +101,8 @@ private:
             const glm::uvec2 depthBufferSize = 2u * windowSize;
             depthOffsets = new DepthOffsets(depthBufferSize);
 
-            std::string quadProxiesFileName = dataPath + "quads.bin";
-            std::string depthOffsetsFileName = dataPath + "depthOffsets.bin";
+            std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
+            std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
 
             // load the quad proxies
             numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
