@@ -5,7 +5,7 @@
 // #include <MeshWarpClientStatic.h>
 // #include <MeshWarpClient.h>
 // #include <QuadsViewer.h>
- #include <DPViewer.h>
+#include <DPViewer.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
@@ -19,7 +19,7 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     // MeshWarpClientStatic app(apiType);
     // MeshWarpClient app(apiType);
     // QuadsViewer app(apiType);
-     DPViewer app(apiType);
+    DPViewer app(apiType);
     app.Run();
 }
 

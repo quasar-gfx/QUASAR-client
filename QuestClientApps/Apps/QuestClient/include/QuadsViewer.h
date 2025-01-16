@@ -23,7 +23,9 @@ private:
     float loadProxies = true;
 
 public:
-    QuadsViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(windowSize.x, windowSize.y) {}
+    QuadsViewer(GraphicsAPI_Type apiType)
+            : OpenXRApp(apiType)
+            , remoteCamera(windowSize.x, windowSize.y) {}
     ~QuadsViewer() = default;
 
 private:

@@ -19,19 +19,17 @@ class DPViewer final : public OpenXRApp {
 private:
     std::string dataPath = "dpwarp/";
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-    float loadProxies = true;
-    int maxLayers = 4;
-    int maxViews;
-    bool disableWideFov = false;
+    unsigned int maxLayers = 4;
+    unsigned int maxViews;
 
 public:
-    DPViewer(GraphicsAPI_Type apiType) 
-        : OpenXRApp(apiType), 
-          remoteCamera(windowSize.x, windowSize.y),
-          remoteCameraWideFov(windowSize.x, windowSize.y)
-    {
-        maxViews = !disableWideFov ? maxLayers + 1 : maxLayers;
-        remoteCameraWideFov.setFovyDegrees(120.0f);
+    DPViewer(GraphicsAPI_Type apiType)
+            : OpenXRApp(apiType)
+            , remoteCamera(windowSize.x, windowSize.y)
+            , remoteCameraWideFov(windowSize.x, windowSize.y)
+            , maxViews(maxLayers + 1) {
+        remoteCamera.setFovyDegrees(100.0f);
+        remoteCameraWideFov.setFovyDegrees(140.0f);
     }
     ~DPViewer() = default;
 
@@ -74,7 +72,6 @@ private:
         meshes.reserve(maxViews);
         nodes.reserve(maxViews);
         colorTextures.reserve(maxViews);
-        nodeWireframes.reserve(maxViews);
 
         // Load all views
         for (int view = 0; view < maxViews; view++) {
@@ -91,10 +88,7 @@ private:
             colorTextures.push_back(colorTexture);
 
             // Get buffer size based on whether this is the last layer
-            glm::vec2 bufferSize = ((!disableWideFov && view == maxViews - 1) || 
-                                   (disableWideFov && view == maxLayers - 1)) ? 
-                                  glm::vec2(colorTexture->width, colorTexture->height) : 
-                                  glm::vec2(windowSize);
+            glm::vec2 bufferSize = glm::vec2(colorTexture->width, colorTexture->height);
 
             // Load proxy data
             std::string quadProxiesFileName = dataPath + "quads" + std::to_string(view) + ".bin.lz4";
@@ -118,8 +112,7 @@ private:
             meshes.push_back(mesh);
 
             // Generate the mesh data immediately
-            auto& cameraToUse = (!disableWideFov && view == maxViews - 1) ? 
-                remoteCameraWideFov : remoteCamera;
+            auto& cameraToUse = (view == maxViews - 1) ? remoteCameraWideFov : remoteCamera;
 
             meshFromQuads->appendProxies(
                 bufferSize,
@@ -140,23 +133,7 @@ private:
             scene->addChildNode(node);
             nodes.push_back(node);
 
-            // Create wireframe node
-            glm::vec4 color = (view == 0) ? 
-                glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : // Primary view is yellow
-                glm::vec4(fmod(view * 0.6180339887f, 1.0f),
-                         fmod(view * 0.9f, 1.0f),
-                         fmod(view * 0.5f, 1.0f),
-                         1.0f);
-
-            Node* nodeWireframe = new Node(mesh);
-            nodeWireframe->frustumCulled = false;
-            nodeWireframe->wireframe = true;
-            nodeWireframe->visible = false;
-            nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = color });
-            nodeWireframes.push_back(nodeWireframe);
-            scene->addChildNode(nodeWireframe);
-
-            spdlog::info("Loaded view {}: {} proxies ({} bytes), {} depth offsets ({} bytes)", 
+            spdlog::info("Loaded view {}: {} proxies ({} bytes), {} depth offsets ({} bytes)",
                         view, numProxies, numBytes,
                         numDepthOffsets, totalBytesDepthOffsets);
         }
@@ -193,12 +170,12 @@ private:
         for (int i = 0; i < 2; i++) {
             actionStateGetInfo.action = m_clickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]), 
+            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]),
                         "Failed to get Boolean State of Click action.");
 
             actionStateGetInfo.action = m_thumbstickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]), 
+            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]),
                         "Failed to get Vector2f State of Thumbstick action.");
 
             m_buzz[i] *= 0.5f;
@@ -221,16 +198,16 @@ private:
         for (int i = 0; i < 2; i++) {
             m_handNodes[i].visible = m_handPoseState[i].isActive;
 
-            if (m_clickState[i].isActive == XR_TRUE && 
-                m_clickState[i].currentState == XR_FALSE && 
+            if (m_clickState[i].isActive == XR_TRUE &&
+                m_clickState[i].currentState == XR_FALSE &&
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
             }
 
-            if (m_thumbstickState[i].isActive == XR_TRUE && 
+            if (m_thumbstickState[i].isActive == XR_TRUE &&
                 m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
-                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || 
+                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f ||
                     glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3 &forward = cameras.get()->left.getForwardVector();
                     const glm::vec3 &right = cameras.get()->left.getRightVector();
@@ -264,15 +241,12 @@ private:
         for (auto node : nodes) {
             delete node;
         }
-        for (auto node : nodeWireframes) {
-            delete node;
-        }
     }
 
 private:
     PerspectiveCamera remoteCamera;
     PerspectiveCamera remoteCameraWideFov;
-    
+
     // Single instances of shared resources
     MeshFromQuads* meshFromQuads;
     QuadBuffers* quadBuffers;
@@ -282,7 +256,6 @@ private:
     std::vector<Texture*> colorTextures;
     std::vector<Mesh*> meshes;
     std::vector<Node*> nodes;
-    std::vector<Node*> nodeWireframes;
     bool* showLayers;
 
     // Tracking data
