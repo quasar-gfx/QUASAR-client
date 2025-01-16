@@ -14,8 +14,6 @@
 #include <BC4DepthVideoTexture.h>
 #include <PoseStreamer.h>
 
-#include <shaders_common.h>
-
 #define THREADS_PER_LOCALGROUP 16
 
 class MeshWarpClient final : public OpenXRApp {
@@ -222,10 +220,10 @@ private:
         genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
         genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
 
-        if (poseStreamer->getPose(poseIdColor, &currentColorFramePose, &elapsedTimeColor)) {
+        if (poseStreamer->getPosePredicted(poseIdColor, &currentColorFramePose, &elapsedTimeColor)) {
             genMeshFromBC4Shader->setMat4("viewColor", currentColorFramePose.mono.view);
         }
-        if (poseStreamer->getPose(poseIdDepth, &currentDepthFramePose, &elapsedTimeDepth)) {
+        if (poseStreamer->getPosePredicted(poseIdDepth, &currentDepthFramePose, &elapsedTimeDepth)) {
             genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(currentDepthFramePose.mono.view));
         }
 

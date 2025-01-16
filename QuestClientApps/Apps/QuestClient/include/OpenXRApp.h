@@ -4,6 +4,7 @@
 #include <map>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/android_sink.h>
 
 #include <OpenGLAppConfig.h>
 #include <OpenGLESRenderer.h>
@@ -27,6 +28,12 @@ public:
             XR_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");
             DEBUG_BREAK;
         }
+
+        // Set up spd for android logging.
+        spdlog::set_pattern("%v");
+        std::string tag = "spdlog-android";
+        auto logger = spdlog::android_logger_mt("android", tag);
+        spdlog::set_default_logger(logger);
     }
     ~OpenXRApp() = default;
 

@@ -89,20 +89,20 @@ private:
         scene->addChildNode(new Node(robotLab));
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
 
-        // animations
-        Node* arm = robotLab->findNodeByName("prop_robotArm_body");
-        if (arm) {
-            Animation* animation = new Animation();
-            animation->setRotation(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 360.0, 0.0), 60.0, false, true);
-            arm->animation = animation;
-        }
+        // // animations
+        // Node* arm = robotLab->findNodeByName("prop_robotArm_body");
+        // if (arm) {
+        //     Animation* animation = new Animation();
+        //     animation->addRotationKey(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 360.0, 0.0), 60.0, false, true);
+        //     arm->animation = animation;
+        // }
 
-        Node* vehicle = robotLab->findNodeByName("vehicle_rcFlyer_clean");
-        if (vehicle) {
-            Animation* animation = new Animation();
-            animation->setTranslation(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 5.0, 0.0), 5.0, true, true);
-            vehicle->animation = animation;
-        }
+        // Node* vehicle = robotLab->findNodeByName("vehicle_rcFlyer_clean");
+        // if (vehicle) {
+        //     Animation* animation = new Animation();
+        //     animation->addPositionKey(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 5.0, 0.0), 5.0, true, true);
+        //     vehicle->animation = animation;
+        // }
     }
 
     void CreateActionSet() override {

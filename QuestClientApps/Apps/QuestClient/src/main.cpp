@@ -1,10 +1,8 @@
-#include <spdlog/sinks/android_sink.h>
-
-// #include <SceneViewer.h>
-// #include <ATWClient.h>
-// #include <MeshWarpClientStatic.h>
-// #include <MeshWarpClient.h>
-// #include <QuadsViewer.h>
+#include <SceneViewer.h>
+#include <ATWClient.h>
+#include <MeshWarpClientStatic.h>
+#include <MeshWarpClient.h>
+#include <QuadsViewer.h>
 #include <DPViewer.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
@@ -24,12 +22,6 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
 }
 
 void android_main(struct android_app* app) {
-    // Set up spd for android logging.
-    spdlog::set_pattern("%v");
-    std::string tag = "spdlog-android";
-    auto logger = spdlog::android_logger_mt("android", tag);
-    spdlog::set_default_logger(logger);
-
     // Allow interaction with JNI and the JVM on this thread.
     // https://developer.android.com/training/articles/perf-jni#threads
     JNIEnv* env;

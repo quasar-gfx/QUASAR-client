@@ -12,9 +12,7 @@
 #include <Cameras/PerspectiveCamera.h>
 #include <BC4DepthVideoTexture.h>
 
-#include <shaders_common.h>
-
-#define THREADS_PER_LOCALGROUP 32
+#define GEN_MESH_THREADS_PER_LOCALGROUP 16
 
 class MeshWarpClientStatic final : public OpenXRApp {
 private:
@@ -32,7 +30,7 @@ private:
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
+            .intensity = 0.5f
         });
         scene->setAmbientLight(ambientLight);
 
@@ -87,11 +85,19 @@ private:
         node->frustumCulled = false;
         scene->addChildNode(node);
 
+        nodeWireframe = new Node(mesh);
+        nodeWireframe->frustumCulled = false;
+        nodeWireframe->wireframe = true;
+        nodeWireframe->visible = false;
+        nodeWireframe->primativeType = GL_LINES;
+        nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(nodeWireframe);
+
         genMeshFromBC4Shader = new ComputeShader({
             .computeCodeData = SHADER_COMMON_GENMESHFROMBC4_COMP,
             .computeCodeSize = SHADER_COMMON_GENMESHFROMBC4_COMP_len,
             .defines = {
-                "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
+                "#define GEN_MESH_THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }
         });
     }
@@ -161,7 +167,9 @@ private:
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+
                 meshWarpEnabled = !meshWarpEnabled;
+                nodeWireframe->visible = !nodeWireframe->visible;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -196,8 +204,8 @@ private:
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, *bc4BufferData);
 
         genMeshFromBC4Shader->dispatch(
-            (windowSize.x / surfelSize + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
-            (windowSize.y / surfelSize + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
+            (windowSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (windowSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
             1
         );
 
@@ -222,10 +230,13 @@ private:
 
     PerspectiveCamera* remoteCamera;
 
-    Texture* colorTexture;
     Buffer<BC4DepthVideoTexture::Block>* bc4BufferData;
+
+    Texture* colorTexture;
     Mesh* mesh;
     Node* node;
+    Node* nodeWireframe;
+
     ComputeShader* genMeshFromBC4Shader;
 
     RenderStats renderStats;

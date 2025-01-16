@@ -38,7 +38,7 @@ private:
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
+            .intensity = 0.5f
         });
         scene->setAmbientLight(ambientLight);
 
@@ -130,8 +130,27 @@ private:
             Node* node = new Node(mesh);
             node->frustumCulled = false;
             node->setPosition(-1.0f * remoteCamera.getPosition());
-            scene->addChildNode(node);
             nodes.push_back(node);
+            node->setPosition(-1.0f * remoteCamera.getPosition());
+            scene->addChildNode(node);
+
+            // Create wireframe node
+            glm::vec4 color = (view == 0) ?
+                glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : // Primary view is yellow
+                glm::vec4(fmod(view * 0.6180339887f, 1.0f),
+                         fmod(view * 0.9f, 1.0f),
+                         fmod(view * 0.5f, 1.0f),
+                         1.0f);
+
+            Node* nodeWireframe = new Node(mesh);
+            nodeWireframe->frustumCulled = false;
+            nodeWireframe->wireframe = true;
+            nodeWireframe->visible = false;
+            nodeWireframe->primativeType = GL_LINES;
+            nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = color });
+            nodeWireframe->setPosition(-1.0f * remoteCamera.getPosition());
+            nodeWireframes.push_back(nodeWireframe);
+            scene->addChildNode(nodeWireframe);
 
             spdlog::info("Loaded view {}: {} proxies ({} bytes), {} depth offsets ({} bytes)",
                         view, numProxies, numBytes,
@@ -203,6 +222,10 @@ private:
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+
+                for (int view = 0; view < maxViews; view++) {
+                    nodeWireframes[view]->visible = !nodeWireframes[view]->visible;
+                }
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE &&
@@ -256,6 +279,7 @@ private:
     std::vector<Texture*> colorTextures;
     std::vector<Mesh*> meshes;
     std::vector<Node*> nodes;
+    std::vector<Node*> nodeWireframes;
     bool* showLayers;
 
     // Tracking data

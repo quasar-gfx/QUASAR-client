@@ -54,7 +54,7 @@ private:
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
+            .intensity = 0.5f
         });
         scene->setAmbientLight(ambientLight);
 
@@ -181,7 +181,7 @@ private:
         atwShader->setMat4("viewInverseRight", glm::inverse(cameras->right.getViewMatrix()));
 
         double elapsedTime;
-        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapsedTime)) {
+        if (poseID != prevPoseID && poseStreamer->getPosePredicted(poseID, &currentFramePose, &elapsedTime)) {
             atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
             atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
 

@@ -20,7 +20,6 @@ private:
     std::string dataPath = "quadwarp/";
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-    float loadProxies = true;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -33,7 +32,7 @@ private:
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
+            .intensity = 0.5f
         });
         scene->setAmbientLight(ambientLight);
 
@@ -77,55 +76,43 @@ private:
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
 
-        if (!loadProxies) {
-            std::string verticesFileName = dataPath + "vertices.bin";
-            std::string indicesFileName = dataPath + "indices.bin";
+        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+        quadBuffers = new QuadBuffers(maxProxies);
 
-            auto vertexData = FileIO::loadBinaryFile(verticesFileName);
-            auto indexData = FileIO::loadBinaryFile(indicesFileName);
+        const glm::uvec2 depthBufferSize = 2u * windowSize;
+        depthOffsets = new DepthOffsets(depthBufferSize);
 
-            std::vector<Vertex> vertices(vertexData.size() / sizeof(Vertex));
-            std::memcpy(vertices.data(), vertexData.data(), vertexData.size());
+        std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
+        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
 
-            std::vector<unsigned int> indices(indexData.size() / sizeof(unsigned int));
-            std::memcpy(indices.data(), indexData.data(), indexData.size());
+        // load the quad proxies
+        numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
+        // load depth offsets
+        numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
-            mesh = new Mesh({
-                .vertices = vertices,
-                .indices = indices,
-                .material = new QuadMaterial({ .baseColorTexture = colorTexture })
-            });
-        }
-        else {
-            unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
-            quadBuffers = new QuadBuffers(maxProxies);
+        mesh = new Mesh({
+            .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
+            .numIndices = numProxies * NUM_SUB_QUADS * INDICES_IN_A_QUAD,
+            .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
+            .usage = GL_DYNAMIC_DRAW,
+            .indirectDraw = true
+        });
 
-            const glm::uvec2 depthBufferSize = 2u * windowSize;
-            depthOffsets = new DepthOffsets(depthBufferSize);
-
-            std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
-            std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
-
-            // load the quad proxies
-            numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
-            // load depth offsets
-            numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
-
-            mesh = new Mesh({
-                .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
-                .numIndices = numProxies * NUM_SUB_QUADS * INDICES_IN_A_QUAD,
-                .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
-                .usage = GL_DYNAMIC_DRAW,
-                .indirectDraw = true
-            });
-
-            spdlog::info("Loaded {} proxies and {} depth offsets", numProxies, numDepthOffsets);
-        }
+        spdlog::info("Loaded {} proxies and {} depth offsets", numProxies, numDepthOffsets);
 
         node = new Node(mesh);
         node->frustumCulled = false;
         node->setPosition(-1.0f * remoteCamera.getPosition());
         scene->addChildNode(node);
+
+        nodeWireframe = new Node(mesh);
+        nodeWireframe->frustumCulled = false;
+        nodeWireframe->wireframe = true;
+        nodeWireframe->visible = false;
+        nodeWireframe->primativeType = GL_LINES;
+        nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        nodeWireframe->setPosition(-1.0f * remoteCamera.getPosition());
+        scene->addChildNode(nodeWireframe);
     }
 
     void CreateActionSet() override {
@@ -187,6 +174,8 @@ private:
             if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+
+                nodeWireframe->visible = !nodeWireframe->visible;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -244,6 +233,7 @@ private:
     Mesh* mesh;
     Texture* colorTexture;
     Node* node;
+    Node* nodeWireframe;
 
     // Actions.
     XrAction m_clickAction;
