@@ -97,7 +97,7 @@ private:
             .computeCodeData = SHADER_COMMON_GENMESHFROMBC4_COMP,
             .computeCodeSize = SHADER_COMMON_GENMESHFROMBC4_COMP_len,
             .defines = {
-                "#define GEN_MESH_THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
+                "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }
         });
     }

@@ -89,20 +89,117 @@ private:
         scene->addChildNode(new Node(robotLab));
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
 
-        // // animations
-        // Node* arm = robotLab->findNodeByName("prop_robotArm_body");
-        // if (arm) {
-        //     Animation* animation = new Animation();
-        //     animation->addRotationKey(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 360.0, 0.0), 60.0, false, true);
-        //     arm->animation = animation;
-        // }
+        // 1. Rotate "prop_robotArm_body" 360 degrees over 60 seconds, looping
+        {
+            Node* node = robotLab->findNodeByName("prop_robotArm_body");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
 
-        // Node* vehicle = robotLab->findNodeByName("vehicle_rcFlyer_clean");
-        // if (vehicle) {
-        //     Animation* animation = new Animation();
-        //     animation->addPositionKey(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 5.0, 0.0), 5.0, true, true);
-        //     vehicle->animation = animation;
-        // }
+                anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addRotationKey(glm::vec3(0.0f, 360.0f, 0.0f), 60.0f);
+                anim->setRotationProperties(false, true);  // Not reversed, looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 2. Move "vehicle_rcFlyer_clean" up and down over 5 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcFlyer_clean");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addPositionKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addPositionKey(glm::vec3(0.0f, 2.0f, 0.0f), 5.0f);
+                anim->setPositionProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 3. Move "vehicle_rcLand_clean" forward/backward over 15 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcLand_clean");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addPositionKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addPositionKey(glm::vec3(0.0f, 0.0f, 3.0f), 15.0f);
+                anim->setPositionProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 4. Rotate "vehicle_rcLand_wheel_rearLeft" 360 degrees over 15 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearLeft");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
+                anim->setRotationProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 5. Rotate "vehicle_rcLand_wheel_rearRight" 360 degrees over 15 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearRight");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
+                anim->setRotationProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 6. Rotate "vehicle_rcLand_wheel_frontLeft" 360 degrees over 15 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontLeft");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
+                anim->setRotationProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
+
+        // 7. Rotate "vehicle_rcLand_wheel_frontRight" 360 degrees over 15 seconds, reversing and looping
+        {
+            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontRight");
+            if (node != nullptr) {
+                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+
+                anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
+                anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
+                anim->setRotationProperties(true, true);  // Reversed and looping
+
+                if (node->animation == nullptr) {
+                    node->animation = anim;
+                }
+            }
+        }
     }
 
     void CreateActionSet() override {
