@@ -18,7 +18,7 @@
 class DPViewer final : public OpenXRApp {
 private:
     std::string dataPath = "dpwarp/";
-    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    glm::uvec2 windowSize = glm::uvec2(3360.0f, 1760.0f);
     unsigned int maxLayers = 4;
     unsigned int maxViews;
 
@@ -42,6 +42,10 @@ public:
             , maxViews(maxLayers + 1) {
         remoteCamera.setFovyDegrees(100.0f);
         remoteCameraWideFov.setFovyDegrees(140.0f);
+
+        remoteCamera.setPosition(glm::vec3(15.0f, 1.6f, 10.0f));
+        remoteCamera.updateViewMatrix();
+        remoteCameraWideFov.setViewMatrix(remoteCamera.getViewMatrix());
     }
     ~DPViewer() = default;
 
@@ -68,10 +72,6 @@ private:
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
-
-        remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
-        remoteCamera.updateViewMatrix();
-        remoteCameraWideFov.setViewMatrix(remoteCamera.getViewMatrix());
 
         // Create shared instances - only one of each!
         meshFromQuads = new MeshFromQuads(windowSize);

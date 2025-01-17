@@ -173,6 +173,7 @@ private:
         atwShader->bind();
 
         atwShader->setBool("atwEnabled", atwEnabled);
+        atwShader->setBool("toneMap", false);
 
         atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras->left.getProjectionMatrix()));
         atwShader->setMat4("projectionInverseRight", glm::inverse(cameras->right.getProjectionMatrix()));
@@ -190,7 +191,6 @@ private:
 
             poseStreamer->removePosesLessThan(poseID);
         }
-
         atwShader->setTexture("videoTexture", *videoTexture, 0);
 
         // draw both eyes in a single pass

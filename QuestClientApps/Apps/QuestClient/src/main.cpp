@@ -13,11 +13,11 @@ void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     XR_LOG("Starting QuestClient...");
 
     // SceneViewer app(apiType);
-    // ATWClient app(apiType);
+    ATWClient app(apiType);
     // MeshWarpClientStatic app(apiType);
     // MeshWarpClient app(apiType);
     // QuadsViewer app(apiType);
-    DPViewer app(apiType);
+    // DPViewer app(apiType);
     app.Run();
 }
 
