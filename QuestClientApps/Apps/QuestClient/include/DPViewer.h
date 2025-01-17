@@ -22,6 +22,18 @@ private:
     unsigned int maxLayers = 4;
     unsigned int maxViews;
 
+    const std::vector<glm::vec4> colors = {
+        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // primary view color is yellow
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(1.0f, 0.5f, 0.5f, 1.0f),
+        glm::vec4(0.0f, 0.5f, 0.5f, 1.0f),
+        glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
+        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
+    };
+
 public:
     DPViewer(GraphicsAPI_Type apiType)
             : OpenXRApp(apiType)
@@ -126,21 +138,13 @@ private:
                 *meshes[view]
             );
 
-            // Create node
             Node* node = new Node(mesh);
             node->frustumCulled = false;
             node->setPosition(-1.0f * remoteCamera.getPosition());
             nodes.push_back(node);
-            node->setPosition(-1.0f * remoteCamera.getPosition());
             scene->addChildNode(node);
 
-            // Create wireframe node
-            glm::vec4 color = (view == 0) ?
-                glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) : // Primary view is yellow
-                glm::vec4(fmod(view * 0.6180339887f, 1.0f),
-                         fmod(view * 0.9f, 1.0f),
-                         fmod(view * 0.5f, 1.0f),
-                         1.0f);
+            const glm::vec4 &color = colors[view % colors.size()];
 
             Node* nodeWireframe = new Node(mesh);
             nodeWireframe->frustumCulled = false;
