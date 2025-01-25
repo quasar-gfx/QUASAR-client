@@ -90,7 +90,6 @@ private:
             .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
             .usage = GL_DYNAMIC_DRAW
         });
-
         node = new Node(mesh);
         node->frustumCulled = false;
         scene->addChildNode(node);
@@ -184,6 +183,8 @@ private:
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+
+                nodeWireframe->visible = !nodeWireframe->visible;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -210,6 +211,7 @@ private:
         // Get latest depth frames
         videoTextureDepth->bind();
         poseIdDepth = videoTextureDepth->draw(poseIdColor);
+        spdlog::info("poseIdColor: {}, poseIdDepth: {}", poseIdColor, poseIdDepth);
 
         // Set shader uniforms
         genMeshFromBC4Shader->bind();

@@ -17,9 +17,11 @@
 
 class QuadsViewer final : public OpenXRApp {
 private:
-    std::string dataPath = "quadwarp/";
+    std::string sceneName = "robotlab";
+    std::string dataPath = "quadwarp/" + sceneName + "/";
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    glm::uvec2 halfWindowSize = windowSize / 2u;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -29,7 +31,7 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.5f
@@ -54,7 +56,7 @@ private:
         remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera.updateViewMatrix();
 
-        meshFromQuads = new MeshFromQuads(windowSize);
+        meshFromQuads = new MeshFromQuads(halfWindowSize);
 
         std::string colorFileName = dataPath + "color.png";
         colorTexture = new Texture({
@@ -76,18 +78,17 @@ private:
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
 
-        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+        unsigned int maxProxies = halfWindowSize.x * halfWindowSize.y * NUM_SUB_QUADS;
         quadBuffers = new QuadBuffers(maxProxies);
 
-        const glm::uvec2 depthBufferSize = 2u * windowSize;
+        const glm::uvec2 depthBufferSize = 2u * halfWindowSize;
         depthOffsets = new DepthOffsets(depthBufferSize);
 
-        std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
-        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
-
         // load the quad proxies
+        std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
         numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
         // load depth offsets
+        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
         numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
         mesh = new Mesh({
@@ -192,12 +193,12 @@ private:
 
     void OnRender(double now, double dt) override {
         meshFromQuads->appendProxies(
-            windowSize,
+            halfWindowSize,
             numProxies,
             *quadBuffers
         );
         meshFromQuads->createMeshFromProxies(
-            windowSize,
+            halfWindowSize,
             numProxies, *depthOffsets,
             remoteCamera,
             *mesh
