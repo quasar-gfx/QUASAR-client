@@ -6,11 +6,7 @@ git clone --recursive git@github.com:EdwardLu2018/QuestClient.git
 
 ## Build and Run Code on Headset
 
-You can build and run code using one of two ways:
-
-1. Opening this project in Android Studio and clicking the play button with the headset connected to your host machine.
-
-2. Running `./build.py --launch` in the root of this repo with the headset connected to your host machine.
+You can build and run code by opening this project in Android Studio and clicking the play button with the headset connected to your host machine.
 
 The headset can either be connected using a cable or wirelessly (see below).
 
