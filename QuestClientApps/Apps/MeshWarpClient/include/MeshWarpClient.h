@@ -211,34 +211,38 @@ private:
         videoTextureDepth->bind();
         poseIdDepth = videoTextureDepth->draw(poseIdColor);
 
-        // set shader
+        // Set shader uniforms
         genMeshFromBC4Shader->bind();
-
-        genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
-        genMeshFromBC4Shader->setVec2("screenSize", videoSize);
-        genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(videoTextureDepth->width, videoTextureDepth->height));
-        genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
-
-        genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
-        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
-
-        if (poseStreamer->getPosePredicted(poseIdColor, &currentColorFramePose, &elapsedTimeColor)) {
-            genMeshFromBC4Shader->setMat4("viewColor", currentColorFramePose.mono.view);
+        {
+            genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
+            genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(videoTextureDepth->width, videoTextureDepth->height));
+            genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
         }
-        if (poseStreamer->getPosePredicted(poseIdDepth, &currentDepthFramePose, &elapsedTimeDepth)) {
-            genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(currentDepthFramePose.mono.view));
+        {
+            genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
+            genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
+            if (poseStreamer->getPose(poseIdColor, &currentColorFramePose, &elapsedTimeColor)) {
+                genMeshFromBC4Shader->setMat4("viewColor", currentColorFramePose.mono.view);
+            }
+            if (poseStreamer->getPose(poseIdDepth, &currentDepthFramePose, &elapsedTimeDepth)) {
+                genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(currentDepthFramePose.mono.view));
+            }
+
+            genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
+            genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
+        }
+        {
+            genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
+            genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
+            genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, videoTextureDepth->bc4CompressedBuffer);
         }
 
-        genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
-        genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
-
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, videoTextureDepth->bc4CompressedBuffer);
-
-        // dispatch compute shader to generate vertices and indices for both main and wireframe meshes
-        genMeshFromBC4Shader->dispatch(((videoTextureDepth->width / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
-                                       ((videoTextureDepth->height / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP, 1);
+        // Dispatch compute shader to generate vertices and indices for both main and wireframe meshes
+        genMeshFromBC4Shader->dispatch(
+                ((videoTextureDepth->width / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
+                ((videoTextureDepth->height / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
+                1
+            );
         genMeshFromBC4Shader->memoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
                                             GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT);
 

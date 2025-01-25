@@ -182,7 +182,7 @@ private:
         atwShader->setMat4("viewInverseRight", glm::inverse(cameras->right.getViewMatrix()));
 
         double elapsedTime;
-        if (poseID != prevPoseID && poseStreamer->getPosePredicted(poseID, &currentFramePose, &elapsedTime)) {
+        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapsedTime)) {
             atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
             atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
 
