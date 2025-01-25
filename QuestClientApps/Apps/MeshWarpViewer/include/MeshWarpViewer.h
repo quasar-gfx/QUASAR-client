@@ -1,94 +1,89 @@
-#ifndef MESHWARP_CLIENT_H
-#define MESHWARP_CLIENT_H
+#ifndef MESHWARP_CLIENT_STATIC_H
+#define MESHWARP_CLIENT_STATIC_H
 
 #include <OpenXRApp.h>
 
 #include <Primitives/Mesh.h>
-#include <Primitives/Cube.h>
+#include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
 
+#include <Buffer.h>
 #include <Cameras/PerspectiveCamera.h>
 #include <Utils/FileIO.h>
 
-#include <VideoTexture.h>
 #include <BC4DepthVideoTexture.h>
-#include <PoseStreamer.h>
 
-#define THREADS_PER_LOCALGROUP 16
+#include <shaders_common.h>
 
-class MeshWarpClient final : public OpenXRApp {
+#define GEN_MESH_THREADS_PER_LOCALGROUP 16
+
+class MeshWarpViewer final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.4.140";
-    std::string poseURL = serverIP + ":54321";
-    std::string videoURL = "0.0.0.0:12345";
-    std::string depthURL = serverIP + ":65432";
-
-    unsigned int surfelSize = 1;
-    unsigned int depthFactor = 4;
-    float fov = 120.0f;
-    glm::uvec2 videoSize = glm::uvec2(1920, 1080);
+    unsigned int surfelSize = 2;
+    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
 
     bool meshWarpEnabled = true;
 
 public:
-    MeshWarpClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(videoSize.x, videoSize.y) {}
-    ~MeshWarpClient() = default;
+    MeshWarpViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    ~MeshWarpViewer() = default;
 
 private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.05f
+            .intensity = 0.5f
         });
         scene->setAmbientLight(ambientLight);
 
-        // Initialize video texture for color stream
-        videoTextureColor = new VideoTexture({
-            .width = videoSize.x,
-            .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
-            .format = GL_RGB,
-            .type = GL_UNSIGNED_BYTE,
+        // add the hand nodes.
+        Model* leftControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/quest-touch-plus-left.glb"
+        });
+        m_handNodes[0].setEntity(leftControllerMesh);
+
+        Model* rightControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/quest-touch-plus-right.glb"
+        });
+        m_handNodes[1].setEntity(rightControllerMesh);
+
+        // create texture
+        colorTexture = new Texture({
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
             .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        // Initialize BC4 depth texture
-        videoTextureDepth = new BC4DepthVideoTexture({
-            .width = videoSize.x / depthFactor,
-            .height = videoSize.y / depthFactor,
-            .internalFormat = GL_R32F,
-            .format = GL_RED,
-            .type = GL_FLOAT,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST
-        }, depthURL);
+            .magFilter = GL_LINEAR,
+            .flipVertically = true,
+            .gammaCorrected = true,
+            .path = "meshwarp/color_1920x1080.png"
+        });
 
         // remote camera
-        remoteCamera.setFovyDegrees(fov);
-        remoteCamera.updateViewMatrix();
+        remoteCamera = new PerspectiveCamera(colorTexture->width, colorTexture->height);
+        remoteCamera->updateViewMatrix();
+        remoteCamera->setFovyDegrees(120.0f);
+        // Load BC4 depth buffer
+        auto depthData = FileIO::loadBinaryFile("meshwarp/depth_1920x1080.bc4");
 
-        // Initialize pose streamer
-        poseStreamer = new PoseStreamer(cameras.get(), poseURL);
+        bc4BufferData = new Buffer<BC4DepthVideoTexture::Block>(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, windowSize.x/8*windowSize.y/8, reinterpret_cast<BC4DepthVideoTexture::Block*>(depthData.data()));
 
-        // Setup scene and mesh
-        glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
-        unsigned int maxVertices = adjustedvideoSize.x * adjustedvideoSize.y;
-        unsigned int numTriangles = (adjustedvideoSize.x-1) * (adjustedvideoSize.y-1) * 2;
+        // Setup scene & mesh
+        glm::uvec2 adjustedWindowSize = windowSize / surfelSize;
+        unsigned int maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
+        unsigned int numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
         unsigned int maxIndices = numTriangles * 3;
 
         mesh = new Mesh({
             .vertices = std::vector<Vertex>(maxVertices),
             .indices = std::vector<unsigned int>(maxIndices),
-            .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
+            .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
             .usage = GL_DYNAMIC_DRAW
         });
-
         node = new Node(mesh);
         node->frustumCulled = false;
         scene->addChildNode(node);
@@ -97,24 +92,15 @@ private:
         nodeWireframe->frustumCulled = false;
         nodeWireframe->wireframe = true;
         nodeWireframe->visible = false;
+        nodeWireframe->primativeType = GL_LINES;
         nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(nodeWireframe);
-
-        // // add a screen for the video.
-        // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
-        // });
-        // Node* screen = new Node(videoScreen);
-        // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        // screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
 
         genMeshFromBC4Shader = new ComputeShader({
             .computeCodeData = SHADER_COMMON_GENMESHFROMBC4_COMP,
             .computeCodeSize = SHADER_COMMON_GENMESHFROMBC4_COMP_len,
             .defines = {
-                "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
+                "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }
         });
     }
@@ -149,7 +135,7 @@ private:
             actionStateGetInfo.action = m_clickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
             OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]),
-                        "Failed to get Boolean State of Click action.");
+                                                 "Failed to get Boolean State of Click action.");
 
             actionStateGetInfo.action = m_thumbstickAction;
             actionStateGetInfo.subactionPath = m_handPaths[i];
@@ -174,7 +160,9 @@ private:
     }
 
     void HandleInteractions() override {
+        // For each hand:
         for (int i = 0; i < 2; i++) {
+            // Draw the controllers:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
 
             if (m_clickState[i].isActive == XR_TRUE &&
@@ -182,6 +170,9 @@ private:
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
                 XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
+
+                meshWarpEnabled = !meshWarpEnabled;
+                nodeWireframe->visible = !nodeWireframe->visible;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -197,82 +188,54 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        // Update pose and stream it
-        poseStreamer->sendPose();
-
-        // Get latest video frames
-        videoTextureColor->bind();
-        poseIdColor = videoTextureColor->draw();
-        videoTextureColor->unbind();
-
-        // Get latest depth frames
-        videoTextureDepth->bind();
-        poseIdDepth = videoTextureDepth->draw(poseIdColor);
-
-        // set shader
         genMeshFromBC4Shader->bind();
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
-        genMeshFromBC4Shader->setVec2("screenSize", videoSize);
-        genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(videoTextureDepth->width, videoTextureDepth->height));
+
+        genMeshFromBC4Shader->setVec2("screenSize", windowSize);
+        genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(colorTexture->width, colorTexture->height));
         genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
 
-        genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
-        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
-
-        if (poseStreamer->getPosePredicted(poseIdColor, &currentColorFramePose, &elapsedTimeColor)) {
-            genMeshFromBC4Shader->setMat4("viewColor", currentColorFramePose.mono.view);
-        }
-        if (poseStreamer->getPosePredicted(poseIdDepth, &currentDepthFramePose, &elapsedTimeDepth)) {
-            genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(currentDepthFramePose.mono.view));
-        }
-
-        genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
-        genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
+        genMeshFromBC4Shader->setMat4("projection", remoteCamera->getProjectionMatrix());
+        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera->getProjectionMatrix()));
+        genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(remoteCamera->getViewMatrix()));
+        genMeshFromBC4Shader->setFloat("near", remoteCamera->getNear());
+        genMeshFromBC4Shader->setFloat("far", remoteCamera->getFar());
 
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, videoTextureDepth->bc4CompressedBuffer);
+        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, *bc4BufferData);
 
-        // dispatch compute shader to generate vertices and indices for both main and wireframe meshes
-        genMeshFromBC4Shader->dispatch(((videoTextureDepth->width / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
-                                       ((videoTextureDepth->height / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP, 1);
-        genMeshFromBC4Shader->memoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
-                                            GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT);
+        genMeshFromBC4Shader->dispatch(
+            (windowSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (windowSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            1
+        );
 
-        poseStreamer->removePosesLessThan(std::min(poseIdColor, poseIdDepth));
+        genMeshFromBC4Shader->memoryBarrier(
+            GL_SHADER_STORAGE_BARRIER_BIT |
+            GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT |
+            GL_ELEMENT_ARRAY_BARRIER_BIT
+        );
 
         // Render
         renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-
-        if (glm::abs(elapsedTimeColor) > 1e-5f) {
-            XR_LOG("E2E Latency (RGB): " << elapsedTimeColor << "ms");
-        }
-        if (glm::abs(elapsedTimeDepth) > 1e-5f) {
-            XR_LOG("E2E Latency (D): " << elapsedTimeDepth << "ms");
-        }
     }
 
     void DestroyResources() override {
-        delete videoTextureColor;
-        delete videoTextureDepth;
+        delete colorTexture;
+        delete bc4BufferData;
         delete mesh;
         delete node;
         delete genMeshFromBC4Shader;
+        delete remoteCamera;
     }
 
-    VideoTexture* videoTextureColor;
-    BC4DepthVideoTexture* videoTextureDepth;
-    PoseStreamer* poseStreamer;
+    PerspectiveCamera* remoteCamera;
 
-    pose_id_t poseIdColor = -1;
-    pose_id_t poseIdDepth = -1;
-    // Get poses for the current frames
-    double elapsedTimeColor, elapsedTimeDepth;
-    Pose currentColorFramePose, currentDepthFramePose;
+    Buffer<BC4DepthVideoTexture::Block>* bc4BufferData;
 
-    PerspectiveCamera remoteCamera;
-
+    Texture* colorTexture;
     Mesh* mesh;
     Node* node;
     Node* nodeWireframe;
@@ -296,4 +259,4 @@ private:
     float m_buzz[2] = {0, 0};
 };
 
-#endif // MESHWARP_CLIENT_H
+#endif // MESHWARP_CLIENT_STATIC_H

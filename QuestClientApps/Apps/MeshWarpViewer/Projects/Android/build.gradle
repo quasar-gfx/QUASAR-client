@@ -18,10 +18,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdk 32
-    namespace 'app.wiselab.QuadsViewer'
+    namespace 'app.wiselab.MeshWarpViewer'
 
     defaultConfig {
-        applicationId "app.wiselab.QuadsViewer"
+        applicationId "app.wiselab.MeshWarpViewer"
         minSdk 26
         targetSdk 32
         versionCode 1

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-set(TARGET QuadsViewer)
+set(TARGET ATWClient)
 project(${TARGET})
 
 set(APP_LIB LibApps)
