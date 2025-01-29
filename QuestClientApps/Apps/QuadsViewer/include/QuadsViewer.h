@@ -85,10 +85,10 @@ private:
         depthOffsets = new DepthOffsets(depthBufferSize);
 
         // load the quad proxies
-        std::string quadProxiesFileName = dataPath + "quads.bin.lz4";
+        std::string quadProxiesFileName = dataPath + "quads.bin.zstd";
         numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
         // load depth offsets
-        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.lz4";
+        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.zstd";
         numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
         mesh = new Mesh({

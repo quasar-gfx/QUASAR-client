@@ -45,6 +45,10 @@ set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
 add_subdirectory(${EXTERNAL_DIR}/lz4_stream/tnt)
 set(RENDERER_LIBS ${RENDERER_LIBS} lz4_stream)
 
+# zstd
+add_subdirectory(${EXTERNAL_DIR}/zstd/build/cmake)
+set(RENDERER_LIBS ${RENDERER_LIBS} libzstd_static)
+
 # for FetchContent_Declare() and FetchContent_MakeAvailable()
 include(FetchContent)
 
@@ -106,6 +110,7 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataReceiverUDP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
     ${APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
     ${APP_COMMON_DIR}/src/Quads/MeshFromQuads.cpp
     ${APP_COMMON_DIR}/src/VideoTexture.cpp

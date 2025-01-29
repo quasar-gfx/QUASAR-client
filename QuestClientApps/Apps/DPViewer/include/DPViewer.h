@@ -113,11 +113,11 @@ private:
             unsigned int numBytes;
 
             // Load proxy data
-            std::string quadProxiesFileName = dataPath + "quads" + std::to_string(view) + ".bin.lz4";
+            std::string quadProxiesFileName = dataPath + "quads" + std::to_string(view) + ".bin.zstd";
             numProxies = quadBuffers->loadFromFile(quadProxiesFileName, &numBytes);
             totalBytesProxies += numBytes;
 
-            std::string depthOffsetsFileName = dataPath + "depthOffsets" + std::to_string(view) + ".bin.lz4";
+            std::string depthOffsetsFileName = dataPath + "depthOffsets" + std::to_string(view) + ".bin.zstd";
             numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName, &numBytes);
             totalBytesDepthOffsets += numBytes;
 
