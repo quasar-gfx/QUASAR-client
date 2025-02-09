@@ -70,7 +70,13 @@ private:
         // Load BC4 depth buffer
         auto depthData = FileIO::loadBinaryFile("meshwarp/depth_1920x1080.bc4");
 
-        bc4BufferData = new Buffer<BC4DepthVideoTexture::Block>(GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW, windowSize.x/8*windowSize.y/8, reinterpret_cast<BC4DepthVideoTexture::Block*>(depthData.data()));
+        bc4BufferData = new Buffer(
+            GL_SHADER_STORAGE_BUFFER,
+            windowSize.x/8*windowSize.y/8,
+            sizeof(BC4DepthVideoTexture::Block),
+            reinterpret_cast<BC4DepthVideoTexture::Block*>(depthData.data()),
+            GL_DYNAMIC_DRAW
+        );
 
         // Setup scene & mesh
         glm::uvec2 adjustedWindowSize = windowSize / surfelSize;
@@ -79,8 +85,8 @@ private:
         unsigned int maxIndices = numTriangles * 3;
 
         mesh = new Mesh({
-            .vertices = std::vector<Vertex>(maxVertices),
-            .indices = std::vector<unsigned int>(maxIndices),
+            .maxVertices = maxVertices,
+            .maxIndices = maxIndices,
             .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
             .usage = GL_DYNAMIC_DRAW
         });
@@ -97,8 +103,8 @@ private:
         scene->addChildNode(nodeWireframe);
 
         genMeshFromBC4Shader = new ComputeShader({
-            .computeCodeData = SHADER_COMMON_GENMESHFROMBC4_COMP,
-            .computeCodeSize = SHADER_COMMON_GENMESHFROMBC4_COMP_len,
+            .computeCodeData = SHADER_COMMON_MESHFROMBC4_COMP,
+            .computeCodeSize = SHADER_COMMON_MESHFROMBC4_COMP_len,
             .defines = {
                 "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }
@@ -233,7 +239,7 @@ private:
 
     PerspectiveCamera* remoteCamera;
 
-    Buffer<BC4DepthVideoTexture::Block>* bc4BufferData;
+    Buffer* bc4BufferData;
 
     Texture* colorTexture;
     Mesh* mesh;

@@ -92,8 +92,10 @@ private:
         numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
         mesh = new Mesh({
-            .numVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
-            .numIndices = numProxies * NUM_SUB_QUADS * INDICES_IN_A_QUAD,
+            .maxVertices = numProxies * NUM_SUB_QUADS * VERTICES_IN_A_QUAD,
+            .maxIndices = numProxies * NUM_SUB_QUADS * INDICES_IN_A_QUAD,
+            .vertexSize = sizeof(QuadVertex),
+            .attributes = QuadVertex::getVertexInputAttributes(),
             .material = new QuadMaterial({ .baseColorTexture = colorTexture }),
             .usage = GL_DYNAMIC_DRAW,
             .indirectDraw = true

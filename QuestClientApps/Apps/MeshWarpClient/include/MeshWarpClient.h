@@ -85,8 +85,8 @@ private:
         unsigned int maxIndices = numTriangles * 3;
 
         mesh = new Mesh({
-            .vertices = std::vector<Vertex>(maxVertices),
-            .indices = std::vector<unsigned int>(maxIndices),
+            .maxVertices = maxVertices,
+            .maxIndices = maxIndices,
             .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
             .usage = GL_DYNAMIC_DRAW
         });
@@ -112,8 +112,8 @@ private:
         // scene->addChildNode(screen);
 
         genMeshFromBC4Shader = new ComputeShader({
-            .computeCodeData = SHADER_COMMON_GENMESHFROMBC4_COMP,
-            .computeCodeSize = SHADER_COMMON_GENMESHFROMBC4_COMP_len,
+            .computeCodeData = SHADER_COMMON_MESHFROMBC4_COMP,
+            .computeCodeSize = SHADER_COMMON_MESHFROMBC4_COMP_len,
             .defines = {
                 "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
             }
