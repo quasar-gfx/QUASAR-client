@@ -7,7 +7,6 @@
 #include <Primitives/Model.h>
 #include <Primitives/Cube.h>
 
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
 #include <Quads/QuadMaterial.h>
@@ -20,7 +19,7 @@ private:
     std::string sceneName = "robot_lab";
     std::string dataPath = "dpwarp/" + sceneName + "/";
 
-    glm::uvec2 windowSize = glm::uvec2(1920.0f, 1080.0f);
+    glm::uvec2 windowSize = glm::uvec2(3360.0f, 1760.0f);
     glm::uvec2 halfWindowSize = windowSize / 2u;
 
     unsigned int maxLayers = 4;
@@ -44,7 +43,8 @@ public:
             , remoteCamera(windowSize.x, windowSize.y)
             , remoteCameraWideFov(windowSize.x, windowSize.y)
             , maxViews(maxLayers + 1) {
-        remoteCameraWideFov.setFovyDegrees(120.0f);
+        remoteCamera.setFovyDegrees(100.0f);
+        remoteCameraWideFov.setFovyDegrees(170.0f);
 
         remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera.updateViewMatrix();

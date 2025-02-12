@@ -7,7 +7,6 @@
 #include <Primitives/Model.h>
 #include <Primitives/Cube.h>
 
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
 #include <Quads/QuadMaterial.h>
@@ -20,13 +19,15 @@ private:
     std::string sceneName = "robot_lab";
     std::string dataPath = "quadwarp/" + sceneName + "/";
 
-    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    glm::uvec2 windowSize = glm::uvec2(3360.0f, 1760.0f);
     glm::uvec2 halfWindowSize = windowSize / 2u;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
             : OpenXRApp(apiType)
-            , remoteCamera(windowSize.x, windowSize.y) {}
+            , remoteCamera(windowSize.x, windowSize.y) {
+        remoteCamera.setFovyDegrees(100.0f);
+    }
     ~QuadsViewer() = default;
 
 private:
@@ -113,7 +114,7 @@ private:
         nodeWireframe->wireframe = true;
         nodeWireframe->visible = false;
         nodeWireframe->primativeType = GL_LINES;
-        nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         nodeWireframe->setPosition(-1.0f * remoteCamera.getPosition());
         scene->addChildNode(nodeWireframe);
     }
