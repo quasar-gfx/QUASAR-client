@@ -17,7 +17,7 @@
 
 class DPViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "robotlab";
+    std::string sceneName = "robot_lab";
     std::string dataPath = "dpwarp/" + sceneName + "/";
 
     glm::uvec2 windowSize = glm::uvec2(1920.0f, 1080.0f);
@@ -250,7 +250,7 @@ private:
 
     void OnRender(double now, double dt) override {
         auto start = std::chrono::high_resolution_clock::now();
-        auto renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
         auto end = std::chrono::high_resolution_clock::now();
 
         spdlog::info("Rendering time: {:.3f}ms", std::chrono::duration<double, std::milli>(end - start).count());

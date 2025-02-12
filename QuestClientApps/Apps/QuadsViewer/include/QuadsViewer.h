@@ -17,7 +17,7 @@
 
 class QuadsViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "robotlab";
+    std::string sceneName = "robot_lab";
     std::string dataPath = "quadwarp/" + sceneName + "/";
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
@@ -207,7 +207,7 @@ private:
         );
 
         auto start = std::chrono::high_resolution_clock::now();
-        auto renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
         auto end = std::chrono::high_resolution_clock::now();
 
         spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
