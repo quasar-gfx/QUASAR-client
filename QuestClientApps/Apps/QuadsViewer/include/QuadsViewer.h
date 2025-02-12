@@ -19,14 +19,14 @@ private:
     std::string sceneName = "robot_lab";
     std::string dataPath = "quadwarp/" + sceneName + "/";
 
-    glm::uvec2 windowSize = glm::uvec2(3360.0f, 1760.0f);
+    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
     glm::uvec2 halfWindowSize = windowSize / 2u;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
             : OpenXRApp(apiType)
             , remoteCamera(windowSize.x, windowSize.y) {
-        remoteCamera.setFovyDegrees(100.0f);
+        remoteCamera.setFovyDegrees(90.0f);
     }
     ~QuadsViewer() = default;
 

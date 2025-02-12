@@ -43,8 +43,8 @@ public:
             , remoteCamera(windowSize.x, windowSize.y)
             , remoteCameraWideFov(windowSize.x, windowSize.y)
             , maxViews(maxLayers + 1) {
-        remoteCamera.setFovyDegrees(100.0f);
-        remoteCameraWideFov.setFovyDegrees(170.0f);
+        remoteCamera.setFovyDegrees(90.0f);
+        remoteCameraWideFov.setFovyDegrees(120.0f);
 
         remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera.updateViewMatrix();
