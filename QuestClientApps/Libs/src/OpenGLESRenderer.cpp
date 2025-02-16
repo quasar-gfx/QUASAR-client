@@ -206,7 +206,6 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const Ren
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.bind();
-    setScreenShaderUniforms(screenShader);
     RenderStats stats = outputFsQuad.draw();
     screenShader.unbind();
 
