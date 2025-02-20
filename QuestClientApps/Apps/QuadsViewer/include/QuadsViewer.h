@@ -176,7 +176,7 @@ private:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
 
             if (m_clickState[i].isActive == XR_TRUE && m_clickState[i].currentState == XR_FALSE && m_clickState[i].changedSinceLastSync == XR_TRUE) {
-                XR_LOG("Click action triggered for hand: " << i);
+                // XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
 
                 nodeWireframe->visible = !nodeWireframe->visible;
@@ -189,7 +189,7 @@ private:
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
-                XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
+                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
     }
@@ -207,14 +207,14 @@ private:
             *mesh
         );
 
-        auto start = std::chrono::high_resolution_clock::now();
+        double start = timeutils::getTimeMicros();
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-        auto end = std::chrono::high_resolution_clock::now();
+        double end = timeutils::getTimeMicros();
 
         spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
         spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
         spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
-        spdlog::info("Rendering time: {:.3f}ms", std::chrono::duration<double, std::milli>(end - start).count());
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
     }
 
     void DestroyResources() override {

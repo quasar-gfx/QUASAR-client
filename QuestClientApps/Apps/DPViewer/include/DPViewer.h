@@ -227,7 +227,7 @@ private:
             if (m_clickState[i].isActive == XR_TRUE &&
                 m_clickState[i].currentState == XR_FALSE &&
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
-                XR_LOG("Click action triggered for hand: " << i);
+                // XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
 
                 for (int view = 0; view < maxViews; view++) {
@@ -249,11 +249,11 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        auto start = std::chrono::high_resolution_clock::now();
+        double start = timeutils::getTimeMicros();
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-        auto end = std::chrono::high_resolution_clock::now();
+        double end = timeutils::getTimeMicros();
 
-        spdlog::info("Rendering time: {:.3f}ms", std::chrono::duration<double, std::milli>(end - start).count());
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
     }
 
     void DestroyResources() override {

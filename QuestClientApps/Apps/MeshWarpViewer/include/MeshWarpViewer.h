@@ -174,7 +174,7 @@ private:
             if (m_clickState[i].isActive == XR_TRUE &&
                 m_clickState[i].currentState == XR_FALSE &&
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
-                XR_LOG("Click action triggered for hand: " << i);
+                // XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
 
                 meshWarpEnabled = !meshWarpEnabled;
@@ -188,7 +188,7 @@ private:
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
-                XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
+                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
     }

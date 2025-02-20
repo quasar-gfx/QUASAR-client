@@ -11,12 +11,10 @@
 #include <Lights/DirectionalLight.h>
 #include <Lights/PointLight.h>
 
+
 class SceneViewer final : public OpenXRApp {
 private:
-    unsigned int surfelSize = 2;
     glm::uvec2 windowSize = glm::uvec2(1024, 1024);
-
-    bool meshWarpEnabled = true;
 
 public:
     SceneViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -50,6 +48,8 @@ private:
             .linear = 0.07f,
             .quadratic = 0.017f
         };
+
+        pointLightParams.position = glm::vec3(5.0f, 5.0f, 5.0f);
         PointLight* pointLight = new PointLight(pointLightParams);
         scene->addPointLight(pointLight);
 
@@ -89,7 +89,6 @@ private:
         scene->addChildNode(new Node(robotLab));
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
 
-        // 1. Rotate "prop_robotArm_body" 360 degrees over 60 seconds, looping
         {
             Node* node = robotLab->findNodeByName("prop_robotArm_body");
             if (node != nullptr) {
@@ -105,7 +104,6 @@ private:
             }
         }
 
-        // 2. Move "vehicle_rcFlyer_clean" up and down over 5 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcFlyer_clean");
             if (node != nullptr) {
@@ -121,7 +119,6 @@ private:
             }
         }
 
-        // 3. Move "vehicle_rcLand_clean" forward/backward over 15 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_clean");
             if (node != nullptr) {
@@ -137,7 +134,6 @@ private:
             }
         }
 
-        // 4. Rotate "vehicle_rcLand_wheel_rearLeft" 360 degrees over 15 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearLeft");
             if (node != nullptr) {
@@ -153,7 +149,6 @@ private:
             }
         }
 
-        // 5. Rotate "vehicle_rcLand_wheel_rearRight" 360 degrees over 15 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearRight");
             if (node != nullptr) {
@@ -169,7 +164,6 @@ private:
             }
         }
 
-        // 6. Rotate "vehicle_rcLand_wheel_frontLeft" 360 degrees over 15 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontLeft");
             if (node != nullptr) {
@@ -185,7 +179,6 @@ private:
             }
         }
 
-        // 7. Rotate "vehicle_rcLand_wheel_frontRight" 360 degrees over 15 seconds, reversing and looping
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontRight");
             if (node != nullptr) {
@@ -265,9 +258,8 @@ private:
             if (m_clickState[i].isActive == XR_TRUE &&
                 m_clickState[i].currentState == XR_FALSE &&
                 m_clickState[i].changedSinceLastSync == XR_TRUE) {
-                XR_LOG("Click action triggered for hand: " << i);
+                // XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
-                meshWarpEnabled = !meshWarpEnabled;
             }
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -277,14 +269,17 @@ private:
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
-                XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
+                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
             }
         }
     }
 
     void OnRender(double now, double dt) override {
+        double start = timeutils::getTimeMicros();
         scene->updateAnimations(dt);
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        double end = timeutils::getTimeMicros();
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
     }
 
     void DestroyResources() override {
