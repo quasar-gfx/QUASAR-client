@@ -116,6 +116,7 @@ private:
             std::string quadProxiesFileName = dataPath + "quads" + std::to_string(view) + ".bin.zstd";
             numProxies = quadBuffers->loadFromFile(quadProxiesFileName, &numBytes);
             totalBytesProxies += numBytes;
+            totalDecompressTime = quadBuffers->stats.timeToDecompressionMs;
 
             std::string depthOffsetsFileName = dataPath + "depthOffsets" + std::to_string(view) + ".bin.zstd";
             numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName, &numBytes);
@@ -249,11 +250,10 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        double start = timeutils::getTimeMicros();
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-        double end = timeutils::getTimeMicros();
 
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
+        spdlog::info("Decompress time: {:.3f}ms", totalDecompressTime);
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {
@@ -292,6 +292,8 @@ private:
     unsigned int numDepthOffsets = 0;
     unsigned int totalBytesProxies = 0;
     unsigned int totalBytesDepthOffsets = 0;
+
+    double totalDecompressTime = 0.0;
 
     // XR Controller Actions
     XrAction m_clickAction;

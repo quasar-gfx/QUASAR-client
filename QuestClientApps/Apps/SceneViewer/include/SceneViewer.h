@@ -275,11 +275,10 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        double start = timeutils::getTimeMicros();
         scene->updateAnimations(dt);
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-        double end = timeutils::getTimeMicros();
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
+
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {

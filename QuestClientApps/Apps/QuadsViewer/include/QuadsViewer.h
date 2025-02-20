@@ -207,14 +207,12 @@ private:
             *mesh
         );
 
-        double start = timeutils::getTimeMicros();
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
-        double end = timeutils::getTimeMicros();
 
         spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
         spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
         spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::microsToMillis(end - start));
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {

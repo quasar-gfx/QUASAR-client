@@ -194,6 +194,7 @@ private:
     }
 
     void OnRender(double now, double dt) override {
+        double startTime = timeutils::getTimeMicros();
         genMeshFromBC4Shader->bind();
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
@@ -223,9 +224,13 @@ private:
             GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT |
             GL_ELEMENT_ARRAY_BARRIER_BIT
         );
+        double endTime = timeutils::getTimeMicros();
 
         // Render
-        renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+
+        spdlog::info("Mesh generation time: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {
@@ -247,8 +252,6 @@ private:
     Node* nodeWireframe;
 
     ComputeShader* genMeshFromBC4Shader;
-
-    RenderStats renderStats;
 
     // Actions.
     XrAction m_clickAction;

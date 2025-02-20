@@ -688,7 +688,7 @@ protected:
         // Check that the session is active and that we should render.
         bool sessionActive = (m_sessionState == XR_SESSION_STATE_SYNCHRONIZED || m_sessionState == XR_SESSION_STATE_VISIBLE || m_sessionState == XR_SESSION_STATE_FOCUSED);
         if (sessionActive && frameState.shouldRender) {
-            // poll actions here because they require a predicted display time, which we've only just obtained.
+            // Poll actions here because they require a predicted display time, which we've only just obtained.
             PollActionsInternal(frameState.predictedDisplayTime);
             // Handle interactions.
             HandleInteractions();

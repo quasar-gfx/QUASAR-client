@@ -204,6 +204,8 @@ private:
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");
         }
+
+        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {
