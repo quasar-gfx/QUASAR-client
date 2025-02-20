@@ -85,7 +85,7 @@ set(RENDERER_SRCS
     ${RENDERER_DIR}/src/Cameras/VRCamera.cpp
     ${RENDERER_DIR}/src/Cameras/PerspectiveCamera.cpp
     ${RENDERER_DIR}/src/CubeMap.cpp
-    ${RENDERER_DIR}/src/Materials/PBRMaterial.cpp
+    ${RENDERER_DIR}/src/Materials/LitMaterial.cpp
     ${RENDERER_DIR}/src/Materials/UnlitMaterial.cpp
     ${RENDERER_DIR}/src/Materials/DirShadowMapMaterial.cpp
     ${RENDERER_DIR}/src/Materials/PointShadowMapMaterial.cpp
