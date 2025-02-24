@@ -53,21 +53,6 @@ private:
 
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.5f
-        });
-        scene->setAmbientLight(ambientLight);
-
-        // add a screen for the video.
-        Cube* videoScreen = new Cube({
-            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
-        });
-        Node* screen = new Node(videoScreen);
-        screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
-        screen->frustumCulled = false;
-        scene->addChildNode(screen);
-
         // add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
@@ -82,6 +67,21 @@ private:
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
+
+        AmbientLight* ambientLight = new AmbientLight({
+            .intensity = 0.5f
+        });
+        scene->setAmbientLight(ambientLight);
+
+        // add a screen for the video.
+        Cube* videoScreen = new Cube({
+            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
+        });
+        Node* screen = new Node(videoScreen);
+        screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+        screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
+        screen->frustumCulled = false;
+        scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {

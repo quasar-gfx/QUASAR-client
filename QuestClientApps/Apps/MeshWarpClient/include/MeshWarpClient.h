@@ -5,6 +5,7 @@
 
 #include <Primitives/Mesh.h>
 #include <Primitives/Cube.h>
+#include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
 
 #include <Cameras/PerspectiveCamera.h>
@@ -74,6 +75,21 @@ private:
         // remote camera
         remoteCamera.setFovyDegrees(fov);
         remoteCamera.updateViewMatrix();
+
+        // add the hand nodes.
+        Model* leftControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/quest-touch-plus-left.glb"
+        });
+        m_handNodes[0].setEntity(leftControllerMesh);
+
+        Model* rightControllerMesh = new Model({
+            .flipTextures = true,
+            .IBL = 0,
+            .path = "models/quest-touch-plus-right.glb"
+        });
+        m_handNodes[1].setEntity(rightControllerMesh);
 
         // Initialize pose streamer
         poseStreamer = new PoseStreamer(cameras.get(), poseURL);
