@@ -73,36 +73,13 @@ FetchContent_MakeAvailable(OpenXR)
 # FFmpeg
 add_subdirectory(ffmpeg-libs)
 
+# renderer code
+file(GLOB_RECURSE RENDERER_SRCS
+    "${RENDERER_DIR}/src/*cpp"
+)
+
 # renderer shaders
 add_subdirectory(${RENDERER_SHADERS_DIR})
-
-# common shaders
-add_subdirectory(${APP_COMMON_SHADERS_DIR})
-
-# files
-set(RENDERER_SRCS
-    ${RENDERER_DIR}/src/Animation.cpp
-    ${RENDERER_DIR}/src/Cameras/VRCamera.cpp
-    ${RENDERER_DIR}/src/Cameras/PerspectiveCamera.cpp
-    ${RENDERER_DIR}/src/CubeMap.cpp
-    ${RENDERER_DIR}/src/Materials/LitMaterial.cpp
-    ${RENDERER_DIR}/src/Materials/UnlitMaterial.cpp
-    ${RENDERER_DIR}/src/Materials/DirShadowMapMaterial.cpp
-    ${RENDERER_DIR}/src/Materials/PointShadowMapMaterial.cpp
-    ${RENDERER_DIR}/src/Renderers/OpenGLRenderer.cpp
-    ${RENDERER_DIR}/src/Primitives/Entity.cpp
-    ${RENDERER_DIR}/src/Primitives/Mesh.cpp
-    ${RENDERER_DIR}/src/Primitives/Model.cpp
-    ${RENDERER_DIR}/src/Primitives/Node.cpp
-    ${RENDERER_DIR}/src/Scene.cpp
-    ${RENDERER_DIR}/src/SceneLoader.cpp
-    ${RENDERER_DIR}/src/Shaders/ComputeShader.cpp
-    ${RENDERER_DIR}/src/Shaders/ShaderBase.cpp
-    ${RENDERER_DIR}/src/Shaders/Shader.cpp
-    ${RENDERER_DIR}/src/Texture.cpp
-    ${RENDERER_DIR}/src/Utils/FileIO.cpp
-    ${RENDERER_DIR}/src/Vertex.cpp
-)
 
 set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
@@ -116,6 +93,9 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/VideoTexture.cpp
     ${APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
 )
+
+# common shaders
+add_subdirectory(${APP_COMMON_SHADERS_DIR})
 
 # app library code
 file(GLOB_RECURSE SRCS
@@ -162,6 +142,7 @@ target_include_directories(${TARGET}
     ${OGL_REMOTE_RENDERING_DIR}/apps/Common/include
     ${EXTERNAL_DIR}
     ${EXTERNAL_DIR}/spdlog/include
+    ${EXTERNAL_DIR}/imgui
     ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/renderer/shaders
     ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
 
