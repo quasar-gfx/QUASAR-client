@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-set(TARGET LibFFmpeg)
+set(TARGET libffmpeg)
 project(${TARGET})
 
 # Add ffmpeg libraries

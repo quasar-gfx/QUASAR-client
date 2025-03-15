@@ -47,7 +47,7 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance
         std::cerr << "ERROR: OPENGL ES: The created OpenGL ES version " << glMajorVersion << "." << glMinorVersion << " doesn't meet the minimum required API version " << requiredMajorVersion << "." << requiredMinorVersion << " for OpenXR." << std::endl;
     }
 
-#if XR_TUTORIAL_ENABLE_MULTIVIEW
+#if QUEST_CLIENT_ENABLE_MULTIVIEW
     const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
     const char* foundExtension = strstr((const char*)extensions, "GL_OVR_multiview");
     if (foundExtension == nullptr) {

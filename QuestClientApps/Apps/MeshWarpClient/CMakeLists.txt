@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(TARGET MeshWarpClient)
 project(${TARGET})
 
-set(APP_LIB LibApps)
+set(APP_LIB questclient)
 
 # our code
 file(GLOB_RECURSE SRCS

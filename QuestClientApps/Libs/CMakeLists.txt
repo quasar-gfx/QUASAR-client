@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
-set(TARGET LibApps)
+set(TARGET questclient)
 project(${TARGET})
 
-# additional Directories for find_package() to search within.
+# additional directories for find_package() to search within
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
@@ -14,73 +14,33 @@ set(OGL_REMOTE_RENDERING_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/opengl-remote-rende
 
 set(RENDERER_DIR ${OGL_REMOTE_RENDERING_DIR}/renderer)
 set(RENDERER_SHADERS_DIR ${RENDERER_DIR}/shaders)
-set(EXTERNAL_DIR ${OGL_REMOTE_RENDERING_DIR}/third_party)
 set(APP_COMMON_DIR ${OGL_REMOTE_RENDERING_DIR}/apps/Common)
 set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
 
-set(FFMPEG_LIBS LibFFmpeg)
+set(EXTERNAL_DIR ${OGL_REMOTE_RENDERING_DIR}/third_party)
 
-# set required libs
-set(RENDERER_LIBS )
-
-# add third party libraries
-
-# spdlog
-add_subdirectory(${EXTERNAL_DIR}/spdlog)
-set(RENDERER_LIBS ${RENDERER_LIBS} spdlog)
-
-# assimp
-add_subdirectory(${EXTERNAL_DIR}/libassimp/tnt)
-set(RENDERER_LIBS ${RENDERER_LIBS} assimp)
-
-# stb
-add_subdirectory(${EXTERNAL_DIR}/stb/tnt)
-set(RENDERER_LIBS ${RENDERER_LIBS} stb)
-
-# jsmn
-add_subdirectory(${EXTERNAL_DIR}/jsmn/tnt)
-set(RENDERER_LIBS ${RENDERER_LIBS} jsmn)
-
-# lz4
-add_subdirectory(${EXTERNAL_DIR}/lz4_stream/tnt)
-set(RENDERER_LIBS ${RENDERER_LIBS} lz4_stream)
-
-# zstd
-add_subdirectory(${EXTERNAL_DIR}/zstd/build/cmake)
-set(RENDERER_LIBS ${RENDERER_LIBS} libzstd_static)
-
-# for FetchContent_Declare() and FetchContent_MakeAvailable()
+# include fetchcontent for external dependencies
 include(FetchContent)
 
-# openxr_loader - From github.com/KhronosGroup
-set(BUILD_TESTS
-    OFF
-    CACHE INTERNAL "Build tests"
-)
-set(BUILD_API_LAYERS
-    ON
-    CACHE INTERNAL "Use OpenXR layers"
-)
+# openxr_loader - from github.com/KhronosGroup
+set(BUILD_TESTS OFF)
+set(BUILD_API_LAYERS ON)
 FetchContent_Declare(
     OpenXR
     URL_HASH MD5=924a94a2da0b5ef8e82154c623d88644
     URL https://github.com/KhronosGroup/OpenXR-SDK-Source/archive/refs/tags/release-1.0.34.zip
-        SOURCE_DIR
-        openxr
+    SOURCE_DIR openxr
 )
 FetchContent_MakeAvailable(OpenXR)
 
-# FFmpeg
+# ffmpeg
 add_subdirectory(ffmpeg-libs)
 
-# renderer code
-file(GLOB_RECURSE RENDERER_SRCS
-    "${RENDERER_DIR}/src/*cpp"
-)
+# disable building apps
+set(BUILD_APPS OFF)
+add_subdirectory(${OGL_REMOTE_RENDERING_DIR})
 
-# renderer shaders
-add_subdirectory(${RENDERER_SHADERS_DIR})
-
+# common source files
 set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
     ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
@@ -88,68 +48,73 @@ set(COMMON_SRCS
     ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
     ${APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
-    ${APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
     ${APP_COMMON_DIR}/src/Quads/MeshFromQuads.cpp
-    ${APP_COMMON_DIR}/src/VideoTexture.cpp
     ${APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
+    ${APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
+    ${APP_COMMON_DIR}/src/VideoTexture.cpp
 )
 
 # common shaders
 add_subdirectory(${APP_COMMON_SHADERS_DIR})
 
-# app library code
-file(GLOB_RECURSE SRCS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-)
+# app library source files
+file(GLOB_RECURSE SRCS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
+# add android native app glue
 add_library(app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
+# create the target library
 add_library(${TARGET}
     STATIC
     ${SRCS}
-    ${RENDERER_SRCS}
     ${COMMON_SRCS}
 )
 
-target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention)
-AddGraphicsAPIDefine(${TARGET})
-target_compile_definitions(${TARGET} PRIVATE XR_TUTORIAL_ENABLE_MULTIVIEW)
-# target_compile_definitions(${TARGET} PRIVATE VR)
+target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention -Wunused-variable)
 
+# apply graphics api definitions
+AddGraphicsAPIDefine(${TARGET})
+target_compile_definitions(${TARGET} PRIVATE QUEST_CLIENT_ENABLE_MULTIVIEW)
+
+# include gfxwrapper if available
 include(${CMAKE_SOURCE_DIR}/cmake/gfxwrapper.cmake)
 if(TARGET openxr-gfxwrapper)
     target_include_directories(${TARGET} PRIVATE ${openxr_SOURCE_DIR}/src/common)
     target_link_libraries(${TARGET} PRIVATE openxr-gfxwrapper)
-    target_compile_definitions(${TARGET} PRIVATE XR_TUTORIAL_USE_OPENGL_ES)
+    target_compile_definitions(${TARGET} PRIVATE QUEST_CLIENT_USE_OPENGL_ES)
 endif()
 
+# link target libraries
 target_link_libraries(${TARGET}
     PUBLIC
     android
     app_glue
     openxr_loader
-    ${RENDERER_LIBS}
-    ${FFMPEG_LIBS}
+    renderer
+    libffmpeg
 )
 
+# include directories
 target_include_directories(${TARGET}
     PUBLIC
-    # Android NDK includes
+    # android ndk includes
     ${ANDROID_NDK}/sources/android/native_app_glue
 
-    # Renderer related includes
-    ${RENDERER_DIR}/include
-    ${OGL_REMOTE_RENDERING_DIR}/apps/Common/include
-    ${EXTERNAL_DIR}
-    ${EXTERNAL_DIR}/spdlog/include
-    ${EXTERNAL_DIR}/imgui
-    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/renderer/shaders
-    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
-
-    # From OpenXR repo
+    # from openxr repo
     ${openxr_SOURCE_DIR}/src/common
     ${openxr_SOURCE_DIR}/external/include
 
-    # From this project
+    # renderer related includes
+    ${RENDERER_DIR}/include
+    ${RENDERER_DIR}/shaders
+
+    # external includes
+    ${EXTERNAL_DIR}
+
+    # common includes
+    ${APP_COMMON_DIR}/include
+    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
+
+    # from this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
