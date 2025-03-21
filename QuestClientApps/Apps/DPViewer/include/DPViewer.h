@@ -116,7 +116,7 @@ private:
             std::string quadProxiesFileName = dataPath + "quads" + std::to_string(view) + ".bin.zstd";
             numProxies = quadBuffers->loadFromFile(quadProxiesFileName, &numBytes);
             totalBytesProxies += numBytes;
-            totalDecompressTime = quadBuffers->stats.timeToDecompressionMs;
+            totalDecompressTime = quadBuffers->stats.timeToDecompressMs;
 
             std::string depthOffsetsFileName = dataPath + "depthOffsets" + std::to_string(view) + ".bin.zstd";
             numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName, &numBytes);
