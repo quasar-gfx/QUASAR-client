@@ -25,4 +25,4 @@ Now, you don't need to plug in your headset to upload code!
 
 The OpenXR code is based on: https://openxr-tutorial.com/android/opengles/index.html
 
-The renderer can be found here: https://github.com/EdwardLu2018/opengl-remote-rendering
+The renderer can be found here: https://github.com/EdwardLu2018/QUASAR

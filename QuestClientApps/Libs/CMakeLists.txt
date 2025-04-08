@@ -7,17 +7,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(QUASAR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/QUASAR)
+set(QUASAR_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/QUASAR)
 
-set(OGL_REMOTE_RENDERING_DIR ${LIBS_DIR}/opengl-remote-rendering)
-set(OGL_REMOTE_RENDERING_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/opengl-remote-rendering)
-
-set(RENDERER_DIR ${OGL_REMOTE_RENDERING_DIR}/renderer)
-set(RENDERER_SHADERS_DIR ${RENDERER_DIR}/shaders)
-set(APP_COMMON_DIR ${OGL_REMOTE_RENDERING_DIR}/apps/Common)
+set(RENDERER_DIR ${QUASAR_DIR}/renderer)
+set(APP_COMMON_DIR ${QUASAR_DIR}/apps/Common)
 set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
 
-set(EXTERNAL_DIR ${OGL_REMOTE_RENDERING_DIR}/third_party)
+set(EXTERNAL_DIR ${QUASAR_DIR}/third_party)
 
 # include fetchcontent for external dependencies
 include(FetchContent)
@@ -38,7 +35,7 @@ add_subdirectory(ffmpeg-libs)
 
 # disable building apps
 set(BUILD_APPS OFF)
-add_subdirectory(${OGL_REMOTE_RENDERING_DIR})
+add_subdirectory(${QUASAR_DIR})
 
 # common source files
 set(COMMON_SRCS
@@ -113,7 +110,7 @@ target_include_directories(${TARGET}
 
     # common includes
     ${APP_COMMON_DIR}/include
-    ${OGL_REMOTE_RENDERING_OUTPUT_DIR}/apps/Common/shaders
+    ${QUASAR_OUTPUT_DIR}/apps/Common/shaders
 
     # from this project
     ${CMAKE_CURRENT_SOURCE_DIR}/include

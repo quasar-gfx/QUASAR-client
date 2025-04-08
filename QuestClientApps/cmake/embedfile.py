@@ -1,1 +1,1 @@
-../Libs/opengl-remote-rendering/cmake/embedfile.py
+../Libs/QUASAR/cmake/embedfile.py
