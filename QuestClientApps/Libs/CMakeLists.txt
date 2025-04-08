@@ -10,11 +10,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 set(QUASAR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/QUASAR)
 set(QUASAR_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/QUASAR)
 
-set(RENDERER_DIR ${QUASAR_DIR}/renderer)
 set(APP_COMMON_DIR ${QUASAR_DIR}/apps/Common)
 set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
-
-set(EXTERNAL_DIR ${QUASAR_DIR}/third_party)
 
 # include fetchcontent for external dependencies
 include(FetchContent)
@@ -33,8 +30,8 @@ FetchContent_MakeAvailable(OpenXR)
 # ffmpeg
 add_subdirectory(ffmpeg-libs)
 
-# disable building apps
-set(BUILD_APPS OFF)
+# QUASAR
+set(QUASAR_BUILD_APPS OFF) # disable building apps
 add_subdirectory(${QUASAR_DIR})
 
 # common source files
@@ -87,7 +84,7 @@ target_link_libraries(${TARGET}
     android
     app_glue
     openxr_loader
-    renderer
+    quasar
     libffmpeg
 )
 
@@ -100,13 +97,6 @@ target_include_directories(${TARGET}
     # from openxr repo
     ${openxr_SOURCE_DIR}/src/common
     ${openxr_SOURCE_DIR}/external/include
-
-    # renderer related includes
-    ${RENDERER_DIR}/include
-    ${RENDERER_DIR}/shaders
-
-    # external includes
-    ${EXTERNAL_DIR}
 
     # common includes
     ${APP_COMMON_DIR}/include
