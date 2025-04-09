@@ -17,6 +17,8 @@
 #include <Utils/OpenXRDebugUtils.h>
 #include <Utils/GLM_XR_Interop.h>
 
+namespace quasar {
+
 class OpenXRApp {
 protected:
     struct RenderLayerInfo;
@@ -946,5 +948,7 @@ protected:
     // The current poses obtained from the XrSpaces.
     Node m_handNodes[2];
 };
+
+} // namespace quasar
 
 #endif // OPENXR_APP_H

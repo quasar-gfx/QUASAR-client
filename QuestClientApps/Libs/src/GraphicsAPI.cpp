@@ -6,6 +6,8 @@
 
 #include <GraphicsAPI.h>
 
+namespace quasar {
+
 bool CheckGraphicsAPI_TypeIsValidForPlatform(GraphicsAPI_Type type) {
 #if defined(XR_USE_PLATFORM_WIN32)
     return (type == D3D11) || (type == D3D12) || (type == OPENGL) || (type == VULKAN);
@@ -48,7 +50,11 @@ const char *GetGraphicsAPIInstanceExtensionString(GraphicsAPI_Type type) {
     return nullptr;
 }
 
+} // namespace quasar
+
 // GraphicsAPI
+
+using namespace quasar;
 
 int64_t GraphicsAPI::SelectColorSwapchainFormat(const std::vector<int64_t> &formats) {
     const std::vector<int64_t> &supportSwapchainFormats = GetSupportedColorSwapchainFormats();

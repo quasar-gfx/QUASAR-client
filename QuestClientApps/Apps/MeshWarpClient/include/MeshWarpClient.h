@@ -19,6 +19,8 @@
 
 #define THREADS_PER_LOCALGROUP 16
 
+using namespace quasar;
+
 class MeshWarpClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";

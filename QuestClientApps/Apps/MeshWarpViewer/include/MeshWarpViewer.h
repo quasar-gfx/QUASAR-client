@@ -17,6 +17,8 @@
 
 #define GEN_MESH_THREADS_PER_LOCALGROUP 16
 
+using namespace quasar;
+
 class MeshWarpViewer final : public OpenXRApp {
 private:
     unsigned int surfelSize = 2;

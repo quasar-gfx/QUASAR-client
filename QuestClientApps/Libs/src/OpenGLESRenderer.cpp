@@ -19,6 +19,8 @@ void (*GetExtension(const char *functionName))() { return glXGetProcAddress((con
 void (*GetExtension(const char *functionName))() { return eglGetProcAddress(functionName); }
 #endif
 
+using namespace quasar;
+
 OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId) : GraphicsAPI(config) {
     OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
     XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};

@@ -14,6 +14,8 @@
 #include <Quads/DepthOffsets.h>
 #include <Quads/MeshFromQuads.h>
 
+using namespace quasar;
+
 class DPViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab";

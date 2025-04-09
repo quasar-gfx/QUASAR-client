@@ -4,6 +4,9 @@
 #include <GraphicsAPI.h>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
+
+namespace quasar {
+
 class OpenGLESRenderer : public GraphicsAPI {
 public:
     OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId);
@@ -50,5 +53,7 @@ private:
     GLuint framebuffer;
 };
 #endif
+
+} // namespace quasar
 
 #endif // OPENGLES_RENDERER_H

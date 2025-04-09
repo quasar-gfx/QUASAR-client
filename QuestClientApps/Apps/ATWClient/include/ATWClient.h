@@ -15,6 +15,8 @@
 
 #include <shaders_common.h>
 
+using namespace quasar;
+
 class ATWClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";

@@ -6,6 +6,8 @@
 
 #include <OpenGLESRenderer.h>
 
+namespace quasar {
+
 namespace gxi {
 
 struct Pose {
@@ -66,6 +68,8 @@ glm::mat4 toGLM(const XrFovf& fov, GraphicsAPI_Type graphicsApi, float nearZ = 0
     return result;
 }
 
-}
+} // namespace gxi
+
+} // namespace quasar
 
 #endif // GLM_XR_INTEROP_H

@@ -20,6 +20,8 @@
 #include <OpenGLAppConfig.h>
 #include <Renderers/OpenGLRenderer.h>
 
+namespace quasar {
+
 enum GraphicsAPI_Type : uint8_t {
     UNKNOWN,
     D3D11,
@@ -146,3 +148,5 @@ protected:
     virtual const std::vector<int64_t> GetSupportedDepthSwapchainFormats() = 0;
     bool debugAPI = false;
 };
+
+} // namespace quasar

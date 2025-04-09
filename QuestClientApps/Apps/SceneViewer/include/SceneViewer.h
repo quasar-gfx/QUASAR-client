@@ -11,6 +11,7 @@
 #include <Lights/DirectionalLight.h>
 #include <Lights/PointLight.h>
 
+using namespace quasar;
 
 class SceneViewer final : public OpenXRApp {
 private:
