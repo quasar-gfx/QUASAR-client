@@ -21,8 +21,7 @@ private:
     std::string sceneName = "robot_lab";
     std::string dataPath = "dpwarp/" + sceneName + "/";
 
-    glm::uvec2 windowSize = glm::uvec2(3360.0f, 1760.0f);
-    glm::uvec2 halfWindowSize = windowSize / 2u;
+    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
 
     unsigned int maxLayers = 4;
     unsigned int maxViews;
@@ -79,12 +78,12 @@ private:
         m_handNodes[1].setEntity(rightControllerMesh);
 
         // Create shared instances - only one of each!
-        meshFromQuads = new MeshFromQuads(halfWindowSize);
+        meshFromQuads = new MeshFromQuads(windowSize);
 
-        unsigned int maxProxies = halfWindowSize.x * halfWindowSize.y * NUM_SUB_QUADS;
+        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
         quadBuffers = new QuadBuffers(maxProxies);
 
-        const glm::uvec2 depthBufferSize = 2u * halfWindowSize;
+        const glm::uvec2 depthBufferSize = 2u * windowSize;
         depthOffsets = new DepthOffsets(depthBufferSize);
 
         // Pre-allocate vectors
@@ -107,10 +106,7 @@ private:
             colorTextures.push_back(colorTexture);
 
             // Get buffer size based on whether this is the last layer
-            glm::uvec2 gBufferSize = glm::uvec2(colorTexture->width, colorTexture->height) / 2u;
-            if (view == maxViews - 1) {
-                gBufferSize /= 2u;
-            }
+            const glm::uvec2 gBufferSize = glm::uvec2(colorTexture->width, colorTexture->height);
 
             unsigned int numBytes;
 

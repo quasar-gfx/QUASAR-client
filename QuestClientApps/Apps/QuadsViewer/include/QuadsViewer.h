@@ -22,7 +22,6 @@ private:
     std::string dataPath = "quadwarp/" + sceneName + "/";
 
     glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-    glm::uvec2 halfWindowSize = windowSize / 2u;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -59,7 +58,7 @@ private:
         remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera.updateViewMatrix();
 
-        meshFromQuads = new MeshFromQuads(halfWindowSize);
+        meshFromQuads = new MeshFromQuads(windowSize);
 
         std::string colorFileName = dataPath + "color.png";
         colorTexture = new Texture({
@@ -81,10 +80,10 @@ private:
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
 
-        unsigned int maxProxies = halfWindowSize.x * halfWindowSize.y * NUM_SUB_QUADS;
+        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
         quadBuffers = new QuadBuffers(maxProxies);
 
-        const glm::uvec2 depthBufferSize = 2u * halfWindowSize;
+        const glm::uvec2 depthBufferSize = 2u * windowSize;
         depthOffsets = new DepthOffsets(depthBufferSize);
 
         // load the quad proxies
@@ -198,12 +197,12 @@ private:
 
     void OnRender(double now, double dt) override {
         meshFromQuads->appendProxies(
-            halfWindowSize,
+            windowSize,
             numProxies,
             *quadBuffers
         );
         meshFromQuads->createMeshFromProxies(
-            halfWindowSize,
+            windowSize,
             numProxies, *depthOffsets,
             remoteCamera,
             *mesh
