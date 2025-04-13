@@ -1,10 +1,11 @@
-# Quest Headset Client for OpenGL Remote Rendering (WIP)
+# Meta Quest Headset Client for QUASAR
 
+## Clone repo:
 ```
 git clone --recursive git@github.com:EdwardLu2018/QuestClient.git
 ```
 
-## Build and Run Code on Headset
+## Build and Run Code on Quest
 
 You can build and run code by opening this project in Android Studio, selecting an app in the Configurations, and clicking the play button with a headset connected to your host machine.
 
@@ -25,4 +26,4 @@ Now, you don't need to plug in your headset to upload code!
 
 The OpenXR code is based on: https://openxr-tutorial.com/android/opengles/index.html
 
-The renderer can be found here: https://github.com/EdwardLu2018/QUASAR
+The server code can be found here: https://github.com/EdwardLu2018/QUASAR
