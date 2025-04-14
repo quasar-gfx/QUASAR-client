@@ -44,7 +44,7 @@ private:
         videoTexture = new VideoTexture({
             .width = videoSize.x,
             .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
+            .internalFormat = GL_RGB8,
             .format = GL_RGB,
             .type = GL_UNSIGNED_BYTE,
             .wrapS = GL_CLAMP_TO_EDGE,
@@ -175,7 +175,6 @@ private:
         atwShader->bind();
 
         atwShader->setBool("atwEnabled", atwEnabled);
-        atwShader->setBool("toneMap", false);
 
         atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras->left.getProjectionMatrix()));
         atwShader->setMat4("projectionInverseRight", glm::inverse(cameras->right.getProjectionMatrix()));

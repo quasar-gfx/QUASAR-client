@@ -52,7 +52,7 @@ private:
         videoTextureColor = new VideoTexture({
             .width = videoSize.x,
             .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
+            .internalFormat = GL_RGB8,
             .format = GL_RGB,
             .type = GL_UNSIGNED_BYTE,
             .wrapS = GL_CLAMP_TO_EDGE,
