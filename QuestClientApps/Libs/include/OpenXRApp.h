@@ -864,16 +864,15 @@ protected:
         }
         while (true) {
             // Poll and process the Android OS system events.
-            struct android_poll_source* source = nullptr;
+            struct android_poll_source *source = nullptr;
             int events = 0;
             // The timeout depends on whether the application is active.
             const int timeoutMilliseconds = (!androidAppState.resumed && !m_sessionRunning && androidApp->destroyRequested == 0) ? -1 : 0;
-            if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void* *)&source) >= 0) {
+            if (ALooper_pollOnce(timeoutMilliseconds, nullptr, &events, (void**)&source) >= 0) {
                 if (source != nullptr) {
                     source->process(androidApp, source);
                 }
-            }
-            else {
+            } else {
                 break;
             }
         }

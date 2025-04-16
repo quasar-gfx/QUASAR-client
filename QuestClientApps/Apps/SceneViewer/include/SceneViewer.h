@@ -82,9 +82,9 @@ private:
         m_handNodes[1].setEntity(rightControllerMesh);
 
         Model* robotLab = new Model({
-            .IBL = 0,
             .flipTextures = true,
             .gammaCorrected = true,
+            .IBL = 0,
             .path = "models/RobotLab.glb"
         });
         scene->addChildNode(new Node(robotLab));
