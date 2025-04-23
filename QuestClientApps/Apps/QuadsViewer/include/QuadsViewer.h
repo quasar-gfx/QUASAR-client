@@ -40,7 +40,7 @@ private:
         });
         scene->setAmbientLight(ambientLight);
 
-        // add the hand nodes.
+        // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -75,10 +75,10 @@ private:
         //     .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
         // });
         // Node* screen = new Node(videoScreen);
-        // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        // screen->setScale(glm::vec3(1.0f, 0.5f, 0.01f));
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
+        // Screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+        // Screen->setScale(glm::vec3(1.0f, 0.5f, 0.01f));
+        // Screen->frustumCulled = false;
+        // Scene->addChildNode(screen);
 
         unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
         quadBuffers = new QuadBuffers(maxProxies);
@@ -86,10 +86,10 @@ private:
         const glm::uvec2 depthBufferSize = 2u * windowSize;
         depthOffsets = new DepthOffsets(depthBufferSize);
 
-        // load the quad proxies
+        // Load the quad proxies
         std::string quadProxiesFileName = dataPath + "quads.bin.zstd";
         numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
-        // load depth offsets
+        // Load depth offsets
         std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.zstd";
         numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
@@ -196,7 +196,7 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        meshFromQuads->appendProxies(
+        meshFromQuads->appendQuads(
             windowSize,
             numProxies,
             *quadBuffers
@@ -210,8 +210,8 @@ private:
 
         m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
 
-        spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendProxiesMs);
-        spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToFillOutputQuadsMs);
+        spdlog::info("Time to append proxies: {:.3f}ms", meshFromQuads->stats.timeToAppendQuadsMs);
+        spdlog::info("Time to fill output quads: {:.3f}ms", meshFromQuads->stats.timeToGatherQuadsMs);
         spdlog::info("Time to create mesh: {:.3f}ms", meshFromQuads->stats.timeToCreateMeshMs);
         spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }

@@ -135,7 +135,7 @@ private:
             // Generate the mesh data immediately
             auto& cameraToUse = (view == maxViews - 1) ? remoteCameraWideFov : remoteCamera;
 
-            meshFromQuads->appendProxies(
+            meshFromQuads->appendQuads(
                 gBufferSize,
                 numProxies,
                 *quadBuffers

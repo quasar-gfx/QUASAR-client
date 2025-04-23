@@ -39,7 +39,7 @@ private:
         });
         scene->setAmbientLight(ambientLight);
 
-        // add the hand nodes.
+        // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -54,7 +54,7 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        // create texture
+        // Create texture
         colorTexture = new Texture({
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
@@ -65,7 +65,7 @@ private:
             .path = "meshwarp/color_1920x1080.png"
         });
 
-        // remote camera
+        // Remote camera
         remoteCamera = new PerspectiveCamera(colorTexture->width, colorTexture->height);
         remoteCamera->updateViewMatrix();
         remoteCamera->setFovyDegrees(120.0f);
@@ -75,8 +75,8 @@ private:
         bc4BufferData = new Buffer(
             GL_SHADER_STORAGE_BUFFER,
             windowSize.x/8*windowSize.y/8,
-            sizeof(BC4DepthVideoTexture::Block),
-            reinterpret_cast<BC4DepthVideoTexture::Block*>(depthData.data()),
+            sizeof(BC4Block),
+            reinterpret_cast<BC4Block*>(depthData.data()),
             GL_DYNAMIC_DRAW
         );
 
@@ -105,8 +105,8 @@ private:
         scene->addChildNode(nodeWireframe);
 
         genMeshFromBC4Shader = new ComputeShader({
-            .computeCodeData = SHADER_COMMON_MESHFROMBC4_COMP,
-            .computeCodeSize = SHADER_COMMON_MESHFROMBC4_COMP_len,
+            .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
+            .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
             .defines = {
                 "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }

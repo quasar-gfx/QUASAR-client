@@ -25,7 +25,7 @@ private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
 
-        // add lights
+        // Add lights
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.1f
         });
@@ -66,7 +66,7 @@ private:
         pointLight = new PointLight(pointLightParams);
         scene->addPointLight(pointLight);
 
-        // add the hand nodes
+        // Add the hand nodes
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,

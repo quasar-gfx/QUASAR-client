@@ -55,7 +55,7 @@ private:
 
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
-        // add the hand nodes.
+        // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -75,7 +75,7 @@ private:
         });
         scene->setAmbientLight(ambientLight);
 
-        // add a screen for the video.
+        // Add a screen for the video.
         Cube* videoScreen = new Cube({
             .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
         });
@@ -164,14 +164,14 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        // send pose
+        // Send pose
         poseStreamer->sendPose();
 
-        // render video to VideoTexture
+        // Render video to VideoTexture
         videoTexture->bind();
         poseID = videoTexture->draw();
 
-        // set uniforms for both eyes
+        // Set uniforms for both eyes
         atwShader->bind();
 
         atwShader->setBool("atwEnabled", atwEnabled);
@@ -194,13 +194,13 @@ private:
         }
         atwShader->setTexture("videoTexture", *videoTexture, 0);
 
-        // draw both eyes in a single pass
+        // Draw both eyes in a single pass
         m_graphicsAPI->drawToScreen(*atwShader);
 
         prevPoseID = poseID;
 
-        // draw objects (uncomment to debug)
-        // m_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        // Draw objects (uncomment to debug)
+        // M_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");

@@ -74,11 +74,11 @@ private:
             .magFilter = GL_NEAREST
         }, depthURL);
 
-        // remote camera
+        // Remote camera
         remoteCamera.setFovyDegrees(fov);
         remoteCamera.updateViewMatrix();
 
-        // add the hand nodes.
+        // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
             .IBL = 0,
@@ -124,14 +124,14 @@ private:
         //     .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
         // });
         // Node* screen = new Node(videoScreen);
-        // screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        // screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
+        // Screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+        // Screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
+        // Screen->frustumCulled = false;
+        // Scene->addChildNode(screen);
 
         genMeshFromBC4Shader = new ComputeShader({
-            .computeCodeData = SHADER_COMMON_MESHFROMBC4_COMP,
-            .computeCodeSize = SHADER_COMMON_MESHFROMBC4_COMP_len,
+            .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
+            .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
             .defines = {
                 "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
             }
