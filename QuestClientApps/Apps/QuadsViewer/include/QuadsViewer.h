@@ -3,6 +3,7 @@
 
 #include <OpenXRApp.h>
 
+#include <Path.h>
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
 #include <Primitives/Cube.h>
@@ -19,15 +20,11 @@ using namespace quasar;
 class QuadsViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab";
-    std::string dataPath = "quadwarp/" + sceneName + "/";
-
-    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
+    std::string dataPathBase = "quads/" + sceneName + "/";
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
-            : OpenXRApp(apiType)
-            , remoteCamera(windowSize.x, windowSize.y) {
-        remoteCamera.setFovyDegrees(90.0f);
+            : OpenXRApp(apiType) {
     }
     ~QuadsViewer() = default;
 
@@ -36,7 +33,7 @@ private:
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.5f
+            .intensity = 1.0f
         });
         scene->setAmbientLight(ambientLight);
 
@@ -55,20 +52,26 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerMesh);
 
-        remoteCamera.setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
-        remoteCamera.updateViewMatrix();
-
-        meshFromQuads = new MeshFromQuads(windowSize);
-
-        std::string colorFileName = dataPath + "color.png";
+        Path dataPath = Path(dataPathBase);
+        std::string colorFileName = dataPath / "color.jpg";
         colorTexture = new Texture({
             .wrapS = GL_REPEAT,
             .wrapT = GL_REPEAT,
             .minFilter = GL_NEAREST,
             .magFilter = GL_NEAREST,
             .flipVertically = true,
+            .gammaCorrected = true,
             .path = colorFileName
         });
+
+        remoteWindowSize = glm::uvec2(colorTexture->width, colorTexture->height);
+
+        remoteCamera = new PerspectiveCamera(remoteWindowSize.x, remoteWindowSize.y);
+        remoteCamera->setFovyDegrees(90.0f);
+        remoteCamera->setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
+        remoteCamera->updateViewMatrix();
+
+        meshFromQuads = new MeshFromQuads(remoteWindowSize);
 
         // // add a screen for the texture.
         // Cube* videoScreen = new Cube({
@@ -80,17 +83,17 @@ private:
         // Screen->frustumCulled = false;
         // Scene->addChildNode(screen);
 
-        unsigned int maxProxies = windowSize.x * windowSize.y * NUM_SUB_QUADS;
+        unsigned int maxProxies = remoteWindowSize.x * remoteWindowSize.y * NUM_SUB_QUADS;
         quadBuffers = new QuadBuffers(maxProxies);
 
-        const glm::uvec2 depthBufferSize = 2u * windowSize;
+        const glm::uvec2 depthBufferSize = 2u * remoteWindowSize;
         depthOffsets = new DepthOffsets(depthBufferSize);
 
         // Load the quad proxies
-        std::string quadProxiesFileName = dataPath + "quads.bin.zstd";
+        std::string quadProxiesFileName = dataPath / "quads.bin.zstd";
         numProxies = quadBuffers->loadFromFile(quadProxiesFileName);
         // Load depth offsets
-        std::string depthOffsetsFileName = dataPath + "depthOffsets.bin.zstd";
+        std::string depthOffsetsFileName = dataPath / "depthOffsets.bin.zstd";
         numDepthOffsets = depthOffsets->loadFromFile(depthOffsetsFileName);
 
         mesh = new Mesh({
@@ -107,7 +110,7 @@ private:
 
         node = new Node(mesh);
         node->frustumCulled = false;
-        node->setPosition(-1.0f * remoteCamera.getPosition());
+        node->setPosition(-1.0f * remoteCamera->getPosition());
         scene->addChildNode(node);
 
         nodeWireframe = new Node(mesh);
@@ -116,7 +119,7 @@ private:
         nodeWireframe->visible = false;
         nodeWireframe->primativeType = GL_LINES;
         nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        nodeWireframe->setPosition(-1.0f * remoteCamera.getPosition());
+        nodeWireframe->setPosition(-1.0f * remoteCamera->getPosition());
         scene->addChildNode(nodeWireframe);
     }
 
@@ -197,14 +200,14 @@ private:
 
     void OnRender(double now, double dt) override {
         meshFromQuads->appendQuads(
-            windowSize,
+            remoteWindowSize,
             numProxies,
             *quadBuffers
         );
         meshFromQuads->createMeshFromProxies(
-            windowSize,
+            remoteWindowSize,
             numProxies, *depthOffsets,
-            remoteCamera,
+            *remoteCamera,
             *mesh
         );
 
@@ -223,7 +226,8 @@ private:
         delete node;
     }
 
-    PerspectiveCamera remoteCamera;
+    glm::uvec2 remoteWindowSize;
+    PerspectiveCamera* remoteCamera;
 
     MeshFromQuads* meshFromQuads;
 
