@@ -17,7 +17,7 @@
 
 using namespace quasar;
 
-class DPViewer final : public OpenXRApp {
+class QUASARViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab";
     std::string dataPathBase = "quads/" + sceneName + "/";
@@ -38,7 +38,7 @@ private:
     };
 
 public:
-    DPViewer(GraphicsAPI_Type apiType)
+    QUASARViewer(GraphicsAPI_Type apiType)
             : OpenXRApp(apiType) {
         // Pre-allocate vectors
         meshes.reserve(maxViews);
@@ -46,7 +46,7 @@ public:
         nodeWireframes.reserve(maxViews);
         colorTextures.reserve(maxViews);
     }
-    ~DPViewer() = default;
+    ~QUASARViewer() = default;
 
 private:
     void CreateResources() override {

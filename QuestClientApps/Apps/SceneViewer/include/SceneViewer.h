@@ -85,7 +85,7 @@ private:
             .flipTextures = true,
             .gammaCorrected = true,
             .IBL = 0,
-            .path = "models/RobotLab.glb"
+            .path = "models/scenes/RobotLab.glb"
         });
         scene->addChildNode(new Node(robotLab));
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);

@@ -1,13 +1,13 @@
-#include <DPViewer.h>
+#include <QUASARViewer.h>
 
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
 
 void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput; // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
-    XR_LOG("Starting DPViewer...");
+    XR_LOG("Starting QUASARViewer...");
 
-    DPViewer app(apiType);
+    QUASARViewer app(apiType);
     app.Run();
 }
 

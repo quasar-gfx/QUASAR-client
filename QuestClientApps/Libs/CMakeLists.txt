@@ -10,8 +10,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/graphics_api_select.cmake")
 set(QUASAR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/QUASAR)
 set(QUASAR_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/QUASAR)
 
-set(APP_COMMON_DIR ${QUASAR_DIR}/apps/Common)
-set(APP_COMMON_SHADERS_DIR ${APP_COMMON_DIR}/shaders)
+set(QUASAR_APP_COMMON_DIR ${QUASAR_DIR}/apps/Common)
+set(QUASAR_APP_COMMON_SHADERS_DIR ${QUASAR_APP_COMMON_DIR}/shaders)
 
 # include fetchcontent for external dependencies
 include(FetchContent)
@@ -34,22 +34,22 @@ add_subdirectory(ffmpeg-libs)
 set(QUASAR_BUILD_APPS OFF) # disable building apps
 add_subdirectory(${QUASAR_DIR})
 
-# common source files
+# quasar_common source files
 set(COMMON_SRCS
-    ${APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
-    ${APP_COMMON_DIR}/src/DataReceiverTCP.cpp
-    ${APP_COMMON_DIR}/src/DataReceiverUDP.cpp
-    ${APP_COMMON_DIR}/src/DataStreamerTCP.cpp
-    ${APP_COMMON_DIR}/src/DataStreamerUDP.cpp
-    ${APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
-    ${APP_COMMON_DIR}/src/Quads/MeshFromQuads.cpp
-    ${APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
-    ${APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
-    ${APP_COMMON_DIR}/src/VideoTexture.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/DataReceiverTCP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/DataReceiverUDP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/DataStreamerTCP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/MeshFromQuads.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/VideoTexture.cpp
 )
 
-# common shaders
-add_subdirectory(${APP_COMMON_SHADERS_DIR})
+# quasar_common shaders
+add_subdirectory(${QUASAR_APP_COMMON_SHADERS_DIR})
 
 # app library source files
 file(GLOB_RECURSE SRCS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
@@ -98,8 +98,8 @@ target_include_directories(${TARGET}
     ${openxr_SOURCE_DIR}/src/common
     ${openxr_SOURCE_DIR}/external/include
 
-    # common includes
-    ${APP_COMMON_DIR}/include
+    # quasar_common includes
+    ${QUASAR_APP_COMMON_DIR}/include
     ${QUASAR_OUTPUT_DIR}/apps/Common/shaders
 
     # from this project

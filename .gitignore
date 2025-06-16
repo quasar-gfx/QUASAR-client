@@ -38,7 +38,7 @@
 build
 sphinx
 
-#Visual Code folders
+# Visual Code folders
 .vscode
 
 # Android build folders
@@ -47,4 +47,8 @@ sphinx
 # Android build config files
 local.properties
 
+# Mac
 .DS_Store
+
+# Ignore large 3D assets
+/QuestClientApps/Apps/SceneViewer/assets/models/scenes/
