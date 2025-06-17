@@ -2,23 +2,26 @@
 
 ## Getting Started
 
-### Cloning the repo
+### Cloning the Repo:
 ```
 git clone --recursive git@github.com:EdwardLu2018/QUASAR-client.git
 ```
 
-If you accidentally cloned this repo with `--recursive-submodules`, you can do:
+If you accidentally cloned this repo without `--recursive-submodules`, you can do:
 ```
 git submodule update --init --recursive
 ```
 
 ## Build and Run Code
 
-The following steps assume you have [Android Studio](https://developer.android.com/studio) installed on your computer.
+The following steps assume you have the latest [Android Studio](https://developer.android.com/studio) installed on your computer:
 
-First, connect your headset to your host machine. The headset can either be connected using a cable or wirelessly (see  [Debugging](#Debugging)).
+1. Connect your headset to your host machine. The headset can either be connected using a cable or wirelessly (see  [Debugging](#Debugging)).
 
-Then, open `<repo root>/QuestClientApps/` in Android Studio, select an app in the `Configurations` menu at the top (dropdown to the left of play/Run button), and click the play/Run button to build and upload (first time opening and building may take a while).
+2. If this is the first time you are launching Android Studio, select Open an existing Android Studio project. If you have launched Android Studio before, click File > Open instead.
+
+3. Open `QuestClientApps/build.gradle` in Android Studio, select an app in the `Configurations` menu at the top (dropdown to the left of play/Run button), and click the play/Run button to build and upload (first time opening and building may take a while).
+   * You could also open an individual sample app from the `QuestClientApps/Apps/` folders. For example, `QuestClientApps/Apps/QUASARViewer/build.gradle`
 
 Note: This code has been tested on Meta Quest 2, Meta Quest Pro, and Meta Quest 3.
 
@@ -30,7 +33,7 @@ All apps allow you to move through a scene using the controller joysticks. You w
 
 The Scene Viewer app loads a GLTF/GLB scene on the headset to view (you can download example scenes from https://drive.google.com/file/d/1zL_hsmtjyOcAbNbud92aNCxjO1kwEqlK/view?usp=drive_link).
 
-Download and unzip into `<repo root>/QuestClientApps/Apps/SceneViewer/assets/models/scenes/` (this will be gitignored).
+Download and unzip into `QuestClientApps/Apps/SceneViewer/assets/models/scenes/` (this will be gitignored).
 
 Note: __You can only have ONE glb in the `scenes/` directory at once since Android will run out of storage if you have them all.__ So, just have `RobotLab.glb` in `scenes/`.
 
@@ -38,7 +41,7 @@ Note: __You can only have ONE glb in the `scenes/` directory at once since Andro
 
 The ATW Client app allows the headset to act as a reciever for a stereo video stream from the server sent across a network. The headset will reproject each eye using a homography to warp the images along a plane.
 
-First, open `<repo root>/QuestClientApps/Apps/ATWClient/include/ATWClient.h` and change `std::string serverIP = "192.168.4.140";` to your __server's__ IP address. Then, on the [QUASAR](https://github.com/quasar-gfx/QUASAR) repo, build and run `build/apps/atw/streamer/atw_streamer`, with your arguments of choice. Make sure the arguments match the ones in `ATWClient.h`! Then, run the app on the headset!
+First, open `QuestClientApps/Apps/ATWClient/include/ATWClient.h` and change `std::string serverIP = "192.168.4.140";` to your __server's__ IP address. Then, on the [QUASAR](https://github.com/quasar-gfx/QUASAR) repo, build and run `build/apps/atw/streamer/atw_streamer`, with your arguments of choice. Make sure the arguments match the ones in `ATWClient.h`! Then, run the app on the headset!
 
 Example:
 ```
@@ -61,7 +64,7 @@ The MeshWarp Viewer app will load a saved static frame from MeshWarp to view on 
 
 The MeshWarp Client app allows the headset to act as a reciever for a video and depth stream from the server sent across a network. The headset will reconstruct a mesh using the depth stream and texture map it with the video for reprojection.
 
-First, open `<repo root>/QuestClientApps/Apps/MeshWarpClient/include/MeshWarpClient.h` and change `std::string serverIP = "192.168.4.140";` to your __server's__ IP address. Then, on the [QUASAR](https://github.com/quasar-gfx/QUASAR) repo, build and run `build/apps/meshwarp/streamer/mw_streamer`, with your arguments of choice. Make sure the arguments match the ones in `MeshWarpClient.h`! Then, run the app on the headset!
+First, open `QuestClientApps/Apps/MeshWarpClient/include/MeshWarpClient.h` and change `std::string serverIP = "192.168.4.140";` to your __server's__ IP address. Then, on the [QUASAR](https://github.com/quasar-gfx/QUASAR) repo, build and run `build/apps/meshwarp/streamer/mw_streamer`, with your arguments of choice. Make sure the arguments match the ones in `MeshWarpClient.h`! Then, run the app on the headset!
 
 Example:
 ```
@@ -72,11 +75,11 @@ cd apps/meshwarp/streamer
 
 ### QuadsViewer
 
-The Quads Viewer app will load a saved static frame from QuadWarp to view on the headset. You can change the scene by editing `std::string sceneName = "robot_lab";` in `<repo root>/QuestClientApps/Apps/QuadsViewer/include/QuadsViewer.h`.
+The Quads Viewer app will load a saved static frame from QuadWarp to view on the headset. You can change the scene by editing `std::string sceneName = "robot_lab";` in `QuestClientApps/Apps/QuadsViewer/include/QuadsViewer.h`.
 
 ### QUASARViewer
 
-The QUASAR Viewer app will load a saved static frame from QUASAR to view on the headset. You can change the scene by editing `std::string sceneName = "robot_lab";` in `<repo root>/QuestClientApps/Apps/QUASARViewer/include/QUASARViewer.h`.
+The QUASAR Viewer app will load a saved static frame from QUASAR to view on the headset. You can change the scene by editing `std::string sceneName = "robot_lab";` in `QuestClientApps/Apps/QUASARViewer/include/QUASARViewer.h`.
 
 ## Debugging
 
