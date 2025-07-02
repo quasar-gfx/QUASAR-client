@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-set(TARGET questclient)
+set(TARGET quasar_questclient)
 project(${TARGET})
 
 # additional directories for find_package() to search within

@@ -19,7 +19,7 @@ using namespace quasar;
 
 class QuadsViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "robot_lab";
+    std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     std::string dataPathBase = "quads/" + sceneName + "/";
 
 public:

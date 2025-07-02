@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(TARGET QuadsViewer)
 project(${TARGET})
 
-set(APP_LIB questclient)
+set(APP_LIB quasar_questclient)
 
 # our code
 file(GLOB_RECURSE SRCS

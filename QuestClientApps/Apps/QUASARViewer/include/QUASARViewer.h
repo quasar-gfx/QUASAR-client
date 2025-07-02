@@ -1,5 +1,5 @@
-#ifndef DP_VIEWER_H
-#define DP_VIEWER_H
+#ifndef QUASAR_VIEWER_H
+#define QUASAR_VIEWER_H
 
 #include <OpenXRApp.h>
 
@@ -19,7 +19,7 @@ using namespace quasar;
 
 class QUASARViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "robot_lab";
+    std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     std::string dataPathBase = "quads/" + sceneName + "/";
 
     uint maxLayers = 4;
@@ -35,6 +35,7 @@ private:
         glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
         glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
+        glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
     };
 
 public:
@@ -51,11 +52,7 @@ public:
 private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
-        });
-        scene->setAmbientLight(ambientLight);
+        scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
         // Add controller models
         Model* leftControllerMesh = new Model({
@@ -279,18 +276,15 @@ private:
     PerspectiveCamera* remoteCamera;
     PerspectiveCamera* remoteCameraWideFov;
 
-    // Single instances of shared resources
     MeshFromQuads* meshFromQuads;
     QuadBuffers* quadBuffers;
     DepthOffsets* depthOffsets;
 
-    // Per-view resources
     std::vector<Texture> colorTextures;
     std::vector<Mesh*> meshes;
     std::vector<Node*> nodes;
     std::vector<Node*> nodeWireframes;
 
-    // Tracking data
     uint totalProxies = 0;
     uint totalDepthOffsets = 0;
     uint totalBytesProxies = 0;
@@ -308,4 +302,4 @@ private:
     float m_buzz[2] = {0, 0};
 };
 
-#endif
+#endif // QUASAR_VIEWER_H
