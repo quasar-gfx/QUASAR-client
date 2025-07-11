@@ -1,5 +1,5 @@
-#ifndef MESHWARP_CLIENT_STATIC_H
-#define MESHWARP_CLIENT_STATIC_H
+#ifndef MESHWARP_VIEWER_H
+#define MESHWARP_VIEWER_H
 
 #include <OpenXRApp.h>
 
@@ -21,10 +21,9 @@ using namespace quasar;
 
 class MeshWarpViewer final : public OpenXRApp {
 private:
-    unsigned int surfelSize = 2;
-    glm::uvec2 windowSize = glm::uvec2(1920, 1080);
-
-    bool meshWarpEnabled = true;
+    unsigned int surfelSize = 4;
+    float remoteFOV = 120.0f;
+    glm::uvec2 remoteWindowSize;
 
 public:
     MeshWarpViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -32,24 +31,24 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.5f
+            .intensity = 1.0f
         });
         scene->setAmbientLight(ambientLight);
 
         // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
@@ -62,26 +61,31 @@ private:
             .magFilter = GL_LINEAR,
             .flipVertically = true,
             .gammaCorrected = true,
-            .path = "meshwarp/color_1920x1080.png"
+            .path = "meshwarp/4K/color.jpg"
         });
+        remoteWindowSize = glm::uvec2(colorTexture->width, colorTexture->height);
 
         // Remote camera
         remoteCamera = new PerspectiveCamera(colorTexture->width, colorTexture->height);
         remoteCamera->updateViewMatrix();
-        remoteCamera->setFovyDegrees(120.0f);
+        remoteCamera->setFovyDegrees(remoteFOV);
+
         // Load BC4 depth buffer
-        auto depthData = FileIO::loadBinaryFile("meshwarp/depth_1920x1080.bc4");
+        auto depthDataCompressed = FileIO::loadBinaryFile("meshwarp/4K/depth.bc4.zstd");
+        // Decompress BC4 data
+        size_t expectedSize = depthDataCompressed.size() * sizeof(BC4Block);
+        std::vector<char> depthData(expectedSize);
+        codec.decompress(depthDataCompressed, depthData);
 
         bc4BufferData = new Buffer(
             GL_SHADER_STORAGE_BUFFER,
-            windowSize.x/8*windowSize.y/8,
-            sizeof(BC4Block),
-            reinterpret_cast<BC4Block*>(depthData.data()),
+            (remoteWindowSize.x / 8) * (remoteWindowSize.y / 8), sizeof(BC4Block),
+            reinterpret_cast<BC4Block*>(depthData.data() + sizeof(pose_id_t)), // Skip the first pose_id_t
             GL_DYNAMIC_DRAW
         );
 
         // Setup scene & mesh
-        glm::uvec2 adjustedWindowSize = windowSize / surfelSize;
+        glm::uvec2 adjustedWindowSize = remoteWindowSize / surfelSize;
         unsigned int maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
         unsigned int numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
         unsigned int maxIndices = numTriangles * 3;
@@ -179,7 +183,6 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 m_buzz[i] = 0.5f;
 
-                meshWarpEnabled = !meshWarpEnabled;
                 nodeWireframe->visible = !nodeWireframe->visible;
             }
 
@@ -201,7 +204,7 @@ private:
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
 
-        genMeshFromBC4Shader->setVec2("screenSize", windowSize);
+        genMeshFromBC4Shader->setVec2("screenSize", remoteWindowSize);
         genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(colorTexture->width, colorTexture->height));
         genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
 
@@ -216,8 +219,8 @@ private:
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, *bc4BufferData);
 
         genMeshFromBC4Shader->dispatch(
-            (windowSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-            (windowSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (remoteWindowSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (remoteWindowSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
             1
         );
 
@@ -253,6 +256,8 @@ private:
     Node* node;
     Node* nodeWireframe;
 
+    ZSTDCodec codec;
+
     ComputeShader* genMeshFromBC4Shader;
 
     // Actions.
@@ -270,4 +275,4 @@ private:
     float m_buzz[2] = {0, 0};
 };
 
-#endif // MESHWARP_CLIENT_STATIC_H
+#endif // MESHWARP_VIEWER_H

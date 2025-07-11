@@ -40,14 +40,14 @@ private:
         // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);

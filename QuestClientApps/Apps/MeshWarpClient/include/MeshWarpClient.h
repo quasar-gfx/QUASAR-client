@@ -41,7 +41,7 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.05f
@@ -81,14 +81,14 @@ private:
         // Add the hand nodes.
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);

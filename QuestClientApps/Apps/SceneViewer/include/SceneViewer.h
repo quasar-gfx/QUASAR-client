@@ -23,7 +23,7 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.17f, 0.17f, 0.17f, 1.0f);
+        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         // Add lights
         AmbientLight* ambientLight = new AmbientLight({
@@ -69,14 +69,14 @@ private:
         // Add the hand nodes
         Model* leftControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         m_handNodes[0].setEntity(leftControllerMesh);
 
         Model* rightControllerMesh = new Model({
             .flipTextures = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
         m_handNodes[1].setEntity(rightControllerMesh);
@@ -84,7 +84,7 @@ private:
         Model* robotLab = new Model({
             .flipTextures = true,
             .gammaCorrected = true,
-            .IBL = 0,
+            .IBL = 0.0f,
             .path = "models/scenes/RobotLab.glb"
         });
         scene->addChildNode(new Node(robotLab));
