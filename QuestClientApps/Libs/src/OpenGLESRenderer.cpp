@@ -171,7 +171,7 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
     }
 }
 
-RenderStats OpenGLESRenderer::drawObjects(const Scene &scene, const Camera &camera, uint32_t clearMask) {
+RenderStats OpenGLESRenderer::drawObjects(Scene &scene, const Camera &camera, uint32_t clearMask) {
     pipeline.apply();
 
     RenderStats stats;

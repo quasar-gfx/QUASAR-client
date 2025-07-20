@@ -32,7 +32,7 @@ public:
     virtual void beginRendering() override;
     virtual void endRendering() override;
 
-    virtual RenderStats drawObjects(const Scene &scene, const Camera &camera,
+    virtual RenderStats drawObjects(Scene &scene, const Camera &camera,
                                     uint32_t clearMask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT) override;
     virtual RenderStats drawToScreen(const Shader &screenShader, const RenderTargetBase* overrideRenderTarget = nullptr) override;
 

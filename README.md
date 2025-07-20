@@ -4,7 +4,7 @@
 
 ## Documentation
 
-__Please refer to the ☞☞ [QUASAR OpenXR documentation](https://quasar-gfx.github.io/QUASAR/openxr.html) ☜☜ for information on how to build and run this repo!__
+__Please visit the ☞☞ [QUASAR OpenXR documentation](https://quasar-gfx.github.io/QUASAR/openxr.html) ☜☜ for information on how to build and run this repo!__
 
 ## Citation
 If you find this project helpful for any research-related purposes, please consider citing our paper:
