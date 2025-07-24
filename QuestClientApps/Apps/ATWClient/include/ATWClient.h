@@ -44,8 +44,8 @@ private:
         videoTexture = new VideoTexture({
             .width = videoSize.x,
             .height = videoSize.y,
-            .internalFormat = GL_RGB8,
-            .format = GL_RGB,
+            .internalFormat = GL_SRGB8,
+            .format = GL_SRGB,
             .type = GL_UNSIGNED_BYTE,
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
@@ -169,7 +169,7 @@ private:
 
         // Render video to VideoTexture
         videoTexture->bind();
-        poseID = videoTexture->draw();
+        pose_id_t currPoseID = videoTexture->draw();
 
         // Set uniforms for both eyes
         atwShader->bind();
@@ -182,25 +182,24 @@ private:
         atwShader->setMat4("viewInverseLeft", glm::inverse(cameras->left.getViewMatrix()));
         atwShader->setMat4("viewInverseRight", glm::inverse(cameras->right.getViewMatrix()));
 
-        double elapsedTime;
-        if (poseID != prevPoseID && poseStreamer->getPose(poseID, &currentFramePose, &elapsedTime)) {
+        if (currPoseID != prevPoseID && poseStreamer->getPose(currPoseID, &currentFramePose, &elapsedTime)) {
             atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
             atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
 
             atwShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
             atwShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
 
-            poseStreamer->removePosesLessThan(poseID);
+            poseStreamer->removePosesLessThan(currPoseID);
         }
         atwShader->setTexture("videoTexture", *videoTexture, 0);
 
         // Draw both eyes in a single pass
         m_graphicsAPI->drawToScreen(*atwShader);
 
-        prevPoseID = poseID;
-
         // Draw objects (uncomment to debug)
         // m_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        prevPoseID = currPoseID;
 
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");
@@ -221,10 +220,11 @@ private:
     VideoTexture* videoTexture;
 
     // Pose streaming.
-    pose_id_t poseID = -1;
     pose_id_t prevPoseID = -1;
     std::unique_ptr<PoseStreamer> poseStreamer;
     Pose currentFramePose;
+
+    double elapsedTime = 0.0f;
 
     // Actions.
     XrAction m_clickAction;
@@ -234,7 +234,7 @@ private:
     XrAction m_thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.02f;
+    float movementSpeed = 0.03f;
     // The haptic output action for grabbing cubes.
     XrAction m_buzzAction;
     // The current haptic output value for each controller.

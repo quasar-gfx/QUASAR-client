@@ -52,8 +52,8 @@ private:
         videoTextureColor = new VideoTexture({
             .width = videoSize.x,
             .height = videoSize.y,
-            .internalFormat = GL_RGB8,
-            .format = GL_RGB,
+            .internalFormat = GL_SRGB8,
+            .format = GL_SRGB,
             .type = GL_UNSIGNED_BYTE,
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
@@ -315,7 +315,7 @@ private:
     XrAction m_thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.02f;
+    float movementSpeed = 0.03f;
     // The haptic output action for grabbing cubes.
     XrAction m_buzzAction;
     // The current haptic output value for each controller.

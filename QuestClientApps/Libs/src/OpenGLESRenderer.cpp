@@ -1,7 +1,3 @@
-#include <Shaders/Shader.h>
-#include <Primitives/Mesh.h>
-#include <Primitives/Model.h>
-
 #include <OpenGLESRenderer.h>
 
 #include <Utils/DebugOutput.h>
@@ -23,7 +19,6 @@ using namespace quasar;
 
 OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId)
     : GraphicsAPI(config)
-    , outputFsQuad()
 {
     OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
     XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
@@ -60,6 +55,7 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance
         DEBUG_BREAK;
     }
 #endif
+    outputFsQuad = std::make_unique<FullScreenQuad>();
 }
 
 OpenGLESRenderer::~OpenGLESRenderer() {
@@ -194,7 +190,7 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const Ren
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.bind();
-    RenderStats stats = outputFsQuad.draw();
+    RenderStats stats = outputFsQuad->draw();
 
     if (overrideRenderTarget != nullptr) {
         endRendering();

@@ -249,7 +249,7 @@ private:
     XrAction m_thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.02f;
+    float movementSpeed = 0.03f;
     // The haptic output action for grabbing cubes.
     XrAction m_buzzAction;
     // The current haptic output value for each controller.

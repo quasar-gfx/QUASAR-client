@@ -296,7 +296,7 @@ private:
     XrActionStateBoolean m_clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
     XrAction m_thumbstickAction;
     XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.02f;
+    float movementSpeed = 0.03f;
     XrAction m_buzzAction;
     float m_buzz[2] = {0, 0};
 };
