@@ -41,5 +41,5 @@ void android_main(struct android_app* app) {
     FileIO::registerIOSystem(app->activity);
 
     OpenXRApp::androidApp = app;
-    OpenXRApp_Main(QUEST_CLIENT_GRAPHICS_API);
+    OpenXRApp_Main(QUASAR_CLIENT_GRAPHICS_API);
 }

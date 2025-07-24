@@ -117,6 +117,7 @@ void OpenGLESRenderer::DestroyImageView(void *&imageView) {
 }
 
 void OpenGLESRenderer::beginRendering() {
+    glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 }
 
@@ -172,27 +173,6 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
         DEBUG_BREAK;
         std::cout << "ERROR: OPENGL: Framebuffer is not complete." << std::endl;
     }
-}
-
-RenderStats OpenGLESRenderer::drawObjects(Scene &scene, const Camera &camera, uint32_t clearMask) {
-    pipeline.apply();
-
-    RenderStats stats;
-
-    updateDirLightShadow(scene, camera);
-    // point light shadows are not implemented yet
-
-    // draw all objects in the scene
-    glViewport(0, 0, width, height); // restore viewport
-    stats += GraphicsAPI::drawScene(scene, camera, clearMask);
-
-    // draw lights for debugging
-    stats += GraphicsAPI::drawLights(scene, camera);
-
-    // draw skybox
-    stats += GraphicsAPI::drawSkyBox(scene, camera);
-
-    return stats;
 }
 
 void OpenGLESRenderer::setScreenShaderUniforms(const Shader &screenShader) {

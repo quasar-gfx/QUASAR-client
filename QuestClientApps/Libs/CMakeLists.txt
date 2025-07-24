@@ -13,6 +13,8 @@ set(QUASAR_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Libs/QUASAR)
 set(QUASAR_APP_COMMON_DIR ${QUASAR_DIR}/apps/Common)
 set(QUASAR_APP_COMMON_SHADERS_DIR ${QUASAR_APP_COMMON_DIR}/shaders)
 
+add_definitions(-DPLATFORM_OPENXR)
+
 # include fetchcontent for external dependencies
 include(FetchContent)
 
@@ -68,14 +70,14 @@ target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention -Wunused-v
 
 # apply graphics api definitions
 AddGraphicsAPIDefine(${TARGET})
-target_compile_definitions(${TARGET} PRIVATE QUEST_CLIENT_ENABLE_MULTIVIEW)
+target_compile_definitions(${TARGET} PRIVATE QUASAR_CLIENT_ENABLE_MULTIVIEW)
 
 # include gfxwrapper if available
 include(${CMAKE_SOURCE_DIR}/cmake/gfxwrapper.cmake)
 if(TARGET openxr-gfxwrapper)
     target_include_directories(${TARGET} PRIVATE ${openxr_SOURCE_DIR}/src/common)
     target_link_libraries(${TARGET} PRIVATE openxr-gfxwrapper)
-    target_compile_definitions(${TARGET} PRIVATE QUEST_CLIENT_USE_OPENGL_ES)
+    target_compile_definitions(${TARGET} PRIVATE QUASAR_CLIENT_USE_OPENGL_ES)
 endif()
 
 # link target libraries
