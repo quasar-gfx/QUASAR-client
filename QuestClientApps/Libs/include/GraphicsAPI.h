@@ -1,10 +1,6 @@
-// Copyright 2023, The Khronos Group Inc.
-//
-// SPDX-License-Identifier: Apache-2.0
+#ifndef GRAPHICS_API_H
+#define GRAPHICS_API_H
 
-// OpenXR Tutorial for Khronos Group
-
-#pragma once
 #include <Utils/HelperFunctions.h>
 
 #include <android_native_app_glue.h>
@@ -140,7 +136,8 @@ public:
     virtual void beginRendering() override = 0;
     virtual void endRendering() override = 0;
 
-    virtual RenderStats drawObjects(Scene &scene, const Camera &camera, uint32_t clearMask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT) override = 0;
+    virtual RenderStats drawObjects(Scene &scene, const Camera &camera,
+                                    uint32_t clearMask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT) override = 0;
     virtual RenderStats drawToScreen(const Shader &screenShader, const RenderTargetBase* overrideRenderTarget = nullptr) override = 0;
 
 protected:
@@ -150,3 +147,5 @@ protected:
 };
 
 } // namespace quasar
+
+#endif // GRAPHICS_API_H

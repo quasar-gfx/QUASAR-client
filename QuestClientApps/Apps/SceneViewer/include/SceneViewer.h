@@ -282,8 +282,7 @@ private:
         spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
-    void DestroyResources() override {
-    }
+    void DestroyResources() override {}
 
     // Actions.
     XrAction m_clickAction;

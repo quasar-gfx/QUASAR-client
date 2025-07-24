@@ -2,6 +2,7 @@
 #define OPENGLES_RENDERER_H
 
 #include <GraphicsAPI.h>
+#include <Primitives/FullScreenQuad.h>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
@@ -50,6 +51,7 @@ private:
     std::unordered_map<GLuint, ImageCreateInfo> images{};
     std::unordered_map<GLuint, ImageViewCreateInfo> imageViews{};
 
+    FullScreenQuad outputFsQuad;
     GLuint framebuffer;
 };
 #endif

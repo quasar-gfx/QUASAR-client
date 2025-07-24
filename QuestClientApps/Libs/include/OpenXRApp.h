@@ -24,7 +24,9 @@ protected:
     struct RenderLayerInfo;
 
 public:
-    OpenXRApp(GraphicsAPI_Type apiType) : m_apiType(apiType) {
+    OpenXRApp(GraphicsAPI_Type apiType)
+        : m_apiType(apiType)
+    {
         // Check API compatibility with Platform.
         if (!CheckGraphicsAPI_TypeIsValidForPlatform(m_apiType)) {
             XR_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");

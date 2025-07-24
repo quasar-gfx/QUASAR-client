@@ -200,7 +200,7 @@ private:
         prevPoseID = poseID;
 
         // Draw objects (uncomment to debug)
-        // M_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        // m_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");

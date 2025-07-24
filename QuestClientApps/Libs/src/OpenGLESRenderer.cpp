@@ -21,7 +21,10 @@ void (*GetExtension(const char *functionName))() { return eglGetProcAddress(func
 
 using namespace quasar;
 
-OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId) : GraphicsAPI(config) {
+OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId)
+    : GraphicsAPI(config)
+    , outputFsQuad()
+{
     OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
     XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
     OPENXR_CHECK(xrGetOpenGLESGraphicsRequirementsKHR(m_xrInstance, systemId, &graphicsRequirements), "Failed to get Graphics Requirements for OpenGLES.");
@@ -122,12 +125,12 @@ void OpenGLESRenderer::endRendering() {
 }
 
 void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewCount, void *depthStencilView, uint32_t width, uint32_t height) {
-    // Reset Framebuffer
+    // Reset framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &framebuffer);
     framebuffer = 0;
 
-    // Create New Framebuffer
+    // Create new framebuffer
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
@@ -200,18 +203,22 @@ void OpenGLESRenderer::setScreenShaderUniforms(const Shader &screenShader) {
 RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const RenderTargetBase* overrideRenderTarget) {
     pipeline.apply();
 
-    FullScreenQuad outputFsQuad;
-
-    beginRendering();
+    if (overrideRenderTarget != nullptr) {
+        overrideRenderTarget->bind();
+    }
+    else {
+        beginRendering();
+    }
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.bind();
     RenderStats stats = outputFsQuad.draw();
-    screenShader.unbind();
 
-    endRendering();
+    if (overrideRenderTarget != nullptr) {
+        endRendering();
+    }
 
     return stats;
 }
