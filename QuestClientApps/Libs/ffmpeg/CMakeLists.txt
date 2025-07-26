@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 set(TARGET libffmpeg)
 project(${TARGET})
 
-# Add ffmpeg libraries
+# Add FFMpeg libraries
 set(FFMPEG_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(FFMPEG_INCLUDE_DIR ${FFMPEG_ROOT_DIR}/include)
 set(FFMPEG_LIBS_DIR ${FFMPEG_ROOT_DIR}/lib/${ANDROID_ABI})

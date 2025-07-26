@@ -52,3 +52,7 @@ local.properties
 
 # Ignore large 3D assets
 /QuestClientApps/Apps/SceneViewer/assets/models/scenes/
+
+# Ignore everything in gstreamer/ except the CMakeLists.txt
+/QuestClientApps/Libs/gstreamer/*
+!/QuestClientApps/Libs/gstreamer/CMakeLists.txt
