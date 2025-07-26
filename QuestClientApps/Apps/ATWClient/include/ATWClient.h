@@ -33,7 +33,7 @@ private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        atwShader = new Shader({
+        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
             .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
             .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
             .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
@@ -52,22 +52,23 @@ private:
             .magFilter = GL_LINEAR
         }, videoURL);
 
+        // Initialize pose streamer
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
         // Add the hand nodes.
-        Model* leftControllerMesh = new Model({
+        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        m_handNodes[0].setEntity(leftControllerMesh);
+        m_handNodes[0].setEntity(leftControllerModel.get());
 
-        Model* rightControllerMesh = new Model({
+        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        m_handNodes[1].setEntity(rightControllerMesh);
+        m_handNodes[1].setEntity(rightControllerModel.get());
 
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.5f
@@ -152,8 +153,8 @@ private:
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras.get()->left.getForwardVector();
-                    const glm::vec3 &right = cameras.get()->left.getRightVector();
+                    const glm::vec3 &forward = cameras->left.getForwardVector();
+                    const glm::vec3 &right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
@@ -196,7 +197,7 @@ private:
         m_graphicsAPI->drawToScreen(*atwShader);
 
         // Draw objects (uncomment to debug)
-        // m_graphicsAPI->drawObjects(*scene.get(), *cameras.get(), GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        // m_graphicsAPI->drawObjects(*scene, *cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         prevPoseID = currPoseID;
 
@@ -209,11 +210,10 @@ private:
 
     void DestroyResources() override {
         delete videoTexture;
-        delete atwShader;
     }
 
     // Shader for the ATW effect.
-    Shader* atwShader;
+    std::unique_ptr<Shader> atwShader;
     bool atwEnabled = true;
 
     VideoTexture* videoTexture;
@@ -224,6 +224,9 @@ private:
     Pose currentFramePose;
 
     double elapsedTime = 0.0f;
+
+    std::unique_ptr<Model> leftControllerModel;
+    std::unique_ptr<Model> rightControllerModel;
 
     // Actions.
     XrAction m_clickAction;

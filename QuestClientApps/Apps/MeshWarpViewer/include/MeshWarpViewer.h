@@ -39,19 +39,19 @@ private:
         scene->setAmbientLight(ambientLight);
 
         // Add the hand nodes.
-        Model* leftControllerMesh = new Model({
+        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        m_handNodes[0].setEntity(leftControllerMesh);
+        m_handNodes[0].setEntity(leftControllerModel.get());
 
-        Model* rightControllerMesh = new Model({
+        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        m_handNodes[1].setEntity(rightControllerMesh);
+        m_handNodes[1].setEntity(rightControllerModel.get());
 
         // Create texture
         colorTexture = new Texture({
@@ -77,12 +77,13 @@ private:
         std::vector<char> depthData(expectedSize);
         codec.decompress(depthDataCompressed, depthData);
 
-        bc4BufferData = new Buffer(
-            GL_SHADER_STORAGE_BUFFER,
-            (remoteWindowSize.x / 8) * (remoteWindowSize.y / 8), sizeof(BC4Block),
-            reinterpret_cast<BC4Block*>(depthData.data() + sizeof(pose_id_t)), // Skip the first pose_id_t
-            GL_DYNAMIC_DRAW
-        );
+        bc4BufferData = new Buffer({
+            .target = GL_SHADER_STORAGE_BUFFER,
+            .dataSize = sizeof(BC4Block),
+            .numElems = (remoteWindowSize.x / 8) * (remoteWindowSize.y / 8),
+            .usage = GL_DYNAMIC_DRAW,
+            .data = reinterpret_cast<BC4Block*>(depthData.data() + sizeof(pose_id_t)), // Skip the first pose_id_t
+        });
 
         // Setup scene & mesh
         glm::uvec2 adjustedWindowSize = remoteWindowSize / surfelSize;
@@ -188,8 +189,8 @@ private:
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras.get()->left.getForwardVector();
-                    const glm::vec3 &right = cameras.get()->left.getRightVector();
+                    const glm::vec3 &forward = cameras->left.getForwardVector();
+                    const glm::vec3 &right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
@@ -232,7 +233,7 @@ private:
         double endTime = timeutils::getTimeMicros();
 
         // Render
-        m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        m_graphicsAPI->drawObjects(*scene, *cameras);
 
         spdlog::info("Mesh generation time: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
         spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
@@ -259,6 +260,9 @@ private:
     ZSTDCodec codec;
 
     ComputeShader* genMeshFromBC4Shader;
+
+    std::unique_ptr<Model> leftControllerModel;
+    std::unique_ptr<Model> rightControllerModel;
 
     // Actions.
     XrAction m_clickAction;

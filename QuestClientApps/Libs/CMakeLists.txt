@@ -57,9 +57,9 @@ set(COMMON_SRCS
     ${QUASAR_APP_COMMON_DIR}/src/DataStreamerTCP.cpp
     ${QUASAR_APP_COMMON_DIR}/src/DataStreamerUDP.cpp
     ${QUASAR_APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/MeshFromQuads.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadBuffers.cpp
     ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadsBuffers.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMesh.cpp
     ${QUASAR_APP_COMMON_DIR}/src/VideoTexture.cpp
 )
 

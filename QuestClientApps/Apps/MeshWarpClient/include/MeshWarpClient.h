@@ -79,22 +79,22 @@ private:
         remoteCamera.updateViewMatrix();
 
         // Add the hand nodes.
-        Model* leftControllerMesh = new Model({
+        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        m_handNodes[0].setEntity(leftControllerMesh);
+        m_handNodes[0].setEntity(leftControllerModel.get());
 
-        Model* rightControllerMesh = new Model({
+        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        m_handNodes[1].setEntity(rightControllerMesh);
+        m_handNodes[1].setEntity(rightControllerModel.get());
 
         // Initialize pose streamer
-        poseStreamer = new PoseStreamer(cameras.get(), poseURL);
+        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
         // Setup scene and mesh
         glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
@@ -207,8 +207,8 @@ private:
 
             if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras.get()->left.getForwardVector();
-                    const glm::vec3 &right = cameras.get()->left.getRightVector();
+                    const glm::vec3 &forward = cameras->left.getForwardVector();
+                    const glm::vec3 &right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
                 }
@@ -269,7 +269,7 @@ private:
         poseStreamer->removePosesLessThan(std::min(poseIdColor, poseIdDepth));
 
         // Render
-        renderStats = m_graphicsAPI->drawObjects(*scene.get(), *cameras.get());
+        renderStats = m_graphicsAPI->drawObjects(*scene, *cameras);
 
         if (glm::abs(elapsedTimeColor) > 1e-5f) {
             XR_LOG("E2E Latency (RGB): " << elapsedTimeColor << "ms");
@@ -289,7 +289,7 @@ private:
 
     VideoTexture* videoTextureColor;
     BC4DepthVideoTexture* videoTextureDepth;
-    PoseStreamer* poseStreamer;
+    std::unique_ptr<PoseStreamer> poseStreamer;
 
     pose_id_t poseIdColor = -1;
     pose_id_t poseIdDepth = -1;
@@ -306,6 +306,9 @@ private:
     ComputeShader* genMeshFromBC4Shader;
 
     RenderStats renderStats;
+
+    std::unique_ptr<Model> leftControllerModel;
+    std::unique_ptr<Model> rightControllerModel;
 
     // Actions.
     XrAction m_clickAction;
