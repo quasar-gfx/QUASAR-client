@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstrealmedia
+Description: gst-plugins-ugly: gstrealmedia
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-rtsp-1.0 >=  1.27.1, gstreamer-sdp-1.0 >=  1.27.1, gstreamer-pbutils-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstrealmedia
+Cflags: -I${includedir}
+

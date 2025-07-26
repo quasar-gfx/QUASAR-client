@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstmatroska
+Description: gst-plugins-good: gstmatroska
+Version: 1.27.1
+Requires.private: gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-audio-1.0 >=  1.27.1, gstreamer-riff-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1, gstreamer-tag-1.0 >=  1.27.1, gstreamer-base-1.0 >=  1.27.1, gstreamer-1.0 >=  1.27.1, zlib
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstmatroska
+Libs.private: -lbz2 -lm
+Cflags: -I${includedir}
+

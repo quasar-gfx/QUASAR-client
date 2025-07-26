@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstsegmentclip
+Description: gst-plugins-bad: gstsegmentclip
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-audio-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstsegmentclip
+Cflags: -I${includedir}
+

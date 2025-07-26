@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstrtsp
+Description: gst-plugins-good: gstrtsp
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-rtp-1.0 >=  1.27.1, gstreamer-rtsp-1.0 >=  1.27.1, gstreamer-sdp-1.0 >=  1.27.1, gstreamer-net-1.0 >=  1.27.1, gio-2.0 >=  2.64.0
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstrtsp
+Cflags: -I${includedir}
+

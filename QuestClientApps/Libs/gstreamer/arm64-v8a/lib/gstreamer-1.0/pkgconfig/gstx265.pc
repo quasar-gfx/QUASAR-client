@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstx265
+Description: gst-plugins-bad: gstx265
+Version: 1.27.1
+Requires.private: gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1, x265
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstx265
+Cflags: -I${includedir}
+

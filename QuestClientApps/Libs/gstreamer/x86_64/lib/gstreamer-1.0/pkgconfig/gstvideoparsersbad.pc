@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstvideoparsersbad
+Description: gst-plugins-bad: gstvideoparsersbad
+Version: 1.27.1
+Requires.private: gstreamer-codecparsers-1.0, gstreamer-base-1.0 >=  1.27.1, gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstvideoparsersbad
+Cflags: -I${includedir}
+

@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstadaptivedemux2
+Description: gst-plugins-good: gstadaptivedemux2
+Version: 1.27.1
+Requires: gmodule-no-export-2.0, gstreamer-1.0 >=  1.27.1, gstreamer-tag-1.0 >=  1.27.1, gstreamer-net-1.0 >=  1.27.1, gstreamer-base-1.0 >=  1.27.1, gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-app-1.0 >=  1.27.1, gio-2.0 >=  2.64.0, libxml-2.0 >=  2.8, openssl, libsoup-3.0
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstadaptivedemux2 -ldl -lm
+Cflags: -I${includedir}
+

@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstandroidmedia
+Description: gst-plugins-bad: gstandroidmedia
+Version: 1.27.1
+Requires.private: gstreamer-photography-1.0, gstreamer-gl-1.0 >=  1.27.1, gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-audio-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1, gstreamer-1.0 >=  1.27.1, gmodule-no-export-2.0, orc-0.4 >=  0.4.34
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstandroidmedia
+Libs.private: -landroid
+Cflags: -I${includedir}
+

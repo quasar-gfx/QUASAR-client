@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstvideotestsrc
+Description: gst-plugins-base: gstvideotestsrc
+Version: 1.27.1
+Requires.private: gstreamer-video-1.0, gstreamer-base-1.0 >=  1.27.1, orc-0.4 >=  0.4.34, gstreamer-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstvideotestsrc
+Libs.private: -lm
+Cflags: -I${includedir}
+

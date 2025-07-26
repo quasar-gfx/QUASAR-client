@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstrsvg
+Description: gst-plugins-bad: gstrsvg
+Version: 1.27.1
+Requires.private: gstreamer-video-1.0 >=  1.27.1, cairo >=  1.16.0, librsvg-2.0 >=  2.36.2
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstrsvg
+Cflags: -I${includedir}
+

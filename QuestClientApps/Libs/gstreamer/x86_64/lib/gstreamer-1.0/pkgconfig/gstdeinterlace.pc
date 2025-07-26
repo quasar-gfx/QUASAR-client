@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstdeinterlace
+Description: gst-plugins-good: gstdeinterlace
+Version: 1.27.1
+Requires.private: orc-0.4 >=  0.4.34, gstreamer-base-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstdeinterlace
+Cflags: -I${includedir}
+

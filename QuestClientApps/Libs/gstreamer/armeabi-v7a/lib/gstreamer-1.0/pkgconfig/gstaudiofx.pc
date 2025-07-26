@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstaudiofx
+Description: gst-plugins-good: gstaudiofx
+Version: 1.27.1
+Requires.private: orc-0.4 >=  0.4.34, gstreamer-audio-1.0 >=  1.27.1, gstreamer-fft-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstaudiofx
+Libs.private: -lm
+Cflags: -I${includedir}
+

@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstudp
+Description: gst-plugins-good: gstudp
+Version: 1.27.1
+Requires.private: gstreamer-1.0 >=  1.27.1, gstreamer-base-1.0 >=  1.27.1, gstreamer-net-1.0 >=  1.27.1, gio-2.0 >=  2.64.0
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstudp
+Cflags: -I${includedir}
+

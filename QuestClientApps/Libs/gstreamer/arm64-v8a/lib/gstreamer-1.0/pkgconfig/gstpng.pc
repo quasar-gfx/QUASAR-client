@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstpng
+Description: gst-plugins-good: gstpng
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1, libpng >= 1.2
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstpng
+Cflags: -I${includedir}
+

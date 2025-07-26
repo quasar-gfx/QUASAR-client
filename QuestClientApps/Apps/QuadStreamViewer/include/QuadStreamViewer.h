@@ -194,8 +194,8 @@ private:
 
         spdlog::info("Decompress time: {:.3f}ms", totalDecompressTime);
         spdlog::info("Loaded {} proxies ({:.3f} MB), {} depth offsets ({:.3f} MB)",
-                     totalProxies, static_cast<float>(totalBytesProxies) / BYTES_IN_MB,
-                     totalDepthOffsets, static_cast<float>(totalBytesDepthOffsets) / BYTES_IN_MB);
+                     totalProxies, static_cast<float>(totalBytesProxies) / BYTES_PER_MEGABYTE,
+                     totalDepthOffsets, static_cast<float>(totalBytesDepthOffsets) / BYTES_PER_MEGABYTE);
     }
 
     void CreateActionSet() override {

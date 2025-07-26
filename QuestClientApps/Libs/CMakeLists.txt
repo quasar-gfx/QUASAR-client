@@ -15,6 +15,12 @@ set(QUASAR_APP_COMMON_SHADERS_DIR ${QUASAR_APP_COMMON_DIR}/shaders)
 
 add_definitions(-DPLATFORM_OPENXR)
 
+set(LIBS )
+
+# add android native app glue
+add_library(app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
+set(LIBS ${LIBS} android app_glue)
+
 # include fetchcontent for external dependencies
 include(FetchContent)
 
@@ -28,13 +34,20 @@ FetchContent_Declare(
     SOURCE_DIR openxr
 )
 FetchContent_MakeAvailable(OpenXR)
+set(LIBS ${LIBS} openxr_loader)
 
-# ffmpeg
-add_subdirectory(ffmpeg-libs)
+# FFMpeg
+add_subdirectory(ffmpeg)
+set(LIBS ${LIBS} libffmpeg)
+
+# GStreamer
+add_subdirectory(gstreamer)
+set(LIBS ${LIBS} libgstreamer)
 
 # QUASAR
 set(QUASAR_BUILD_APPS OFF) # disable building apps
 add_subdirectory(${QUASAR_DIR})
+set(LIBS ${LIBS} quasar)
 
 # quasar_common source files
 set(COMMON_SRCS
@@ -55,9 +68,6 @@ add_subdirectory(${QUASAR_APP_COMMON_SHADERS_DIR})
 
 # app library source files
 file(GLOB_RECURSE SRCS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-
-# add android native app glue
-add_library(app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
 # create the target library
 add_library(${TARGET}
@@ -81,14 +91,7 @@ if(TARGET openxr-gfxwrapper)
 endif()
 
 # link target libraries
-target_link_libraries(${TARGET}
-    PUBLIC
-    android
-    app_glue
-    openxr_loader
-    quasar
-    libffmpeg
-)
+target_link_libraries(${TARGET} PUBLIC ${LIBS})
 
 # include directories
 target_include_directories(${TARGET}

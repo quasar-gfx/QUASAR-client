@@ -1,0 +1,11 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstautoconvert
+Description: gst-plugins-bad: gstautoconvert
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-pbutils-1.0 >=  1.27.1, gstreamer-video-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstautoconvert
+Cflags: -I${includedir}
+

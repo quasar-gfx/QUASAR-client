@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../../..
+includedir=${prefix}/include
+libdir=${prefix}/lib
+
+Name: gstaudiofxbad
+Description: gst-plugins-bad: gstaudiofxbad
+Version: 1.27.1
+Requires.private: gstreamer-base-1.0 >=  1.27.1, gstreamer-audio-1.0 >=  1.27.1
+Libs: -L${prefix}/lib/gstreamer-1.0 -lgstaudiofxbad
+Libs.private: -lm
+Cflags: -I${includedir}
+

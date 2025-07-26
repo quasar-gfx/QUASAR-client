@@ -23,7 +23,6 @@ private:
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 
-    std::string videoFormat = "mpegts";
     glm::uvec2 videoSize = glm::uvec2(2048, 1024);
 
 public:
@@ -51,7 +50,7 @@ private:
             .wrapT = GL_CLAMP_TO_EDGE,
             .minFilter = GL_LINEAR,
             .magFilter = GL_LINEAR
-        }, videoURL, videoFormat);
+        }, videoURL);
 
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
