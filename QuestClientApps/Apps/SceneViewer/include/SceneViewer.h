@@ -91,108 +91,81 @@ private:
 
         cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
 
+        // SceneLoader doesn't work on Android atm, so manually add animations
         {
             Node* node = robotLab->findNodeByName("prop_robotArm_body");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addRotationKey(glm::vec3(0.0f, 360.0f, 0.0f), 60.0f);
                 anim->setRotationProperties(false, true);  // Not reversed, looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcFlyer_clean");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addPositionKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addPositionKey(glm::vec3(0.0f, 2.0f, 0.0f), 5.0f);
                 anim->setPositionProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_clean");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addPositionKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addPositionKey(glm::vec3(0.0f, 0.0f, 3.0f), 15.0f);
                 anim->setPositionProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearLeft");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
                 anim->setRotationProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearRight");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
                 anim->setRotationProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontLeft");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
                 anim->setRotationProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
 
         {
             Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontRight");
             if (node != nullptr) {
-                Animation* anim = (node->animation != nullptr) ? node->animation : new Animation();
+                std::shared_ptr<Animation> anim = node->addAnimation();
 
                 anim->addRotationKey(glm::vec3(0.0f, 0.0f, 0.0f), 0.0f);
                 anim->addRotationKey(glm::vec3(360.0f, 0.0f, 0.0f), 15.0f);
                 anim->setRotationProperties(true, true);  // Reversed and looping
-
-                if (node->animation == nullptr) {
-                    node->animation = anim;
-                }
             }
         }
     }

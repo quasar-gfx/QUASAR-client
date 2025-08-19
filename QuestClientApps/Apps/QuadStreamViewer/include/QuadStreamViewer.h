@@ -9,7 +9,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <Quads/QuadFrame.h>
+#include <Quads/QuadFrames.h>
 #include <Quads/QuadMesh.h>
 
 using namespace quasar;
@@ -17,35 +17,11 @@ using namespace quasar;
 class QuadStreamViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
-    std::string dataPathBase = "quads/" + sceneName + "/";
+    Path dataPath = Path("quads/" + sceneName);
 
     uint maxAdditionalViews = 8;
     uint maxViews = maxAdditionalViews + 2; // +2 for primary and wide fov views
     float viewBoxSize = 0.5f;
-
-    const std::vector<glm::vec3> offsets = {
-        glm::vec3(-1.0f, +1.0f, -1.0f),
-        glm::vec3(+1.0f, +1.0f, -1.0f),
-        glm::vec3(+1.0f, -1.0f, -1.0f),
-        glm::vec3(-1.0f, -1.0f, -1.0f),
-        glm::vec3(-1.0f, +1.0f, +1.0f),
-        glm::vec3(+1.0f, +1.0f, +1.0f),
-        glm::vec3(+1.0f, -1.0f, +1.0f),
-        glm::vec3(-1.0f, -1.0f, +1.0f),
-    };
-
-    const std::vector<glm::vec4> colors = {
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // primary view color is yellow
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-        glm::vec4(1.0f, 0.5f, 0.5f, 1.0f),
-        glm::vec4(0.0f, 0.5f, 0.5f, 1.0f),
-        glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-        glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
-        glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
-    };
 
 public:
     QuadStreamViewer(GraphicsAPI_Type apiType)
@@ -57,6 +33,7 @@ public:
         meshes.reserve(maxViews);
         nodes.reserve(maxViews);
         nodeWireframes.reserve(maxViews);
+        frames.resize(maxViews);
     }
 
     ~QuadStreamViewer() = default;
@@ -81,8 +58,7 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerModel.get());
 
-        Path dataPath = Path(dataPathBase);
-
+        // Load all textures
         TextureFileCreateParams params = {
             .wrapS = GL_REPEAT,
             .wrapT = GL_REPEAT,
@@ -95,9 +71,10 @@ private:
             Path file = dataPath.appendToName("color" + std::to_string(view)).withExtension(".jpg");
             params.path = file;
             colorTextures.emplace_back(params);
+            frames.emplace_back();
         }
 
-        glm::uvec2 remoteGBufferSize = glm::uvec2(colorTextures[0].width, colorTextures[0].height);
+        remoteGBufferSize = glm::uvec2(colorTextures[0].width, colorTextures[0].height);
 
         for (int view = 0; view < maxViews; view++) {
             remoteCameras.emplace_back(remoteGBufferSize.x, remoteGBufferSize.y);
@@ -127,23 +104,26 @@ private:
         remoteCameras[maxViews-1].setFovyDegrees(120.0f);
         remoteCameras[maxViews-1].setViewMatrix(remoteCameraCenter.getViewMatrix());
 
-        quadFrame = std::make_unique<QuadFrame>(remoteGBufferSize);
+        quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
 
-        QuadFrame::Sizes totalSizes;
+        QuadSet::Sizes totalSizes;
 
         // Load quad buffers and depth offsets
         for (int view = 0; view < maxViews; view++) {
-            Path quadsFile = (dataPath / "quads").appendToName(std::to_string(view)).withExtension(".bin.zstd");
-            Path depthFile = (dataPath / "depthOffsets").appendToName(std::to_string(view)).withExtension(".bin.zstd");
-            auto sizes = quadFrame->loadFromFiles(quadsFile, depthFile);
-            totalDecompressTime = quadFrame->stats.timeToDecompressMs;
+            double startTime = timeutils::getTimeMicros();
+            frames[view].loadFromFiles(dataPath, view);
+            loadFromFilesTime = timeutils::microsToMillis(timeutils::getTimeMicros() - startTime);
+
+            startTime = timeutils::getTimeMicros();
+            auto sizes = quadSet->unmapFromCPU(frames[view].quads, frames[view].depthOffsets);
+            transferTime = timeutils::microsToMillis(quadSet->stats.timeToTransferMs);
 
             // Create mesh
-            meshes.emplace_back(*quadFrame, colorTextures[view], sizes.numQuads);
+            meshes.emplace_back(*quadSet, colorTextures[view], sizes.numQuads);
 
             const glm::vec2& gBufferSize = glm::vec2(colorTextures[view].width, colorTextures[view].height);
-            meshes[view].appendQuads(*quadFrame, gBufferSize);
-            meshes[view].createMeshFromProxies(*quadFrame, gBufferSize, remoteCameras[view]);
+            meshes[view].appendQuads(*quadSet, gBufferSize);
+            meshes[view].createMeshFromProxies(*quadSet, gBufferSize, remoteCameras[view]);
 
             totalSizes += sizes;
         }
@@ -165,15 +145,19 @@ private:
             scene->addChildNode(&nodeWireframes[view]);
         }
 
-        spdlog::info("Decompress time: {:.3f}ms", totalDecompressTime);
+        spdlog::info("Time to load from files: {:.3f}ms", loadFromFilesTime);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", transferTime);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                      totalSizes.numQuads, totalSizes.quadsSize / BYTES_PER_MEGABYTE,
                      totalSizes.numDepthOffsets, totalSizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
     }
 
     void CreateActionSet() override {
+        // An Action for clicking on the controller.
         CreateAction(m_clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
+        // An Action for the position of the thumbstick.
         CreateAction(m_thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
+        // An Action for a vibration output on one or other hand.
         CreateAction(m_buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
@@ -222,7 +206,9 @@ private:
     }
 
     void HandleInteractions() override {
+        // For each hand:
         for (int i = 0; i < 2; i++) {
+            // Draw the controllers:
             m_handNodes[i].visible = m_handPoseState[i].isActive;
 
             if (m_clickState[i].isActive == XR_TRUE &&
@@ -257,16 +243,43 @@ private:
     void DestroyResources() override {}
 
 private:
+    const std::vector<glm::vec4> colors = {
+        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // primary view color is yellow
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+        glm::vec4(1.0f, 0.5f, 0.5f, 1.0f),
+        glm::vec4(0.0f, 0.5f, 0.5f, 1.0f),
+        glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
+        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
+        glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
+    };
+
+    const std::vector<glm::vec3> offsets = {
+        glm::vec3(-1.0f, +1.0f, -1.0f),
+        glm::vec3(+1.0f, +1.0f, -1.0f),
+        glm::vec3(+1.0f, -1.0f, -1.0f),
+        glm::vec3(-1.0f, -1.0f, -1.0f),
+        glm::vec3(-1.0f, +1.0f, +1.0f),
+        glm::vec3(+1.0f, +1.0f, +1.0f),
+        glm::vec3(+1.0f, -1.0f, +1.0f),
+        glm::vec3(-1.0f, -1.0f, +1.0f),
+    };
+
+    double loadFromFilesTime = 0.0;
+    double transferTime = 0.0;
+
+    glm::uvec2 remoteGBufferSize;
     std::vector<PerspectiveCamera> remoteCameras;
 
-    std::unique_ptr<QuadFrame> quadFrame;
+    std::unique_ptr<QuadSet> quadSet;
 
     std::vector<Texture> colorTextures;
     std::vector<QuadMesh> meshes;
     std::vector<Node> nodes;
     std::vector<Node> nodeWireframes;
-
-    double totalDecompressTime = 0.0;
+    std::vector<ReferenceFrame> frames;
 
     std::unique_ptr<Model> leftControllerModel;
     std::unique_ptr<Model> rightControllerModel;

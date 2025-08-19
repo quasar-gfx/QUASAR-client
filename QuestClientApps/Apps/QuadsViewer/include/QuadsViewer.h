@@ -11,8 +11,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <Quads/QuadMaterial.h>
-#include <Quads/QuadFrame.h>
+#include <Quads/QuadFrames.h>
 #include <Quads/QuadMesh.h>
 
 using namespace quasar;
@@ -20,7 +19,7 @@ using namespace quasar;
 class QuadsViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
-    std::string dataPathBase = "quads/" + sceneName + "/";
+    Path dataPath = Path("quads/" + sceneName);
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -52,7 +51,6 @@ private:
         });
         m_handNodes[1].setEntity(rightControllerModel.get());
 
-        Path dataPath = Path(dataPathBase);
         std::string colorFileName = dataPath / "color.jpg";
         colorTexture = new Texture({
             .wrapS = GL_REPEAT,
@@ -71,15 +69,20 @@ private:
         remoteCamera->setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
         remoteCamera->updateViewMatrix();
 
-        quadFrame = std::make_unique<QuadFrame>(remoteGBufferSize);
-        quadMesh = std::make_unique<QuadMesh>(*quadFrame, *colorTexture);
+        quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
+        quadMesh = std::make_unique<QuadMesh>(*quadSet, *colorTexture);
 
         // Load quad buffers and depth offsets
-        Path quadsFile = (dataPath / "quads").withExtension(".bin.zstd");
-        Path depthOffsetsFile = (dataPath / "depthOffsets").withExtension(".bin.zstd");
-        auto sizes = quadFrame->loadFromFiles(quadsFile, depthOffsetsFile);
+        double startTime = timeutils::getTimeMicros();
+        frame.loadFromFiles(dataPath);
+        loadFromFilesTime = timeutils::microsToMillis(timeutils::getTimeMicros() - startTime);
 
-        spdlog::info("Decompress time: {:.3f}ms", quadFrame->stats.timeToDecompressMs);
+        startTime = timeutils::getTimeMicros();
+        auto sizes = quadSet->unmapFromCPU(frame.quads, frame.depthOffsets);
+        transferTime = quadSet->stats.timeToTransferMs;
+
+        spdlog::info("Time to load from files: {:.3f}ms", loadFromFilesTime);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", transferTime);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                      sizes.numQuads, sizes.quadsSize / BYTES_PER_MEGABYTE,
                      sizes.numDepthOffsets, sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
@@ -175,8 +178,8 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        quadMesh->appendQuads(*quadFrame, remoteGBufferSize);
-        quadMesh->createMeshFromProxies(*quadFrame, remoteGBufferSize, *remoteCamera);
+        quadMesh->appendQuads(*quadSet, remoteGBufferSize);
+        quadMesh->createMeshFromProxies(*quadSet, remoteGBufferSize, *remoteCamera);
 
         m_graphicsAPI->drawObjects(*scene, *cameras);
 
@@ -191,10 +194,14 @@ private:
         delete node;
     }
 
+private:
+    double loadFromFilesTime = 0.0;
+    double transferTime = 0.0;
+
     glm::uvec2 remoteGBufferSize;
     PerspectiveCamera* remoteCamera;
 
-    std::unique_ptr<QuadFrame> quadFrame;
+    std::unique_ptr<QuadSet> quadSet;
 
     Texture* colorTexture;
     std::unique_ptr<QuadMesh> quadMesh;
@@ -203,6 +210,8 @@ private:
 
     std::unique_ptr<Model> leftControllerModel;
     std::unique_ptr<Model> rightControllerModel;
+
+    ReferenceFrame frame;
 
     // Actions.
     XrAction m_clickAction;
