@@ -44,14 +44,14 @@ private:
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        m_handNodes[0].setEntity(leftControllerModel.get());
+        handNodes[0].setEntity(leftControllerModel.get());
 
         rightControllerModel = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        m_handNodes[1].setEntity(rightControllerModel.get());
+        handNodes[1].setEntity(rightControllerModel.get());
 
         // Create texture
         colorTexture = new Texture({
@@ -120,54 +120,54 @@ private:
 
     void CreateActionSet() override {
         // An Action for clicking on the controller.
-        CreateAction(m_clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
+        CreateAction(clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
         // An Action for the position of the thumbstick.
-        CreateAction(m_thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
+        CreateAction(thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
         // An Action for a vibration output on one or other hand.
-        CreateAction(m_buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
+        CreateAction(buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
     void SuggestBindings(std::map<std::string, std::vector<XrActionSuggestedBinding>>& bindings) override {
-        bindings["/interaction_profiles/khr/simple_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/left/input/select/click")});
-        bindings["/interaction_profiles/khr/simple_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/right/input/select/click")});
-        bindings["/interaction_profiles/khr/simple_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/left/output/haptic")});
-        bindings["/interaction_profiles/khr/simple_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/right/output/haptic")});
+        bindings["/interaction_profiles/khr/simple_controller"].push_back({clickAction, CreateXrPath("/user/hand/left/input/select/click")});
+        bindings["/interaction_profiles/khr/simple_controller"].push_back({clickAction, CreateXrPath("/user/hand/right/input/select/click")});
+        bindings["/interaction_profiles/khr/simple_controller"].push_back({buzzAction, CreateXrPath("/user/hand/left/output/haptic")});
+        bindings["/interaction_profiles/khr/simple_controller"].push_back({buzzAction, CreateXrPath("/user/hand/right/output/haptic")});
 
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/left/input/trigger/value")});
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_clickAction, CreateXrPath("/user/hand/right/input/trigger/value")});
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_thumbstickAction, CreateXrPath("/user/hand/left/input/thumbstick")});
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_thumbstickAction, CreateXrPath("/user/hand/right/input/thumbstick")});
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/left/output/haptic")});
-        bindings["/interaction_profiles/oculus/touch_controller"].push_back({m_buzzAction, CreateXrPath("/user/hand/right/output/haptic")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({clickAction, CreateXrPath("/user/hand/left/input/trigger/value")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({clickAction, CreateXrPath("/user/hand/right/input/trigger/value")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({thumbstickAction, CreateXrPath("/user/hand/left/input/thumbstick")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({thumbstickAction, CreateXrPath("/user/hand/right/input/thumbstick")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({buzzAction, CreateXrPath("/user/hand/left/output/haptic")});
+        bindings["/interaction_profiles/oculus/touch_controller"].push_back({buzzAction, CreateXrPath("/user/hand/right/output/haptic")});
     }
 
     void PollActions(XrTime predictedTime) override {
         XrActionStateGetInfo actionStateGetInfo{XR_TYPE_ACTION_STATE_GET_INFO};
 
         for (int i = 0; i < 2; i++) {
-            actionStateGetInfo.action = m_clickAction;
-            actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateBoolean(m_session, &actionStateGetInfo, &m_clickState[i]),
+            actionStateGetInfo.action = clickAction;
+            actionStateGetInfo.subactionPath = handPaths[i];
+            OPENXR_CHECK(xrGetActionStateBoolean(session, &actionStateGetInfo, &clickState[i]),
                                                  "Failed to get Boolean State of Click action.");
 
-            actionStateGetInfo.action = m_thumbstickAction;
-            actionStateGetInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrGetActionStateVector2f(m_session, &actionStateGetInfo, &m_thumbstickState[i]),
+            actionStateGetInfo.action = thumbstickAction;
+            actionStateGetInfo.subactionPath = handPaths[i];
+            OPENXR_CHECK(xrGetActionStateVector2f(session, &actionStateGetInfo, &thumbstickState[i]),
                                                  "Failed to get Vector2f State of Thumbstick action.");
 
-            m_buzz[i] *= 0.5f;
-            if (m_buzz[i] < 0.01f) {
-                m_buzz[i] = 0.0f;
+            buzz[i] *= 0.5f;
+            if (buzz[i] < 0.01f) {
+                buzz[i] = 0.0f;
             }
             XrHapticVibration vibration{XR_TYPE_HAPTIC_VIBRATION};
-            vibration.amplitude = m_buzz[i];
+            vibration.amplitude = buzz[i];
             vibration.duration = XR_MIN_HAPTIC_DURATION;
             vibration.frequency = XR_FREQUENCY_UNSPECIFIED;
 
             XrHapticActionInfo hapticActionInfo{XR_TYPE_HAPTIC_ACTION_INFO};
-            hapticActionInfo.action = m_buzzAction;
-            hapticActionInfo.subactionPath = m_handPaths[i];
-            OPENXR_CHECK(xrApplyHapticFeedback(m_session, &hapticActionInfo, (XrHapticBaseHeader*)&vibration),
+            hapticActionInfo.action = buzzAction;
+            hapticActionInfo.subactionPath = handPaths[i];
+            OPENXR_CHECK(xrApplyHapticFeedback(session, &hapticActionInfo, (XrHapticBaseHeader*)&vibration),
                         "Failed to apply haptic feedback.");
         }
     }
@@ -176,25 +176,25 @@ private:
         // For each hand:
         for (int i = 0; i < 2; i++) {
             // Draw the controllers:
-            m_handNodes[i].visible = m_handPoseState[i].isActive;
+            handNodes[i].visible = handPoseState[i].isActive;
 
-            if (m_clickState[i].isActive == XR_TRUE &&
-                m_clickState[i].currentState == XR_FALSE &&
-                m_clickState[i].changedSinceLastSync == XR_TRUE) {
+            if (clickState[i].isActive == XR_TRUE &&
+                clickState[i].currentState == XR_FALSE &&
+                clickState[i].changedSinceLastSync == XR_TRUE) {
                 // XR_LOG("Click action triggered for hand: " << i);
-                m_buzz[i] = 0.5f;
+                buzz[i] = 0.5f;
 
                 nodeWireframe->visible = !nodeWireframe->visible;
             }
 
-            if (m_thumbstickState[i].isActive == XR_TRUE && m_thumbstickState[i].changedSinceLastSync == XR_TRUE) {
-                if (glm::abs(m_thumbstickState[i].currentState.x) > 0.2f || glm::abs(m_thumbstickState[i].currentState.y) > 0.2f) {
+            if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
+                if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3 &forward = cameras->left.getForwardVector();
                     const glm::vec3 &right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * m_thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * m_thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
+                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
                 }
-                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << m_thumbstickState[i].currentState.x << ", " << m_thumbstickState[i].currentState.y);
+                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
         }
     }
@@ -233,7 +233,7 @@ private:
         double endTime = timeutils::getTimeMicros();
 
         // Render
-        m_graphicsAPI->drawObjects(*scene, *cameras);
+        graphicsAPI->drawObjects(*scene, *cameras);
 
         spdlog::info("Mesh generation time: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
         spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
@@ -265,18 +265,18 @@ private:
     std::unique_ptr<Model> rightControllerModel;
 
     // Actions.
-    XrAction m_clickAction;
+    XrAction clickAction;
     // The realtime states of these actions.
-    XrActionStateBoolean m_clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
+    XrActionStateBoolean clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
     // The thumbstick input action.
-    XrAction m_thumbstickAction;
+    XrAction thumbstickAction;
     // The current thumbstick state for each controller.
-    XrActionStateVector2f m_thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
+    XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
     float movementSpeed = 0.03f;
     // The haptic output action for grabbing cubes.
-    XrAction m_buzzAction;
+    XrAction buzzAction;
     // The current haptic output value for each controller.
-    float m_buzz[2] = {0, 0};
+    float buzz[2] = {0, 0};
 };
 
 #endif // MESHWARP_VIEWER_H

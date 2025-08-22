@@ -82,7 +82,7 @@ XrBool32 OpenXRMessageCallbackFunction(XrDebugUtilsMessageSeverityFlagsEXT messa
     return XrBool32();
 }
 
-XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance) {
+XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance xrInstance) {
     // Fill out a XrDebugUtilsMessengerCreateInfoEXT structure specifying all severities and types.
     // Set the userCallback to OpenXRMessageCallbackFunction().
     XrDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
@@ -94,17 +94,17 @@ XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance
     // Load xrCreateDebugUtilsMessengerEXT() function pointer as it is not default loaded by the OpenXR loader.
     XrDebugUtilsMessengerEXT debugUtilsMessenger{};
     PFN_xrCreateDebugUtilsMessengerEXT xrCreateDebugUtilsMessengerEXT;
-    OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrCreateDebugUtilsMessengerEXT", (PFN_xrVoidFunction *)&xrCreateDebugUtilsMessengerEXT), "Failed to get InstanceProcAddr.");
+    OPENXR_CHECK(xrGetInstanceProcAddr(xrInstance, "xrCreateDebugUtilsMessengerEXT", (PFN_xrVoidFunction *)&xrCreateDebugUtilsMessengerEXT), "Failed to get InstanceProcAddr.");
 
     // Finally create and return the XrDebugUtilsMessengerEXT.
-    OPENXR_CHECK(xrCreateDebugUtilsMessengerEXT(m_xrInstance, &debugUtilsMessengerCI, &debugUtilsMessenger), "Failed to create DebugUtilsMessenger.");
+    OPENXR_CHECK(xrCreateDebugUtilsMessengerEXT(xrInstance, &debugUtilsMessengerCI, &debugUtilsMessenger), "Failed to create DebugUtilsMessenger.");
     return debugUtilsMessenger;
 }
 
-void DestroyOpenXRDebugUtilsMessenger(XrInstance m_xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger) {
+void DestroyOpenXRDebugUtilsMessenger(XrInstance xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger) {
     // Load xrDestroyDebugUtilsMessengerEXT() function pointer as it is not default loaded by the OpenXR loader.
     PFN_xrDestroyDebugUtilsMessengerEXT xrDestroyDebugUtilsMessengerEXT;
-    OPENXR_CHECK(xrGetInstanceProcAddr(m_xrInstance, "xrDestroyDebugUtilsMessengerEXT", (PFN_xrVoidFunction *)&xrDestroyDebugUtilsMessengerEXT), "Failed to get InstanceProcAddr.");
+    OPENXR_CHECK(xrGetInstanceProcAddr(xrInstance, "xrDestroyDebugUtilsMessengerEXT", (PFN_xrVoidFunction *)&xrDestroyDebugUtilsMessengerEXT), "Failed to get InstanceProcAddr.");
 
     // Destroy the provided XrDebugUtilsMessengerEXT.
     OPENXR_CHECK(xrDestroyDebugUtilsMessengerEXT(debugUtilsMessenger), "Failed to destroy DebugUtilsMessenger.");

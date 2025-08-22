@@ -10,7 +10,7 @@ namespace quasar {
 
 class OpenGLESRenderer : public GraphicsAPI {
 public:
-    OpenGLESRenderer(const Config &config, XrInstance m_xrInstance, XrSystemId systemId);
+    OpenGLESRenderer(const Config &config, XrInstance xrInstance, XrSystemId systemId);
     ~OpenGLESRenderer();
 
     virtual void* GetGraphicsBinding() override;
