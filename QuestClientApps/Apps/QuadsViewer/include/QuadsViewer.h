@@ -19,7 +19,7 @@ using namespace quasar;
 class QuadsViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
-    Path dataPath = Path("quads/" + sceneName);
+    Path dataPath = Path("quads/" + sceneName + "/");
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -51,7 +51,7 @@ private:
         });
         handNodes[1].setEntity(rightControllerModel.get());
 
-        std::string colorFileName = dataPath / "color.jpg";
+        std::string colorFileName = dataPath.appendToName("color").withExtension(".jpg");
         colorTexture = new Texture({
             .wrapS = GL_REPEAT,
             .wrapT = GL_REPEAT,

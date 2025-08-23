@@ -17,7 +17,7 @@ using namespace quasar;
 class QuadStreamViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
-    Path dataPath = Path("quads/" + sceneName);
+    Path dataPath = Path("quads/" + sceneName + "/");
 
     uint maxAdditionalViews = 8;
     uint maxViews = maxAdditionalViews + 2; // +2 for primary and wide fov views

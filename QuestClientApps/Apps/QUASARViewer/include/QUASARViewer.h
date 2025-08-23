@@ -17,7 +17,7 @@ using namespace quasar;
 class QUASARViewer final : public OpenXRApp {
 private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
-    Path dataPath = Path("quads/" + sceneName);
+    Path dataPath = Path("quads/" + sceneName + "/");
 
     uint numHiddenLayers = 3;
     uint maxLayers = numHiddenLayers + 2; // add visible and wide FOV layer
@@ -68,8 +68,9 @@ private:
             // Load color texture
             Path colorFileName = dataPath.appendToName("color" + std::to_string(layer));
             params.path = colorFileName.withExtension(".jpg");
+            spdlog::info("Loading layer {} from files...", layer);
+            spdlog::info("Loading {}...", colorFileName.str());
             colorTextures.emplace_back(params);
-            frames.emplace_back();
         }
 
         remoteGBufferSize = glm::uvec2(colorTextures[0].width, colorTextures[0].height);
