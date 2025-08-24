@@ -9,8 +9,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <Quads/QuadFrames.h>
-#include <Quads/QuadMesh.h>
+#include <QuadStreamReceiver.h>
 
 using namespace quasar;
 
@@ -21,21 +20,16 @@ private:
 
     uint maxAdditionalViews = 8;
     uint maxViews = maxAdditionalViews + 2; // +2 for primary and wide fov views
+
+    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    float remoteFOV = 90.0f;
+    float remoteFOVWide = 120.0f;
     float viewBoxSize = 0.5f;
 
 public:
     QuadStreamViewer(GraphicsAPI_Type apiType)
         : OpenXRApp(apiType)
-    {
-        // Pre-allocate vectors
-        remoteCameras.reserve(maxViews);
-        colorTextures.reserve(maxViews);
-        meshes.reserve(maxViews);
-        nodes.reserve(maxViews);
-        nodeWireframes.reserve(maxViews);
-        frames.resize(maxViews);
-    }
-
+    {}
     ~QuadStreamViewer() = default;
 
 private:
@@ -47,7 +41,6 @@ private:
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
-            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
@@ -56,105 +49,43 @@ private:
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .gammaCorrected = true,            .IBL = 0.0f,
+            .gammaCorrected = true,
             .path = "models/quest-touch-plus-right.glb"
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
-        // Load all textures
-        TextureFileCreateParams params = {
-            .wrapS = GL_REPEAT,
-            .wrapT = GL_REPEAT,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST,
-            .flipVertically = true,
-            .gammaCorrected = true
-        };
-        for (int view = 0; view < maxViews; view++) {
-            Path file = dataPath.appendToName("color" + std::to_string(view)).withExtension(".jpg");
-            params.path = file;
-            colorTextures.emplace_back(params);
-            frames.emplace_back();
-        }
-
-        remoteGBufferSize = glm::uvec2(colorTextures[0].width, colorTextures[0].height);
-
-        for (int view = 0; view < maxViews; view++) {
-            remoteCameras.emplace_back(remoteGBufferSize.x, remoteGBufferSize.y);
-            remoteCameras[view].setFovyDegrees(90.0f);
-            remoteCameras[view].setPosition({ 0.0f, 3.0f, 10.0f });
-            remoteCameras[view].updateViewMatrix();
-        }
-        PerspectiveCamera& remoteCameraCenter = remoteCameras[0];
-
-        for (int view = 1; view < maxViews - 1; view++) {
-            const glm::vec3& offset = offsets[view - 1];
-            const glm::vec3& right = remoteCameraCenter.getRightVector();
-            const glm::vec3& up = remoteCameraCenter.getUpVector();
-            const glm::vec3& forward = remoteCameraCenter.getForwardVector();
-
-            glm::vec3 worldOffset =
-                right   * offset.x * viewBoxSize / 2.0f +
-                up      * offset.y * viewBoxSize / 2.0f +
-                forward * -offset.z * viewBoxSize / 2.0f;
-
-            remoteCameras[view].setViewMatrix(remoteCameraCenter.getViewMatrix());
-            remoteCameras[view].setPosition(remoteCameraCenter.getPosition() + worldOffset);
-            remoteCameras[view].updateViewMatrix();
-        }
-
-        remoteCameras[maxViews-1] = PerspectiveCamera(remoteGBufferSize.x, remoteGBufferSize.y);
-        remoteCameras[maxViews-1].setFovyDegrees(120.0f);
-        remoteCameras[maxViews-1].setViewMatrix(remoteCameraCenter.getViewMatrix());
-
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-
-        QuadSet::Sizes totalSizes;
-
-        // Load quad buffers and depth offsets
-        for (int view = 0; view < maxViews; view++) {
-            double startTime = timeutils::getTimeMicros();
-            frames[view].loadFromFiles(dataPath, view);
-            loadFromFilesTime = timeutils::microsToMillis(timeutils::getTimeMicros() - startTime);
-
-            startTime = timeutils::getTimeMicros();
-            auto sizes = quadSet->unmapFromCPU(frames[view].quads, frames[view].depthOffsets);
-            transferTime = timeutils::microsToMillis(quadSet->stats.timeToTransferMs);
-
-            // Create mesh
-            meshes.emplace_back(*quadSet, colorTextures[view], sizes.numQuads);
-
-            const glm::vec2& gBufferSize = glm::vec2(colorTextures[view].width, colorTextures[view].height);
-            meshes[view].appendQuads(*quadSet, gBufferSize);
-            meshes[view].createMeshFromProxies(*quadSet, gBufferSize, remoteCameras[view]);
-
-            totalSizes += sizes;
-        }
+        quadstreamReceiver = std::make_unique<QuadStreamReceiver>(*quadSet, maxViews, remoteFOV, remoteFOVWide, viewBoxSize);
 
         // Create nodes
+        nodes.reserve(maxViews);
+        nodeWireframes.reserve(maxViews);
         for (int view = 0; view < maxViews; view++) {
-            nodes.emplace_back(&meshes[view]);
+            nodes.emplace_back(&quadstreamReceiver->getMesh(view));
             nodes[view].frustumCulled = false;
-            nodes[view].setPosition(-1.0f * remoteCameraCenter.getPosition());
             scene->addChildNode(&nodes[view]);
 
-            nodeWireframes.emplace_back(&meshes[view]);
+            nodeWireframes.emplace_back(&quadstreamReceiver->getMesh(view));
             nodeWireframes[view].frustumCulled = false;
             nodeWireframes[view].wireframe = true;
             nodeWireframes[view].visible = false;
             nodeWireframes[view].primativeType = GL_LINES;
             nodeWireframes[view].overrideMaterial = new QuadMaterial({ .baseColor = colors[view % colors.size()] });
-            nodeWireframes[view].setPosition(-1.0f * remoteCameraCenter.getPosition());
             scene->addChildNode(&nodeWireframes[view]);
         }
 
-        spdlog::info("Time to load from files: {:.3f}ms", loadFromFilesTime);
-        spdlog::info("Time to transfer to GPU: {:.3f}ms", transferTime);
+        // Load quad buffers and depth offsets
+        quadstreamReceiver->loadFromFiles(dataPath);
+
+        spdlog::info("Time to load from files: {:.3f}ms", quadstreamReceiver->stats.loadFromFilesTime);
+        spdlog::info("Time to decompress: {:.3f}ms", quadstreamReceiver->stats.decompressTime);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadstreamReceiver->stats.transferTime);
+        spdlog::info("Time to create mesh: {:.3f}ms", quadstreamReceiver->stats.createMeshTime);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
-                     totalSizes.numQuads, totalSizes.quadsSize / BYTES_PER_MEGABYTE,
-                     totalSizes.numDepthOffsets, totalSizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
+                     quadstreamReceiver->stats.sizes.numQuads, quadstreamReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
+                     quadstreamReceiver->stats.sizes.numDepthOffsets, quadstreamReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
     }
 
     void CreateActionSet() override {
@@ -242,7 +173,7 @@ private:
 
     void OnRender(double now, double dt) override {
         graphicsAPI->drawObjects(*scene, *cameras);
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {}
@@ -261,33 +192,10 @@ private:
         glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
     };
 
-    const std::vector<glm::vec3> offsets = {
-        glm::vec3(-1.0f, +1.0f, -1.0f),
-        glm::vec3(+1.0f, +1.0f, -1.0f),
-        glm::vec3(+1.0f, -1.0f, -1.0f),
-        glm::vec3(-1.0f, -1.0f, -1.0f),
-        glm::vec3(-1.0f, +1.0f, +1.0f),
-        glm::vec3(+1.0f, +1.0f, +1.0f),
-        glm::vec3(+1.0f, -1.0f, +1.0f),
-        glm::vec3(-1.0f, -1.0f, +1.0f),
-    };
-
-    double loadFromFilesTime = 0.0;
-    double transferTime = 0.0;
-
-    glm::uvec2 remoteGBufferSize;
-    std::vector<PerspectiveCamera> remoteCameras;
-
     std::unique_ptr<QuadSet> quadSet;
+    std::unique_ptr<QuadStreamReceiver> quadstreamReceiver;
 
-    std::vector<Texture> colorTextures;
-    std::vector<QuadMesh> meshes;
-    std::vector<Node> nodes;
-    std::vector<Node> nodeWireframes;
-    std::vector<ReferenceFrame> frames;
-
-    std::unique_ptr<Model> handModelLeft;
-    std::unique_ptr<Model> handModelRight;
+    std::vector<Node> nodes, nodeWireframes;
 
     // Actions.
     XrAction clickAction;
@@ -302,6 +210,9 @@ private:
     XrAction buzzAction;
     // The current haptic output value for each controller.
     float buzz[2] = {0, 0};
+
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 };
 
 #endif // QUAD_STREAM_RECEIVER_H

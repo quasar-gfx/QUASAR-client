@@ -20,6 +20,9 @@ private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("quads/" + sceneName + "/");
 
+    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    float remoteFOV = 90.0f;
+
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
         : OpenXRApp(apiType)
@@ -39,7 +42,6 @@ private:
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
-            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
@@ -48,39 +50,31 @@ private:
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .gammaCorrected = true,            .IBL = 0.0f,
+            .gammaCorrected = true,
             .path = "models/quest-touch-plus-right.glb"
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
-        const glm::vec2& remoteGBufferSize = glm::vec2(1920, 1080);
-
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, remoteFOV);
 
-        remoteCamera = std::make_unique<PerspectiveCamera>(remoteGBufferSize.x, remoteGBufferSize.y);
-        remoteCamera->setFovyDegrees(90.0f);
-        remoteCamera->setPosition({ 0.0f, 3.0f, 10.0f });
-        remoteCamera->updateViewMatrix();
+        // Create nodes
+        node.setEntity(&quadsReceiver->getMesh());
+        node.frustumCulled = false;
+        scene->addChildNode(&node);
 
-        node = new Node(&quadsReceiver->mesh);
-        node->frustumCulled = false;
-        node->setPosition(-1.0f * remoteCamera->getPosition());
-        scene->addChildNode(node);
-
-        nodeWireframe = new Node(&quadsReceiver->mesh);
-        nodeWireframe->frustumCulled = false;
-        nodeWireframe->wireframe = true;
-        nodeWireframe->visible = false;
-        nodeWireframe->primativeType = GL_LINES;
-        nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        nodeWireframe->setPosition(-1.0f * remoteCamera->getPosition());
-        scene->addChildNode(nodeWireframe);
+        nodeWireframe.setEntity(&quadsReceiver->getMesh());
+        nodeWireframe.frustumCulled = false;
+        nodeWireframe.wireframe = true;
+        nodeWireframe.visible = false;
+        nodeWireframe.primativeType = GL_LINES;
+        nodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(&nodeWireframe);
 
         // Load quad buffers and depth offsets
-        quadsReceiver->loadFromFiles(dataPath, *remoteCamera);
+        quadsReceiver->loadFromFiles(dataPath);
 
         spdlog::info("Time to load from files: {:.3f}ms", quadsReceiver->stats.loadFromFilesTime);
         spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.decompressTime);
@@ -151,7 +145,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                nodeWireframe->visible = !nodeWireframe->visible;
+                nodeWireframe.visible = !nodeWireframe.visible;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -171,22 +165,13 @@ private:
         // spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
-    void DestroyResources() override {
-        delete node;
-        delete nodeWireframe;
-    }
+    void DestroyResources() override {}
 
 private:
-    glm::uvec2 remoteGBufferSize;
-    std::unique_ptr<PerspectiveCamera> remoteCamera;
-
     std::unique_ptr<QuadSet> quadSet;
     std::unique_ptr<QuadsReceiver> quadsReceiver;
-    Node* node;
-    Node* nodeWireframe;
 
-    std::unique_ptr<Model> handModelLeft;
-    std::unique_ptr<Model> handModelRight;
+    Node node, nodeWireframe;
 
     // Actions.
     XrAction clickAction;
@@ -201,6 +186,9 @@ private:
     XrAction buzzAction;
     // The current haptic output value for each controller.
     float buzz[2] = {0, 0};
+
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 };
 
 #endif // QUADS_VIEWER_H

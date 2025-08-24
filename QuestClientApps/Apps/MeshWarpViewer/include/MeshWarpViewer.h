@@ -42,7 +42,6 @@ private:
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
-            .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
@@ -51,7 +50,7 @@ private:
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .gammaCorrected = true,            .IBL = 0.0f,
+            .gammaCorrected = true,
             .path = "models/quest-touch-plus-right.glb"
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
@@ -266,9 +265,6 @@ private:
 
     ComputeShader* genMeshFromBC4Shader;
 
-    std::unique_ptr<Model> handModelLeft;
-    std::unique_ptr<Model> handModelRight;
-
     // Actions.
     XrAction clickAction;
     // The realtime states of these actions.
@@ -282,6 +278,9 @@ private:
     XrAction buzzAction;
     // The current haptic output value for each controller.
     float buzz[2] = {0, 0};
+
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 };
 
 #endif // MESHWARP_VIEWER_H
