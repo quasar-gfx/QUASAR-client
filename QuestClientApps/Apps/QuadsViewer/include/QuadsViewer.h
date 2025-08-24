@@ -38,16 +38,21 @@ private:
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
+            .gammaCorrected = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
+        handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
+        handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[0].setEntity(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .IBL = 0.0f,
+            .gammaCorrected = true,            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
+        handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
+        handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
         const glm::vec2& remoteGBufferSize = glm::vec2(1920, 1080);
@@ -55,15 +60,15 @@ private:
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
         quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet);
 
+        remoteCamera = std::make_unique<PerspectiveCamera>(remoteGBufferSize.x, remoteGBufferSize.y);
+        remoteCamera->setFovyDegrees(90.0f);
+        remoteCamera->setPosition({ 0.0f, 3.0f, 10.0f });
+        remoteCamera->updateViewMatrix();
+
         node = new Node(&quadsReceiver->mesh);
         node->frustumCulled = false;
         node->setPosition(-1.0f * remoteCamera->getPosition());
         scene->addChildNode(node);
-
-        remoteCamera = std::make_unique<PerspectiveCamera>(remoteGBufferSize.x, remoteGBufferSize.y);
-        remoteCamera->setFovyDegrees(90.0f);
-        remoteCamera->setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
-        remoteCamera->updateViewMatrix();
 
         nodeWireframe = new Node(&quadsReceiver->mesh);
         nodeWireframe->frustumCulled = false;

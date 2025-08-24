@@ -46,16 +46,21 @@ private:
         // Add controller models
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
+            .gammaCorrected = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
+        handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
+        handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[0].setEntity(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .IBL = 0.0f,
+            .gammaCorrected = true,            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
+        handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
+        handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
         // Load all textures
@@ -79,7 +84,7 @@ private:
         for (int view = 0; view < maxViews; view++) {
             remoteCameras.emplace_back(remoteGBufferSize.x, remoteGBufferSize.y);
             remoteCameras[view].setFovyDegrees(90.0f);
-            remoteCameras[view].setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
+            remoteCameras[view].setPosition({ 0.0f, 3.0f, 10.0f });
             remoteCameras[view].updateViewMatrix();
         }
         PerspectiveCamera& remoteCameraCenter = remoteCameras[0];

@@ -81,16 +81,21 @@ private:
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
+            .gammaCorrected = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
+        handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
+        handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[0].setEntity(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
-            .IBL = 0.0f,
+            .gammaCorrected = true,            .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
+        handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
+        handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
         // Initialize pose streamer
@@ -124,8 +129,8 @@ private:
         //     .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
         // });
         // Node* screen = new Node(videoScreen);
-        // Screen->setPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-        // Screen->setScale(glm::vec3(1.0f, 0.5f, 0.05f));
+        // Screen->setPosition({ 0.0f, 0.0f, -2.0f });
+        // Screen->setScale({ 1.0f, 0.5f, 0.05f });
         // Screen->frustumCulled = false;
         // Scene->addChildNode(screen);
 

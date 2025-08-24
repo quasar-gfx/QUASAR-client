@@ -406,8 +406,12 @@ protected:
     void CreateResourcesInternal() {
         cameras = std::make_unique<VRCamera>();
         scene = std::make_unique<Scene>();
-        scene->addChildNode(&handNodes[0]);
-        scene->addChildNode(&handNodes[1]);
+        for (int i = 0; i < 2; i++) {
+            handNodes[i].setName((i == 0) ? "LeftHand" : "RightHand");
+            handNodeParents[i].setName((i == 0) ? "LeftHandParent" : "RightHandParent");
+            handNodeParents[i].addChildNode(&handNodes[i]);
+            scene->addChildNode(&handNodeParents[i]);
+        }
         CreateResources();
     }
     virtual void CreateResources() {}
@@ -529,8 +533,8 @@ protected:
                         (spaceLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0 &&
                         (spaceLocation.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT) != 0) {
                     gxi::Pose pose = gxi::toGLM(spaceLocation.pose);
-                    handNodes[i].setPosition(pose.position);
-                    handNodes[i].setRotationQuat(pose.orientation);
+                    handNodeParents[i].setPosition(pose.position);
+                    handNodeParents[i].setRotationQuat(pose.orientation);
                 }
                 else {
                     handPoseState[i].isActive = false;
@@ -738,7 +742,7 @@ protected:
             views[i].pose.position.z += cameraPositionOffset.z;
         }
         for (int i = 0; i < 2; i++) {
-            handNodes[i].setPosition(handNodes[i].getPosition() + cameraPositionOffset);
+            handNodeParents[i].setPosition(handNodeParents[i].getPosition() + cameraPositionOffset);
         }
 
         // Acquire and wait for an image from the swapchains.
@@ -948,6 +952,7 @@ protected:
     XrActionStatePose handPoseState[2] = {{XR_TYPE_ACTION_STATE_POSE}, {XR_TYPE_ACTION_STATE_POSE}};
     // The current poses obtained from the XrSpaces.
     Node handNodes[2];
+    Node handNodeParents[2];
 };
 
 } // namespace quasar
