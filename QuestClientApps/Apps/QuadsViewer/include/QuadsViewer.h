@@ -11,8 +11,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <Quads/QuadFrames.h>
-#include <Quads/QuadMesh.h>
+#include <QuadsReceiver.h>
 
 using namespace quasar;
 
@@ -37,62 +36,36 @@ private:
         scene->setAmbientLight(ambientLight);
 
         // Add the hand nodes.
-        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        handNodes[0].setEntity(leftControllerModel.get());
+        handNodes[0].setEntity(handModelLeft.get());
 
-        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        handNodes[1].setEntity(rightControllerModel.get());
+        handNodes[1].setEntity(handModelRight.get());
 
-        std::string colorFileName = dataPath.appendToName("color").withExtension(".jpg");
-        colorTexture = new Texture({
-            .wrapS = GL_REPEAT,
-            .wrapT = GL_REPEAT,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST,
-            .flipVertically = true,
-            .gammaCorrected = true,
-            .path = colorFileName
-        });
-
-        remoteGBufferSize = glm::uvec2(colorTexture->width, colorTexture->height);
-
-        remoteCamera = new PerspectiveCamera(remoteGBufferSize.x, remoteGBufferSize.y);
-        remoteCamera->setFovyDegrees(90.0f);
-        remoteCamera->setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
-        remoteCamera->updateViewMatrix();
+        const glm::vec2& remoteGBufferSize = glm::vec2(1920, 1080);
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadMesh = std::make_unique<QuadMesh>(*quadSet, *colorTexture);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet);
 
-        // Load quad buffers and depth offsets
-        double startTime = timeutils::getTimeMicros();
-        frame.loadFromFiles(dataPath);
-        loadFromFilesTime = timeutils::microsToMillis(timeutils::getTimeMicros() - startTime);
-
-        startTime = timeutils::getTimeMicros();
-        auto sizes = quadSet->unmapFromCPU(frame.quads, frame.depthOffsets);
-        transferTime = quadSet->stats.timeToTransferMs;
-
-        spdlog::info("Time to load from files: {:.3f}ms", loadFromFilesTime);
-        spdlog::info("Time to transfer to GPU: {:.3f}ms", transferTime);
-        spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
-                     sizes.numQuads, sizes.quadsSize / BYTES_PER_MEGABYTE,
-                     sizes.numDepthOffsets, sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
-
-        node = new Node(quadMesh.get());
+        node = new Node(&quadsReceiver->mesh);
         node->frustumCulled = false;
         node->setPosition(-1.0f * remoteCamera->getPosition());
         scene->addChildNode(node);
 
-        nodeWireframe = new Node(quadMesh.get());
+        remoteCamera = std::make_unique<PerspectiveCamera>(remoteGBufferSize.x, remoteGBufferSize.y);
+        remoteCamera->setFovyDegrees(90.0f);
+        remoteCamera->setPosition(glm::vec3(0.0f, 3.0f, 10.0f));
+        remoteCamera->updateViewMatrix();
+
+        nodeWireframe = new Node(&quadsReceiver->mesh);
         nodeWireframe->frustumCulled = false;
         nodeWireframe->wireframe = true;
         nodeWireframe->visible = false;
@@ -100,6 +73,17 @@ private:
         nodeWireframe->overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         nodeWireframe->setPosition(-1.0f * remoteCamera->getPosition());
         scene->addChildNode(nodeWireframe);
+
+        // Load quad buffers and depth offsets
+        quadsReceiver->loadFromFiles(dataPath, *remoteCamera);
+
+        spdlog::info("Time to load from files: {:.3f}ms", quadsReceiver->stats.loadFromFilesTime);
+        spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.decompressTime);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.transferTime);
+        spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.createMeshTime);
+        spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
+                     quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
+                     quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
     }
 
     void CreateActionSet() override {
@@ -178,40 +162,26 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        quadMesh->appendQuads(*quadSet, remoteGBufferSize);
-        quadMesh->createMeshFromProxies(*quadSet, remoteGBufferSize, *remoteCamera);
-
         graphicsAPI->drawObjects(*scene, *cameras);
-
-        spdlog::info("Time to append proxies: {:.3f}ms", quadMesh->stats.timeToAppendQuadsMs);
-        spdlog::info("Time to fill output quads: {:.3f}ms", quadMesh->stats.timeToGatherQuadsMs);
-        spdlog::info("Time to create mesh: {:.3f}ms", quadMesh->stats.timeToCreateMeshMs);
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {
-        delete colorTexture;
         delete node;
+        delete nodeWireframe;
     }
 
 private:
-    double loadFromFilesTime = 0.0;
-    double transferTime = 0.0;
-
     glm::uvec2 remoteGBufferSize;
-    PerspectiveCamera* remoteCamera;
+    std::unique_ptr<PerspectiveCamera> remoteCamera;
 
     std::unique_ptr<QuadSet> quadSet;
-
-    Texture* colorTexture;
-    std::unique_ptr<QuadMesh> quadMesh;
+    std::unique_ptr<QuadsReceiver> quadsReceiver;
     Node* node;
     Node* nodeWireframe;
 
-    std::unique_ptr<Model> leftControllerModel;
-    std::unique_ptr<Model> rightControllerModel;
-
-    ReferenceFrame frame;
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 
     // Actions.
     XrAction clickAction;

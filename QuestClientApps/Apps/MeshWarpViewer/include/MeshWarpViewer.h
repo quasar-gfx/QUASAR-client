@@ -39,19 +39,19 @@ private:
         scene->setAmbientLight(ambientLight);
 
         // Add the hand nodes.
-        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        handNodes[0].setEntity(leftControllerModel.get());
+        handNodes[0].setEntity(handModelLeft.get());
 
-        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        handNodes[1].setEntity(rightControllerModel.get());
+        handNodes[1].setEntity(handModelRight.get());
 
         // Create texture
         colorTexture = new Texture({
@@ -261,8 +261,8 @@ private:
 
     ComputeShader* genMeshFromBC4Shader;
 
-    std::unique_ptr<Model> leftControllerModel;
-    std::unique_ptr<Model> rightControllerModel;
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 
     // Actions.
     XrAction clickAction;

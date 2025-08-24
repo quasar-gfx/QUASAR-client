@@ -52,10 +52,10 @@ set(LIBS ${LIBS} quasar)
 # quasar_common source files
 set(COMMON_SRCS
     ${QUASAR_APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/DataReceiverTCP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/DataReceiverUDP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/DataStreamerTCP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/DataStreamerUDP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataReceiverTCP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataReceiverUDP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataStreamerTCP.cpp
+    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataStreamerUDP.cpp
     ${QUASAR_APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
     ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadBuffers.cpp
     ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp

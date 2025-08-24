@@ -44,19 +44,19 @@ private:
         scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
         // Add controller models
-        leftControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-left.glb"
         });
-        handNodes[0].setEntity(leftControllerModel.get());
+        handNodes[0].setEntity(handModelLeft.get());
 
-        rightControllerModel = std::make_unique<Model>(ModelCreateParams{
+        handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .IBL = 0.0f,
             .path = "models/quest-touch-plus-right.glb"
         });
-        handNodes[1].setEntity(rightControllerModel.get());
+        handNodes[1].setEntity(handModelRight.get());
 
         // Load all textures
         TextureFileCreateParams params = {
@@ -281,8 +281,8 @@ private:
     std::vector<Node> nodeWireframes;
     std::vector<ReferenceFrame> frames;
 
-    std::unique_ptr<Model> leftControllerModel;
-    std::unique_ptr<Model> rightControllerModel;
+    std::unique_ptr<Model> handModelLeft;
+    std::unique_ptr<Model> handModelRight;
 
     // Actions.
     XrAction clickAction;
