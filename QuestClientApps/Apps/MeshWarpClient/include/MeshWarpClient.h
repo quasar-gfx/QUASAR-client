@@ -17,7 +17,7 @@
 
 #include <shaders_common.h>
 
-#define THREADS_PER_LOCALGROUP 16
+#define GEN_MESH_THREADS_PER_LOCALGROUP 16
 
 using namespace quasar;
 
@@ -28,15 +28,17 @@ private:
     std::string videoURL = "0.0.0.0:12345";
     std::string depthURL = serverIP + ":65432";
 
+    const glm::uvec2 videoSize = glm::uvec2(1920, 1080);
+
     unsigned int surfelSize = 1;
     unsigned int depthFactor = 4;
-    float fov = 120.0f;
-    glm::uvec2 videoSize = glm::uvec2(1920, 1080);
-
-    bool meshWarpEnabled = true;
+    float remoteFOV = 120.0f;
 
 public:
-    MeshWarpClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType), remoteCamera(videoSize.x, videoSize.y) {}
+    MeshWarpClient(GraphicsAPI_Type apiType)
+        : OpenXRApp(apiType)
+        , remoteCamera(videoSize)
+    {}
     ~MeshWarpClient() = default;
 
 private:
@@ -44,39 +46,9 @@ private:
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.05f
+            .intensity = 1.0f
         });
         scene->setAmbientLight(ambientLight);
-
-        // Initialize video texture for color stream
-        videoTextureColor = new VideoTexture({
-            .width = videoSize.x,
-            .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
-            .format = GL_SRGB,
-            .type = GL_UNSIGNED_BYTE,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        // Initialize BC4 depth texture
-        videoTextureDepth = new BC4DepthVideoTexture({
-            .width = videoSize.x / depthFactor,
-            .height = videoSize.y / depthFactor,
-            .internalFormat = GL_R32F,
-            .format = GL_RED,
-            .type = GL_FLOAT,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_NEAREST,
-            .magFilter = GL_NEAREST
-        }, depthURL);
-
-        // Remote camera
-        remoteCamera.setFovyDegrees(fov);
-        remoteCamera.updateViewMatrix();
 
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
@@ -97,8 +69,35 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
-        // Initialize pose streamer
-        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
+        // Create video texture for color stream
+        videoTextureColor = new VideoTexture({
+            .width = videoSize.x,
+            .height = videoSize.y,
+            .internalFormat = GL_RGB8,
+            .format = GL_RGB,
+            .type = GL_UNSIGNED_BYTE,
+            .wrapS = GL_CLAMP_TO_EDGE,
+            .wrapT = GL_CLAMP_TO_EDGE,
+            .minFilter = GL_LINEAR,
+            .magFilter = GL_LINEAR
+        }, videoURL);
+
+        // Create BC4 depth texture
+        videoTextureDepth = new BC4DepthVideoTexture({
+            .width = videoSize.x / depthFactor,
+            .height = videoSize.y / depthFactor,
+            .internalFormat = GL_R32F,
+            .format = GL_RED,
+            .type = GL_FLOAT,
+            .wrapS = GL_CLAMP_TO_EDGE,
+            .wrapT = GL_CLAMP_TO_EDGE,
+            .minFilter = GL_NEAREST,
+            .magFilter = GL_NEAREST
+        }, depthURL);
+
+        // Create pose streamer
+        remoteCamera.setFovyDegrees(remoteFOV);
+        poseStreamer = std::make_unique<PoseStreamer>(&remoteCamera, poseURL);
 
         // Setup scene and mesh
         glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
@@ -112,16 +111,17 @@ private:
             .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
             .usage = GL_DYNAMIC_DRAW
         });
-        node = new Node(mesh);
-        node->frustumCulled = false;
-        scene->addChildNode(node);
+        node.setEntity(mesh);
+        node.frustumCulled = false;
+        scene->addChildNode(&node);
 
-        nodeWireframe = new Node(mesh);
-        nodeWireframe->frustumCulled = false;
-        nodeWireframe->wireframe = true;
-        nodeWireframe->visible = false;
-        nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        scene->addChildNode(nodeWireframe);
+        nodeWireframe.setEntity(mesh);
+        nodeWireframe.frustumCulled = false;
+        nodeWireframe.wireframe = true;
+        nodeWireframe.visible = false;
+        nodeWireframe.primitiveType = GL_LINES;
+        nodeWireframe.overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(&nodeWireframe);
 
         // // add a screen for the video.
         // Cube* videoScreen = new Cube({
@@ -137,7 +137,7 @@ private:
             .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
             .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
             .defines = {
-                "#define THREADS_PER_LOCALGROUP " + std::to_string(THREADS_PER_LOCALGROUP)
+                "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
             }
         });
     }
@@ -206,7 +206,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                nodeWireframe->visible = !nodeWireframe->visible;
+                nodeWireframe.visible = !nodeWireframe.visible;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -222,7 +222,16 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        // Update pose and stream it
+        // Update and send pose
+        const glm::vec3& headPosition = (cameras->left.getPosition() + cameras->right.getPosition()) / 2.0f;
+        const glm::quat& headRotation = glm::normalize(glm::slerp(
+            cameras->left.getRotationQuat(),
+            cameras->right.getRotationQuat(),
+            0.5f
+        ));
+        remoteCamera.setPosition(headPosition);
+        remoteCamera.setRotationQuat(headRotation);
+        remoteCamera.updateViewMatrix();
         poseStreamer->sendPose();
 
         // Get latest video frames
@@ -263,8 +272,8 @@ private:
 
         // Dispatch compute shader to generate vertices and indices for both main and wireframe meshes
         genMeshFromBC4Shader->dispatch(
-                ((videoTextureDepth->width / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
-                ((videoTextureDepth->height / surfelSize) + THREADS_PER_LOCALGROUP - 1) / THREADS_PER_LOCALGROUP,
+                ((videoTextureDepth->width / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+                ((videoTextureDepth->height / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
                 1
             );
         genMeshFromBC4Shader->memoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
@@ -287,7 +296,6 @@ private:
         delete videoTextureColor;
         delete videoTextureDepth;
         delete mesh;
-        delete node;
         delete genMeshFromBC4Shader;
     }
 
@@ -304,8 +312,7 @@ private:
     PerspectiveCamera remoteCamera;
 
     Mesh* mesh;
-    Node* node;
-    Node* nodeWireframe;
+    Node node, nodeWireframe;
 
     ComputeShader* genMeshFromBC4Shader;
 

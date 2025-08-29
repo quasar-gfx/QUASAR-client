@@ -257,7 +257,7 @@ private:
         scene->updateAnimations(dt);
         graphicsAPI->drawObjects(*scene, *cameras);
 
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {}

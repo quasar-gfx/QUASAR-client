@@ -68,7 +68,7 @@ private:
         refNodeWireframe.frustumCulled = false;
         refNodeWireframe.wireframe = true;
         refNodeWireframe.visible = false;
-        refNodeWireframe.primativeType = GL_LINES;
+        refNodeWireframe.primitiveType = GL_LINES;
         refNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(&refNodeWireframe);
 
@@ -174,7 +174,7 @@ private:
 
     void OnRender(double now, double dt) override {
         graphicsAPI->drawObjects(*scene, *cameras);
-        // spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {}

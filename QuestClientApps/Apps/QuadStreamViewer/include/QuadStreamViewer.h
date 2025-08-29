@@ -71,7 +71,7 @@ private:
             nodeWireframes[view].frustumCulled = false;
             nodeWireframes[view].wireframe = true;
             nodeWireframes[view].visible = false;
-            nodeWireframes[view].primativeType = GL_LINES;
+            nodeWireframes[view].primitiveType = GL_LINES;
             nodeWireframes[view].overrideMaterial = new QuadMaterial({ .baseColor = colors[view % colors.size()] });
             scene->addChildNode(&nodeWireframes[view]);
         }
@@ -79,7 +79,7 @@ private:
         // Load quad buffers and depth offsets
         quadstreamReceiver->loadFromFiles(dataPath);
 
-        spdlog::info("Time to load from files: {:.3f}ms", quadstreamReceiver->stats.timeToLoadMs);
+        spdlog::info("Time to load: {:.3f}ms", quadstreamReceiver->stats.timeToLoadMs);
         spdlog::info("Time to decompress: {:.3f}ms", quadstreamReceiver->stats.timeToDecompressMs);
         spdlog::info("Time to transfer to GPU: {:.3f}ms", quadstreamReceiver->stats.timeToTransferMs);
         spdlog::info("Time to create mesh: {:.3f}ms", quadstreamReceiver->stats.timeToCreateMeshMs);
@@ -173,7 +173,7 @@ private:
 
     void OnRender(double now, double dt) override {
         graphicsAPI->drawObjects(*scene, *cameras);
-        // spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {}

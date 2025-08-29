@@ -1,60 +1,46 @@
-#ifndef ATW_CLIENT_H
-#define ATW_CLIENT_H
+#ifndef QUADS_CLIENT_H
+#define QUADS_CLIENT_H
+
+#include <memory>
 
 #include <OpenXRApp.h>
 
+#include <Path.h>
 #include <Primitives/Mesh.h>
-#include <Primitives/Cube.h>
 #include <Primitives/Model.h>
 
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
-#include <VideoTexture.h>
+#include <QuadsReceiver.h>
 #include <PoseStreamer.h>
-
-#include <shaders_common.h>
 
 using namespace quasar;
 
-class ATWClient final : public OpenXRApp {
+class QuadsClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
-    std::string videoURL = "0.0.0.0:12345";
+    std::string quadsURL = serverIP + ":65432";
 
-    glm::uvec2 videoSize = glm::uvec2(2048, 1024);
+    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+
+    float remoteFOV = 90.0f;
 
 public:
-    ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
-    ~ATWClient() = default;
+    QuadsClient(GraphicsAPI_Type apiType)
+        : OpenXRApp(apiType)
+        , remoteCamera(remoteGBufferSize)
+    {}
+    ~QuadsClient() = default;
 
 private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
-            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
-            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
-            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
-            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
+        AmbientLight* ambientLight = new AmbientLight({
+            .intensity = 1.0f
         });
-
-        // Create video texture
-        videoTexture = new VideoTexture({
-            .width = videoSize.x,
-            .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
-            .format = GL_SRGB,
-            .type = GL_UNSIGNED_BYTE,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        // Create pose streamer
-        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
+        scene->setAmbientLight(ambientLight);
 
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
@@ -75,20 +61,37 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.5f
-        });
-        scene->setAmbientLight(ambientLight);
+        quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, quadsURL);
 
-        // Add a screen for the video.
-        Cube* videoScreen = new Cube({
-            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
-        });
-        Node* screen = new Node(videoScreen);
-        screen->setPosition({ 0.0f, 0.0f, -2.0f });
-        screen->setScale({ 1.0f, 0.5f, 0.05f });
-        screen->frustumCulled = false;
-        scene->addChildNode(screen);
+        // Create pose streamer
+        remoteCamera.setFovyDegrees(remoteFOV);
+        poseStreamer = std::make_unique<PoseStreamer>(&remoteCamera, poseURL);
+
+        // Create nodes
+        refNode.setEntity(&quadsReceiver->getReferenceMesh());
+        refNode.frustumCulled = false;
+        scene->addChildNode(&refNode);
+
+        refNodeWireframe.setEntity(&quadsReceiver->getReferenceMesh());
+        refNodeWireframe.frustumCulled = false;
+        refNodeWireframe.wireframe = true;
+        refNodeWireframe.visible = false;
+        refNodeWireframe.primitiveType = GL_LINES;
+        refNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(&refNodeWireframe);
+
+        resNode.setEntity(&quadsReceiver->getResidualMesh());
+        resNode.frustumCulled = false;
+        scene->addChildNode(&resNode);
+
+        resNodeWireframe.setEntity(&quadsReceiver->getResidualMesh());
+        resNodeWireframe.frustumCulled = false;
+        resNodeWireframe.wireframe = true;
+        resNodeWireframe.visible = false;
+        resNodeWireframe.primitiveType = GL_LINES;
+        resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
+        scene->addChildNode(&resNodeWireframe);
     }
 
     void CreateActionSet() override {
@@ -120,13 +123,11 @@ private:
         for (int i = 0; i < 2; i++) {
             actionStateGetInfo.action = clickAction;
             actionStateGetInfo.subactionPath = handPaths[i];
-            OPENXR_CHECK(xrGetActionStateBoolean(session, &actionStateGetInfo, &clickState[i]),
-                                                 "Failed to get Boolean State of Click action.");
+            OPENXR_CHECK(xrGetActionStateBoolean(session, &actionStateGetInfo, &clickState[i]), "Failed to get Boolean State of Click action.");
 
             actionStateGetInfo.action = thumbstickAction;
             actionStateGetInfo.subactionPath = handPaths[i];
-            OPENXR_CHECK(xrGetActionStateVector2f(session, &actionStateGetInfo, &thumbstickState[i]),
-                                                 "Failed to get Vector2f State of Thumbstick action.");
+            OPENXR_CHECK(xrGetActionStateVector2f(session, &actionStateGetInfo, &thumbstickState[i]), "Failed to get Vector2f State of Thumbstick action.");
 
             buzz[i] *= 0.5f;
             if (buzz[i] < 0.01f)
@@ -139,8 +140,7 @@ private:
             XrHapticActionInfo hapticActionInfo{XR_TYPE_HAPTIC_ACTION_INFO};
             hapticActionInfo.action = buzzAction;
             hapticActionInfo.subactionPath = handPaths[i];
-            OPENXR_CHECK(xrApplyHapticFeedback(session, &hapticActionInfo, (XrHapticBaseHeader* )&vibration),
-                                               "Failed to apply haptic feedback.");
+            OPENXR_CHECK(xrApplyHapticFeedback(session, &hapticActionInfo, (XrHapticBaseHeader* )&vibration), "Failed to apply haptic feedback.");
         }
     }
 
@@ -153,7 +153,8 @@ private:
             if (clickState[i].isActive == XR_TRUE && clickState[i].currentState == XR_FALSE && clickState[i].changedSinceLastSync == XR_TRUE) {
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
-                atwEnabled = !atwEnabled;
+
+                showWireframe = !showWireframe;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -169,66 +170,53 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        // Send pose
+        // Update and send pose
+        const glm::vec3& headPosition = (cameras->left.getPosition() + cameras->right.getPosition()) / 2.0f;
+        const glm::quat& headRotation = glm::normalize(glm::slerp(
+            cameras->left.getRotationQuat(),
+            cameras->right.getRotationQuat(),
+            0.5f
+        ));
+        remoteCamera.setPosition(headPosition);
+        remoteCamera.setRotationQuat(headRotation);
+        remoteCamera.updateViewMatrix();
         poseStreamer->sendPose();
 
-        // Render video to VideoTexture
-        videoTexture->bind();
-        pose_id_t currPoseID = videoTexture->draw();
+        FrameType frameType = quadsReceiver->recvData();
+        if (frameType != FrameType::NONE) {
+            resNode.visible = frameType == FrameType::RESIDUAL;
 
-        // Set uniforms for both eyes
-        atwShader->bind();
-
-        atwShader->setBool("atwEnabled", atwEnabled);
-
-        atwShader->setMat4("projectionInverseLeft", glm::inverse(cameras->left.getProjectionMatrix()));
-        atwShader->setMat4("projectionInverseRight", glm::inverse(cameras->right.getProjectionMatrix()));
-
-        atwShader->setMat4("viewInverseLeft", glm::inverse(cameras->left.getViewMatrix()));
-        atwShader->setMat4("viewInverseRight", glm::inverse(cameras->right.getViewMatrix()));
-
-        if (currPoseID != prevPoseID && poseStreamer->getPose(currPoseID, &currentFramePose, &elapsedTime)) {
-            atwShader->setMat4("remoteProjectionLeft", currentFramePose.stereo.projL);
-            atwShader->setMat4("remoteProjectionRight", currentFramePose.stereo.projR);
-
-            atwShader->setMat4("remoteViewLeft", currentFramePose.stereo.viewL);
-            atwShader->setMat4("remoteViewRight", currentFramePose.stereo.viewR);
-
-            poseStreamer->removePosesLessThan(currPoseID);
-        }
-        atwShader->setTexture("videoTexture", *videoTexture, 0);
-
-        // Draw both eyes in a single pass
-        graphicsAPI->drawToScreen(*atwShader);
-
-        // Draw objects (uncomment to debug)
-        // graphicsAPI->drawObjects(*scene, *cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        prevPoseID = currPoseID;
-
-        if (glm::abs(elapsedTime) > 1e-5f) {
-            XR_LOG("E2E Latency: " << elapsedTime << "ms");
+            spdlog::info("Time to load: {:.3f}ms", quadsReceiver->stats.timeToLoadMs);
+            spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.timeToDecompressMs);
+            spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.timeToTransferMs);
+            spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.timeToCreateMeshMs);
+            spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
+                        quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
+                        quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
         }
 
-        spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        refNodeWireframe.visible = showWireframe;
+        resNodeWireframe.visible = resNode.visible && showWireframe;
+
+        graphicsAPI->drawObjects(*scene, *cameras);
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
-    void DestroyResources() override {
-        delete videoTexture;
-    }
+    void DestroyResources() override {}
 
-    // Shader for the ATW effect.
-    std::unique_ptr<Shader> atwShader;
-    bool atwEnabled = true;
+private:
+    std::unique_ptr<QuadSet> quadSet;
+    std::unique_ptr<QuadsReceiver> quadsReceiver;
 
-    VideoTexture* videoTexture;
+    Node refNode, refNodeWireframe;
+    Node resNode, resNodeWireframe;
+    bool showWireframe = false;
+
+    PerspectiveCamera remoteCamera;
 
     // Pose streaming.
     pose_id_t prevPoseID = -1;
     std::unique_ptr<PoseStreamer> poseStreamer;
-    Pose currentFramePose;
-
-    double elapsedTime = 0.0f;
 
     // Actions.
     XrAction clickAction;
@@ -248,4 +236,4 @@ private:
     std::unique_ptr<Model> handModelRight;
 };
 
-#endif // ATW_CLIENT_H
+#endif // QUADS_CLIENT_H

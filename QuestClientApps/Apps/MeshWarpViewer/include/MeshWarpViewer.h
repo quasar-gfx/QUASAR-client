@@ -64,15 +64,14 @@ private:
             .minFilter = GL_LINEAR,
             .magFilter = GL_LINEAR,
             .flipVertically = true,
-            .gammaCorrected = true,
             .path = "meshwarp/4K/color.jpg"
         });
         remoteWindowSize = glm::uvec2(colorTexture->width, colorTexture->height);
 
         // Remote camera
-        remoteCamera = new PerspectiveCamera(colorTexture->width, colorTexture->height);
-        remoteCamera->updateViewMatrix();
-        remoteCamera->setFovyDegrees(remoteFOV);
+        remoteCamera.setAspect(colorTexture->width, colorTexture->height);
+        remoteCamera.updateViewMatrix();
+        remoteCamera.setFovyDegrees(remoteFOV);
 
         // Load BC4 depth bufferloadFromBinaryFile
         auto depthDataCompressed = FileIO::loadFromBinaryFile("meshwarp/4K/depth.bc4.zstd");
@@ -101,17 +100,18 @@ private:
             .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
             .usage = GL_DYNAMIC_DRAW
         });
-        node = new Node(mesh);
-        node->frustumCulled = false;
-        scene->addChildNode(node);
 
-        nodeWireframe = new Node(mesh);
-        nodeWireframe->frustumCulled = false;
-        nodeWireframe->wireframe = true;
-        nodeWireframe->visible = false;
-        nodeWireframe->primativeType = GL_LINES;
-        nodeWireframe->overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        scene->addChildNode(nodeWireframe);
+        node.setEntity(mesh);
+        node.frustumCulled = false;
+        scene->addChildNode(&node);
+
+        nodeWireframe.setEntity(mesh);
+        nodeWireframe.frustumCulled = false;
+        nodeWireframe.wireframe = true;
+        nodeWireframe.visible = false;
+        nodeWireframe.primitiveType = GL_LINES;
+        nodeWireframe.overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(&nodeWireframe);
 
         genMeshFromBC4Shader = new ComputeShader({
             .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
@@ -188,7 +188,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                nodeWireframe->visible = !nodeWireframe->visible;
+                nodeWireframe.visible = !nodeWireframe.visible;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -213,11 +213,11 @@ private:
         genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(colorTexture->width, colorTexture->height));
         genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
 
-        genMeshFromBC4Shader->setMat4("projection", remoteCamera->getProjectionMatrix());
-        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera->getProjectionMatrix()));
-        genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(remoteCamera->getViewMatrix()));
-        genMeshFromBC4Shader->setFloat("near", remoteCamera->getNear());
-        genMeshFromBC4Shader->setFloat("far", remoteCamera->getFar());
+        genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
+        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
+        genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(remoteCamera.getViewMatrix()));
+        genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
+        genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
 
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
@@ -234,32 +234,29 @@ private:
             GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT |
             GL_ELEMENT_ARRAY_BARRIER_BIT
         );
+
         double endTime = timeutils::getTimeMicros();
+        spdlog::info("Time to create mesh: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
 
         // Render
         graphicsAPI->drawObjects(*scene, *cameras);
-
-        spdlog::info("Mesh generation time: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
-        spdlog::info("Rendering time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {
         delete colorTexture;
         delete bc4BufferData;
         delete mesh;
-        delete node;
         delete genMeshFromBC4Shader;
-        delete remoteCamera;
     }
 
-    PerspectiveCamera* remoteCamera;
+    PerspectiveCamera remoteCamera;
 
     Buffer* bc4BufferData;
 
     Texture* colorTexture;
     Mesh* mesh;
-    Node* node;
-    Node* nodeWireframe;
+    Node node, nodeWireframe;
 
     ZSTDCodec codec;
 
