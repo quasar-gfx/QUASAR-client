@@ -78,10 +78,10 @@ private:
         // Load quad buffers and depth offsets
         quasarReceiver->loadFromFiles(dataPath);
 
-        spdlog::info("Time to load from files: {:.3f}ms", quasarReceiver->stats.loadFromFilesTime);
-        spdlog::info("Time to decompress: {:.3f}ms", quasarReceiver->stats.decompressTime);
-        spdlog::info("Time to transfer to GPU: {:.3f}ms", quasarReceiver->stats.transferTime);
-        spdlog::info("Time to create mesh: {:.3f}ms", quasarReceiver->stats.createMeshTime);
+        spdlog::info("Time to load from files: {:.3f}ms", quasarReceiver->stats.timeToLoadMs);
+        spdlog::info("Time to decompress: {:.3f}ms", quasarReceiver->stats.timeToDecompressMs);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", quasarReceiver->stats.timeToTransferMs);
+        spdlog::info("Time to create mesh: {:.3f}ms", quasarReceiver->stats.timeToCreateMeshMs);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                      quasarReceiver->stats.sizes.numQuads, quasarReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
                      quasarReceiver->stats.sizes.numDepthOffsets, quasarReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);

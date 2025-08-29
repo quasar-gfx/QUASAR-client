@@ -79,10 +79,10 @@ private:
         // Load quad buffers and depth offsets
         quadstreamReceiver->loadFromFiles(dataPath);
 
-        spdlog::info("Time to load from files: {:.3f}ms", quadstreamReceiver->stats.loadFromFilesTime);
-        spdlog::info("Time to decompress: {:.3f}ms", quadstreamReceiver->stats.decompressTime);
-        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadstreamReceiver->stats.transferTime);
-        spdlog::info("Time to create mesh: {:.3f}ms", quadstreamReceiver->stats.createMeshTime);
+        spdlog::info("Time to load from files: {:.3f}ms", quadstreamReceiver->stats.timeToLoadMs);
+        spdlog::info("Time to decompress: {:.3f}ms", quadstreamReceiver->stats.timeToDecompressMs);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadstreamReceiver->stats.timeToTransferMs);
+        spdlog::info("Time to create mesh: {:.3f}ms", quadstreamReceiver->stats.timeToCreateMeshMs);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                      quadstreamReceiver->stats.sizes.numQuads, quadstreamReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
                      quadstreamReceiver->stats.sizes.numDepthOffsets, quadstreamReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);

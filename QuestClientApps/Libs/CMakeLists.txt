@@ -50,18 +50,7 @@ add_subdirectory(${QUASAR_DIR})
 set(LIBS ${LIBS} quasar)
 
 # quasar_common source files
-set(COMMON_SRCS
-    ${QUASAR_APP_COMMON_DIR}/src/BC4DepthVideoTexture.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataReceiverTCP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataReceiverUDP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataStreamerTCP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Networking/DataStreamerUDP.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/DepthOffsets.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadBuffers.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMaterial.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/Quads/QuadMesh.cpp
-    ${QUASAR_APP_COMMON_DIR}/src/VideoTexture.cpp
-)
+file(GLOB_RECURSE COMMON_SRCS "${QUASAR_APP_COMMON_DIR}/src/*.cpp")
 
 # quasar_common shaders
 add_subdirectory(${QUASAR_APP_COMMON_SHADERS_DIR})

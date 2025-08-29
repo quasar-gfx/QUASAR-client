@@ -74,8 +74,8 @@ private:
         remoteCamera->updateViewMatrix();
         remoteCamera->setFovyDegrees(remoteFOV);
 
-        // Load BC4 depth buffer
-        auto depthDataCompressed = FileIO::loadBinaryFile("meshwarp/4K/depth.bc4.zstd");
+        // Load BC4 depth bufferloadFromBinaryFile
+        auto depthDataCompressed = FileIO::loadFromBinaryFile("meshwarp/4K/depth.bc4.zstd");
         // Decompress BC4 data
         size_t expectedSize = depthDataCompressed.size() * sizeof(BC4Block);
         std::vector<char> depthData(expectedSize);

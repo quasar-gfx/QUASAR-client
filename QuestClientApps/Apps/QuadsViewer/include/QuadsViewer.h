@@ -21,7 +21,6 @@ private:
     Path dataPath = Path("quads/" + sceneName + "/");
 
     const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
-    float remoteFOV = 90.0f;
 
 public:
     QuadsViewer(GraphicsAPI_Type apiType)
@@ -58,28 +57,41 @@ private:
         handNodes[1].setEntity(handModelRight.get());
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, remoteFOV);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet);
 
         // Create nodes
-        node.setEntity(&quadsReceiver->getMesh());
-        node.frustumCulled = false;
-        scene->addChildNode(&node);
+        refNode.setEntity(&quadsReceiver->getReferenceMesh());
+        refNode.frustumCulled = false;
+        scene->addChildNode(&refNode);
 
-        nodeWireframe.setEntity(&quadsReceiver->getMesh());
-        nodeWireframe.frustumCulled = false;
-        nodeWireframe.wireframe = true;
-        nodeWireframe.visible = false;
-        nodeWireframe.primativeType = GL_LINES;
-        nodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
-        scene->addChildNode(&nodeWireframe);
+        refNodeWireframe.setEntity(&quadsReceiver->getReferenceMesh());
+        refNodeWireframe.frustumCulled = false;
+        refNodeWireframe.wireframe = true;
+        refNodeWireframe.visible = false;
+        refNodeWireframe.primativeType = GL_LINES;
+        refNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
+        scene->addChildNode(&refNodeWireframe);
+
+        resNode.setEntity(&quadsReceiver->getResidualMesh());
+        resNode.frustumCulled = false;
+        scene->addChildNode(&resNode);
+
+        resNodeWireframe.setEntity(&quadsReceiver->getResidualMesh());
+        resNodeWireframe.frustumCulled = false;
+        resNodeWireframe.wireframe = true;
+        resNodeWireframe.visible = false;
+        resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
+        scene->addChildNode(&resNodeWireframe);
 
         // Load quad buffers and depth offsets
         quadsReceiver->loadFromFiles(dataPath);
+        auto& remoteCamera = quadsReceiver->getRemoteCamera();
+        cameraPositionOffset = remoteCamera.getPosition();
 
-        spdlog::info("Time to load from files: {:.3f}ms", quadsReceiver->stats.loadFromFilesTime);
-        spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.decompressTime);
-        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.transferTime);
-        spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.createMeshTime);
+        spdlog::info("Time to load from files: {:.3f}ms", quadsReceiver->stats.timeToLoadMs);
+        spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.timeToDecompressMs);
+        spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.timeToTransferMs);
+        spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.timeToCreateMeshMs);
         spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                      quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
                      quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
@@ -145,7 +157,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                nodeWireframe.visible = !nodeWireframe.visible;
+                refNodeWireframe.visible = !refNodeWireframe.visible;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -171,7 +183,8 @@ private:
     std::unique_ptr<QuadSet> quadSet;
     std::unique_ptr<QuadsReceiver> quadsReceiver;
 
-    Node node, nodeWireframe;
+    Node refNode, refNodeWireframe;
+    Node resNode, resNodeWireframe;
 
     // Actions.
     XrAction clickAction;
