@@ -11,7 +11,7 @@
 #include <Cameras/PerspectiveCamera.h>
 #include <Utils/FileIO.h>
 
-#include <BC4DepthVideoTexture.h>
+#include <Receivers/BC4DepthVideoTexture.h>
 
 #include <shaders_common.h>
 

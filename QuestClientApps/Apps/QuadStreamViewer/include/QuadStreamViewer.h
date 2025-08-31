@@ -9,7 +9,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <QuadStreamReceiver.h>
+#include <Receivers/QuadStreamReceiver.h>
 
 using namespace quasar;
 

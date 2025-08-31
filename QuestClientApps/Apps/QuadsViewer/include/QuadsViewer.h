@@ -1,8 +1,6 @@
 #ifndef QUADS_VIEWER_H
 #define QUADS_VIEWER_H
 
-#include <memory>
-
 #include <OpenXRApp.h>
 
 #include <Path.h>
@@ -11,7 +9,7 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <QuadsReceiver.h>
+#include <Receivers/QuadsReceiver.h>
 
 using namespace quasar;
 

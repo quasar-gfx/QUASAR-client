@@ -1,8 +1,6 @@
 #ifndef QUADS_CLIENT_H
 #define QUADS_CLIENT_H
 
-#include <memory>
-
 #include <OpenXRApp.h>
 
 #include <Path.h>
@@ -11,8 +9,8 @@
 
 #include <Lights/AmbientLight.h>
 
-#include <QuadsReceiver.h>
-#include <PoseStreamer.h>
+#include <Receivers/QuadsReceiver.h>
+#include <Streamers/PoseStreamer.h>
 
 using namespace quasar;
 

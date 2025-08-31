@@ -10,8 +10,8 @@
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
-#include <VideoTexture.h>
-#include <PoseStreamer.h>
+#include <Receivers/VideoTexture.h>
+#include <Streamers/PoseStreamer.h>
 
 #include <shaders_common.h>
 
