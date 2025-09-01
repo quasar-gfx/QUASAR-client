@@ -3,6 +3,8 @@
 android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
 
+extern void gst_android_glue_init(ANativeActivity* activity);
+
 void OpenXRApp_Main(GraphicsAPI_Type apiType) {
     DebugOutput debugOutput; // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
     XR_LOG("Starting ATWClient...");
@@ -40,6 +42,9 @@ void android_main(struct android_app* app) {
     // Set the asset manager for FileIO (required in order to load files from the Android filesystem).
     FileIO::registerIOSystem(app->activity);
 
+    // Initialize GStreamer Android
+    VideoTexture::gst_android_glue_init(app->activity);
+
     OpenXRApp::androidApp = app;
-    OpenXRApp_Main(QUASAR_CLIENT_GRAPHICS_API);
+    OpenXRApp_Main(QUASAR_GRAPHICS_API);
 }

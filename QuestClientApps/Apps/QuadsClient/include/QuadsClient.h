@@ -93,7 +93,7 @@ private:
         resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
         scene->addChildNode(&resNodeWireframe);
 
-        // // Add a screen for the video.
+        // // Add a screen for the video
         // Cube* videoScreen = new Cube({
         //     .material = new UnlitMaterial({ .baseColorTexture = &quadsReceiver->atlasVideoTexture }),
         // });

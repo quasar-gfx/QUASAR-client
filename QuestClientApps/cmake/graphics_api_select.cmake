@@ -4,8 +4,8 @@
 
 include_guard()
 
-set(QUASAR_CLIENT_GRAPHICS_API "OPENGL_ES" CACHE STRING "Which graphics API to use when building the tutorial projects.")
+set(QUASAR_GRAPHICS_API "OPENGL_ES" CACHE STRING "Which graphics API to use when building the tutorial projects.")
 
 function(AddGraphicsAPIDefine PROJECT_NAME)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC QUASAR_CLIENT_GRAPHICS_API=${QUASAR_CLIENT_GRAPHICS_API})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC QUASAR_GRAPHICS_API=${QUASAR_GRAPHICS_API})
 endfunction(AddGraphicsAPIDefine)

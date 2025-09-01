@@ -32,22 +32,6 @@ private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        // Create video texture
-        videoTexture = new VideoTexture({
-            .width = videoSize.x,
-            .height = videoSize.y,
-            .internalFormat = GL_RGB8,
-            .format = GL_RGB,
-            .type = GL_UNSIGNED_BYTE,
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR
-        }, videoURL);
-
-        // Create pose streamer
-        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
-
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
@@ -72,15 +56,31 @@ private:
         });
         scene->setAmbientLight(ambientLight);
 
-        // Add a screen for the video.
-        Cube* videoScreen = new Cube({
-            .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
-        });
-        Node* screen = new Node(videoScreen);
-        screen->setPosition({ 0.0f, 0.0f, -2.0f });
-        screen->setScale({ 1.0f, 0.5f, 0.05f });
-        screen->frustumCulled = false;
-        scene->addChildNode(screen);
+        // Create video texture
+        videoTexture = new VideoTexture({
+            .width = videoSize.x,
+            .height = videoSize.y,
+            .internalFormat = GL_RGB8,
+            .format = GL_RGB,
+            .type = GL_UNSIGNED_BYTE,
+            .wrapS = GL_CLAMP_TO_EDGE,
+            .wrapT = GL_CLAMP_TO_EDGE,
+            .minFilter = GL_LINEAR,
+            .magFilter = GL_LINEAR
+        }, videoURL);
+
+        // Create pose streamer
+        poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
+
+        // // Add a screen for the video
+        // Cube* videoScreen = new Cube({
+        //     .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
+        // });
+        // Node* screen = new Node(videoScreen);
+        // screen->setPosition({ 0.0f, 0.0f, -2.0f });
+        // screen->setScale({ 1.0f, 0.5f, 0.05f });
+        // screen->frustumCulled = false;
+        // scene->addChildNode(screen);
 
         atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
             .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
@@ -201,7 +201,7 @@ private:
         graphicsAPI->drawToScreen(*atwShader);
 
         // Draw objects (uncomment to debug)
-        // graphicsAPI->drawObjects(*scene, *cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        graphicsAPI->drawObjects(*scene, *cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         prevPoseID = currPoseID;
 
@@ -209,7 +209,7 @@ private:
             XR_LOG("E2E Latency: " << elapsedTime << "ms");
         }
 
-        spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {

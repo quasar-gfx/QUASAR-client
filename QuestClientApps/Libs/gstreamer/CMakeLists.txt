@@ -35,27 +35,28 @@ endif()
 
 # Add GStreamer libraries
 set(GSTREAMER_ABI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}")
-set(GSTREAMER_INCLUDE_DIR "${GSTREAMER_ABI_DIR}/include")
 set(GSTREAMER_LIBS_DIR "${GSTREAMER_ABI_DIR}/lib")
 set(GSTREAMER_PLUGIN_DIR "${GSTREAMER_LIBS_DIR}/gstreamer-1.0")
+set(GSTREAMER_INCLUDE_DIR "${GSTREAMER_ABI_DIR}/include")
 
 set(GSTREAMER_LIB_NAMES
     gstreamer-1.0
-    gstnet-1.0
+    gstbase-1.0
     gstapp-1.0
+    gstvideo-1.0
+    gstcodecparsers-1.0
+    gstnet-1.0
     gstpbutils-1.0
     gsttag-1.0
     gstgl-1.0
     gstaudio-1.0
     gstphotography-1.0
-    orc-0.4
     gobject-2.0
     glib-2.0
     gmodule-2.0
     gio-2.0
-    gstbase-1.0
-    gstvideo-1.0
     gstrtp-1.0
+    orc-0.4
     pcre2-8
     intl
     iconv
@@ -63,15 +64,18 @@ set(GSTREAMER_LIB_NAMES
 )
 
 set(GSTREAMER_PLUGIN_LIB_NAMES
-    gstcoreelements
-    gstudp
-    gstapp
-    gstrtp
-    gstlibav
-    gstrtpmanager
-    gstvideoconvertscale
-    gstlibav
-    gstplayback
+    coreelements
+    app
+    gio
+    videoconvertscale
+    videorate
+    autodetect
+    rtp
+    rtpmanager
+    udp
+    playback
+    androidmedia
+    videoparsersbad
 )
 
 set(GSTREAMER_STATIC_LIBS "")
@@ -80,7 +84,7 @@ foreach(LIB ${GSTREAMER_LIB_NAMES})
 endforeach()
 
 foreach(PLUGIN ${GSTREAMER_PLUGIN_LIB_NAMES})
-    list(APPEND GSTREAMER_STATIC_LIBS "${GSTREAMER_PLUGIN_DIR}/lib${PLUGIN}.a")
+    list(APPEND GSTREAMER_STATIC_LIBS "${GSTREAMER_PLUGIN_DIR}/libgst${PLUGIN}.a")
 endforeach()
 
 add_library(libgstreamer INTERFACE)
@@ -91,4 +95,6 @@ target_include_directories(libgstreamer INTERFACE
     "${GSTREAMER_INCLUDE_DIR}/gstreamer-1.0"
     "${GSTREAMER_INCLUDE_DIR}/glib-2.0"
     "${GSTREAMER_LIBS_DIR}/glib-2.0/include"
+    "${GSTREAMER_LIBS_DIR}/gstreamer-1.0/include"
+    "${GSTREAMER_INCLUDE_DIR}"
 )

@@ -124,7 +124,7 @@ private:
         nodeWireframe.overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(&nodeWireframe);
 
-        // // add a screen for the video.
+        // // Add a screen for the video
         // Cube* videoScreen = new Cube({
         //     .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
         // });

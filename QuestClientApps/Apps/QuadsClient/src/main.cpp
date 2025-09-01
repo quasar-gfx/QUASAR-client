@@ -40,6 +40,9 @@ void android_main(struct android_app* app) {
     // Set the asset manager for FileIO (required in order to load files from the Android filesystem).
     FileIO::registerIOSystem(app->activity);
 
+    // Initialize GStreamer Android
+    VideoTexture::gst_android_glue_init(app->activity);
+
     OpenXRApp::androidApp = app;
-    OpenXRApp_Main(QUASAR_CLIENT_GRAPHICS_API);
+    OpenXRApp_Main(QUASAR_GRAPHICS_API);
 }
