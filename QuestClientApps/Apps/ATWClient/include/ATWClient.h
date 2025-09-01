@@ -6,7 +6,6 @@
 #include <Primitives/Mesh.h>
 #include <Primitives/Cube.h>
 #include <Primitives/Model.h>
-
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
@@ -33,19 +32,12 @@ private:
     void CreateResources() override {
         scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
-            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
-            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
-            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
-            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
-        });
-
         // Create video texture
         videoTexture = new VideoTexture({
             .width = videoSize.x,
             .height = videoSize.y,
-            .internalFormat = GL_SRGB8,
-            .format = GL_SRGB,
+            .internalFormat = GL_RGB8,
+            .format = GL_RGB,
             .type = GL_UNSIGNED_BYTE,
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
@@ -89,6 +81,13 @@ private:
         screen->setScale({ 1.0f, 0.5f, 0.05f });
         screen->frustumCulled = false;
         scene->addChildNode(screen);
+
+        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
+            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
+            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
+            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
+            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
+        });
     }
 
     void CreateActionSet() override {

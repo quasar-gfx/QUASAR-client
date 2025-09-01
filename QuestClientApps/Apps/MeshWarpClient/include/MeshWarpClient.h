@@ -7,6 +7,7 @@
 #include <Primitives/Cube.h>
 #include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
+#include <Lights/AmbientLight.h>
 
 #include <Cameras/PerspectiveCamera.h>
 #include <Utils/FileIO.h>
@@ -133,7 +134,7 @@ private:
         // Screen->frustumCulled = false;
         // Scene->addChildNode(screen);
 
-        genMeshFromBC4Shader = new ComputeShader({
+        genMeshFromBC4Shader = std::make_unique<ComputeShader>(ComputeShaderDataCreateParams{
             .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
             .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
             .defines = {
@@ -237,7 +238,6 @@ private:
         // Get latest video frames
         videoTextureColor->bind();
         poseIdColor = videoTextureColor->draw();
-        videoTextureColor->unbind();
 
         // Get latest depth frames
         videoTextureDepth->bind();
@@ -272,10 +272,9 @@ private:
 
         // Dispatch compute shader to generate vertices and indices for both main and wireframe meshes
         genMeshFromBC4Shader->dispatch(
-                ((videoTextureDepth->width / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-                ((videoTextureDepth->height / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-                1
-            );
+            ((videoTextureDepth->width / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            ((videoTextureDepth->height / surfelSize) + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            1);
         genMeshFromBC4Shader->memoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT |
                                             GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT);
 
@@ -296,15 +295,13 @@ private:
         delete videoTextureColor;
         delete videoTextureDepth;
         delete mesh;
-        delete genMeshFromBC4Shader;
     }
 
     VideoTexture* videoTextureColor;
     BC4DepthVideoTexture* videoTextureDepth;
     std::unique_ptr<PoseStreamer> poseStreamer;
 
-    pose_id_t poseIdColor = -1;
-    pose_id_t poseIdDepth = -1;
+    pose_id_t poseIdColor = -1, poseIdDepth = -1;
     // Get poses for the current frames
     double elapsedTimeColor, elapsedTimeDepth;
     Pose currentColorFramePose, currentDepthFramePose;
@@ -314,7 +311,7 @@ private:
     Mesh* mesh;
     Node node, nodeWireframe;
 
-    ComputeShader* genMeshFromBC4Shader;
+    std::unique_ptr<ComputeShader> genMeshFromBC4Shader;
 
     RenderStats renderStats;
 

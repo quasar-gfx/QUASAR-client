@@ -5,8 +5,9 @@
 
 #include <Path.h>
 #include <Primitives/Mesh.h>
+#include <Primitives/Cube.h>
 #include <Primitives/Model.h>
-
+#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 
 #include <Receivers/QuadsReceiver.h>
@@ -18,6 +19,7 @@ class QuadsClient final : public OpenXRApp {
 private:
     std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
+    std::string videoURL = "0.0.0.0:12345";
     std::string quadsURL = serverIP + ":65432";
 
     const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
@@ -60,7 +62,7 @@ private:
         handNodes[1].setEntity(handModelRight.get());
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, quadsURL);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, videoURL, quadsURL);
 
         // Create pose streamer
         remoteCamera.setFovyDegrees(remoteFOV);
@@ -90,6 +92,16 @@ private:
         resNodeWireframe.primitiveType = GL_LINES;
         resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
         scene->addChildNode(&resNodeWireframe);
+
+        // // Add a screen for the video.
+        // Cube* videoScreen = new Cube({
+        //     .material = new UnlitMaterial({ .baseColorTexture = &quadsReceiver->atlasVideoTexture }),
+        // });
+        // Node* screen = new Node(videoScreen);
+        // screen->setPosition({ 0.0f, 0.0f, -2.0f });
+        // screen->setScale({ 1.5f, 0.5f, 0.05f });
+        // screen->frustumCulled = false;
+        // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
