@@ -22,8 +22,6 @@ private:
     uint maxLayers = numHiddenLayers + 2; // add visible and wide FOV layer
 
     const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
-    float remoteFOV = 90.0f;
-    float remoteFOVWide = 120.0f;
 
 public:
     QUASARViewer(GraphicsAPI_Type apiType)
@@ -56,7 +54,7 @@ private:
         handNodes[1].setEntity(handModelRight.get());
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quasarReceiver = std::make_unique<QUASARReceiver>(*quadSet, maxLayers, remoteFOV, remoteFOVWide);
+        quasarReceiver = std::make_unique<QUASARReceiver>(*quadSet, maxLayers);
 
         // Create nodes
         nodes.reserve(maxLayers);
@@ -77,6 +75,8 @@ private:
 
         // Load quad buffers and depth offsets
         quasarReceiver->loadFromFiles(dataPath);
+        auto& remoteCamera = quasarReceiver->getRemoteCamera();
+        cameraPositionOffset = remoteCamera.getPosition();
 
         spdlog::info("Time to load: {:.3f}ms", quasarReceiver->stats.timeToLoadMs);
         spdlog::info("Time to decompress: {:.3f}ms", quasarReceiver->stats.timeToDecompressMs);
@@ -180,15 +180,15 @@ private:
 
 private:
     const std::vector<glm::vec4> colors = {
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // primary layer color is yellow
+        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // primary view color is yellow
         glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
         glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
         glm::vec4(1.0f, 0.5f, 0.5f, 1.0f),
-        glm::vec4(0.0f, 0.5f, 0.5f, 1.0f),
         glm::vec4(0.5f, 0.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
         glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
         glm::vec4(0.0f, 0.5f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 0.0f, 0.5f, 1.0f),
         glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
     };
 
