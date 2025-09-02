@@ -22,9 +22,6 @@ private:
     uint maxViews = maxAdditionalViews + 2; // +2 for primary and wide fov views
 
     const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
-    float remoteFOV = 90.0f;
-    float remoteFOVWide = 120.0f;
-    float viewBoxSize = 0.5f;
 
 public:
     QuadStreamViewer(GraphicsAPI_Type apiType)
@@ -57,7 +54,7 @@ private:
         handNodes[1].setEntity(handModelRight.get());
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadstreamReceiver = std::make_unique<QuadStreamReceiver>(*quadSet, maxViews, remoteFOV, remoteFOVWide, viewBoxSize);
+        quadstreamReceiver = std::make_unique<QuadStreamReceiver>(*quadSet, maxViews);
 
         // Create nodes
         nodes.reserve(maxViews);
@@ -78,6 +75,8 @@ private:
 
         // Load quad buffers and depth offsets
         quadstreamReceiver->loadFromFiles(dataPath);
+        auto& remoteCamera = quadstreamReceiver->getRemoteCamera();
+        cameraPositionOffset = remoteCamera.getPosition();
 
         spdlog::info("Time to load: {:.3f}ms", quadstreamReceiver->stats.timeToLoadMs);
         spdlog::info("Time to decompress: {:.3f}ms", quadstreamReceiver->stats.timeToDecompressMs);
