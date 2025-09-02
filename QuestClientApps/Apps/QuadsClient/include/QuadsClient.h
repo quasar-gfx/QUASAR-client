@@ -192,9 +192,9 @@ private:
         remoteCamera.updateViewMatrix();
         poseStreamer->sendPose();
 
-        FrameType frameType = quadsReceiver->recvData();
-        if (frameType != FrameType::NONE) {
-            resNode.visible = frameType == FrameType::RESIDUAL;
+        QuadFrame::FrameType frameType = quadsReceiver->recvData();
+        if (frameType != QuadFrame::FrameType::NONE) {
+            resNode.visible = frameType == QuadFrame::FrameType::RESIDUAL;
 
             spdlog::info("Time to load: {:.3f}ms", quadsReceiver->stats.timeToLoadMs);
             spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.timeToDecompressMs);
