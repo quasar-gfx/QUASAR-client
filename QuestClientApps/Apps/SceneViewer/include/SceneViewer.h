@@ -6,7 +6,6 @@
 #include <Primitives/Mesh.h>
 #include <Primitives/Cube.h>
 #include <Primitives/Model.h>
-
 #include <Lights/AmbientLight.h>
 #include <Lights/DirectionalLight.h>
 #include <Lights/PointLight.h>

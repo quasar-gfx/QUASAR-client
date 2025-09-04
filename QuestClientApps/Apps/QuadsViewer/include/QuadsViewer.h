@@ -6,7 +6,6 @@
 #include <Path.h>
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
-
 #include <Lights/AmbientLight.h>
 
 #include <Receivers/QuadsReceiver.h>
@@ -155,7 +154,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                refNodeWireframe.visible = !refNodeWireframe.visible;
+                showWireframe = !showWireframe;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
@@ -171,6 +170,9 @@ private:
     }
 
     void OnRender(double now, double dt) override {
+        refNodeWireframe.visible = showWireframe;
+        resNodeWireframe.visible = resNode.visible && showWireframe;
+
         graphicsAPI->drawObjects(*scene, *cameras);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
@@ -183,6 +185,7 @@ private:
 
     Node refNode, refNodeWireframe;
     Node resNode, resNodeWireframe;
+    bool showWireframe = false;
 
     // Actions.
     XrAction clickAction;

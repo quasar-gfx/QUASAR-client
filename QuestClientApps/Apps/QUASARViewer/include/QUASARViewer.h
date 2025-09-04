@@ -6,7 +6,6 @@
 #include <Path.h>
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
-
 #include <Lights/AmbientLight.h>
 
 #include <Receivers/QUASARReceiver.h>
@@ -57,21 +56,33 @@ private:
         quasarReceiver = std::make_unique<QUASARReceiver>(*quadSet, maxLayers);
 
         // Create nodes
-        nodes.reserve(maxLayers);
-        nodeWireframes.reserve(maxLayers);
+        refNodes.reserve(maxLayers);
+        refNodeWireframes.reserve(maxLayers);
         for (int layer = 0; layer < maxLayers; layer++) {
-            nodes.emplace_back(&quasarReceiver->getMesh(layer));
-            nodes[layer].frustumCulled = false;
-            scene->addChildNode(&nodes[layer]);
+            refNodes.emplace_back(&quasarReceiver->getMesh(layer));
+            refNodes[layer].frustumCulled = false;
+            scene->addChildNode(&refNodes[layer]);
 
-            nodeWireframes.emplace_back(&quasarReceiver->getMesh(layer));
-            nodeWireframes[layer].frustumCulled = false;
-            nodeWireframes[layer].wireframe = true;
-            nodeWireframes[layer].visible = false;
-            nodeWireframes[layer].primitiveType = GL_LINES;
-            nodeWireframes[layer].overrideMaterial = new QuadMaterial({ .baseColor = colors[layer % colors.size()] });
-            scene->addChildNode(&nodeWireframes[layer]);
+            refNodeWireframes.emplace_back(&quasarReceiver->getMesh(layer));
+            refNodeWireframes[layer].frustumCulled = false;
+            refNodeWireframes[layer].wireframe = true;
+            refNodeWireframes[layer].visible = false;
+            refNodeWireframes[layer].primitiveType = GL_LINES;
+            refNodeWireframes[layer].overrideMaterial = new QuadMaterial({ .baseColor = colors[layer % colors.size()] });
+            scene->addChildNode(&refNodeWireframes[layer]);
         }
+
+        resNode.setEntity(&quasarReceiver->getResidualMesh());
+        resNode.frustumCulled = false;
+        scene->addChildNode(&resNode);
+
+        resNodeWireframe.setEntity(&quasarReceiver->getResidualMesh());
+        resNodeWireframe.frustumCulled = false;
+        resNodeWireframe.wireframe = true;
+        resNodeWireframe.visible = false;
+        resNodeWireframe.primitiveType = GL_LINES;
+        resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
+        scene->addChildNode(&resNodeWireframe);
 
         // Load quad buffers and depth offsets
         quasarReceiver->loadFromFiles(dataPath);
@@ -152,9 +163,7 @@ private:
                 // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
-                for (int layer = 0; layer < maxLayers; layer++) {
-                    nodeWireframes[layer].visible = !nodeWireframes[layer].visible;
-                }
+                showWireframe = !showWireframe;
             }
 
             if (thumbstickState[i].isActive == XR_TRUE &&
@@ -172,6 +181,11 @@ private:
     }
 
     void OnRender(double now, double dt) override {
+        for (int layer = 0; layer < maxLayers; layer++) {
+            refNodeWireframes[layer].visible = showWireframe;
+        }
+        resNodeWireframe.visible = resNode.visible && showWireframe;
+
         graphicsAPI->drawObjects(*scene, *cameras);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
@@ -195,7 +209,9 @@ private:
     std::unique_ptr<QuadSet> quadSet;
     std::unique_ptr<QUASARReceiver> quasarReceiver;
 
-    std::vector<Node> nodes, nodeWireframes;
+    std::vector<Node> refNodes, refNodeWireframes;
+    Node resNode, resNodeWireframe;
+    bool showWireframe = false;
 
     // Actions.
     XrAction clickAction;

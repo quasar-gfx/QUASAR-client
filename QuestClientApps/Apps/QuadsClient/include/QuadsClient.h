@@ -20,10 +20,9 @@ private:
     std::string serverIP = "192.168.4.140";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
-    std::string quadsURL = serverIP + ":65432";
+    std::string proxiesURL = serverIP + ":65432";
 
     const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
-
     float remoteFOV = 90.0f;
 
 public:
@@ -62,7 +61,7 @@ private:
         handNodes[1].setEntity(handModelRight.get());
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
-        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, videoURL, quadsURL);
+        quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet, videoURL, proxiesURL);
 
         // Create pose streamer
         remoteCamera.setFovyDegrees(remoteFOV);
