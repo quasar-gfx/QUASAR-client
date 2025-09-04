@@ -202,6 +202,14 @@ private:
         QuadFrame::FrameType frameType = quasarReceiver->recvData();
         if (frameType != QuadFrame::FrameType::NONE) {
             resNode.visible = frameType == QuadFrame::FrameType::RESIDUAL;
+
+            spdlog::info("Time to load: {:.3f}ms", quasarReceiver->stats.timeToLoadMs);
+            spdlog::info("Time to decompress: {:.3f}ms", quasarReceiver->stats.timeToDecompressMs);
+            spdlog::info("Time to transfer to GPU: {:.3f}ms", quasarReceiver->stats.timeToTransferMs);
+            spdlog::info("Time to create mesh: {:.3f}ms", quasarReceiver->stats.timeToCreateMeshMs);
+            spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
+                         quasarReceiver->stats.sizes.numQuads, quasarReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
+                         quasarReceiver->stats.sizes.numDepthOffsets, quasarReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
         }
 
         for (int layer = 0; layer < maxLayers; layer++) {
