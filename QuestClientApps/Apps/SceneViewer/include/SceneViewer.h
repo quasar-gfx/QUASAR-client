@@ -86,7 +86,6 @@ private:
 
         Model* robotLab = new Model({
             .flipTextures = true,
-            .gammaCorrected = true,
             .IBL = 0.01f,
             .path = "models/scenes/RobotLab.glb"
         });

@@ -21,6 +21,9 @@ using namespace quasar;
 
 class MeshWarpViewer final : public OpenXRApp {
 private:
+    std::string sceneName = "san_miguel"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
+    Path dataPath = Path("meshwarp/" + sceneName + "/");
+
     unsigned int surfelSize = 4;
     float remoteFOV = 120.0f;
     glm::uvec2 remoteWindowSize;
@@ -64,7 +67,7 @@ private:
             .minFilter = GL_LINEAR,
             .magFilter = GL_LINEAR,
             .flipVertically = true,
-            .path = "meshwarp/4K/color.jpg"
+            .path = dataPath / "color.jpg"
         });
         remoteWindowSize = glm::uvec2(colorTexture->width, colorTexture->height);
 
@@ -74,7 +77,7 @@ private:
         remoteCamera.setFovyDegrees(remoteFOV);
 
         // Load BC4 depth bufferloadFromBinaryFile
-        auto depthDataCompressed = FileIO::loadFromBinaryFile("meshwarp/4K/depth.bc4.zstd");
+        auto depthDataCompressed = FileIO::loadFromBinaryFile(dataPath / "depth.bc4.zstd");
         // Decompress BC4 data
         size_t expectedSize = depthDataCompressed.size() * sizeof(BC4Block);
         std::vector<char> depthData(expectedSize);

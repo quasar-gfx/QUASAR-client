@@ -200,8 +200,8 @@ private:
             spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.timeToTransferMs);
             spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.timeToCreateMeshMs);
             spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
-                        quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
-                        quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
+                         quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
+                         quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
         }
 
         refNodeWireframe.visible = showWireframe;
