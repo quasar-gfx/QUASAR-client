@@ -197,7 +197,8 @@ private:
         remoteCamera.setPosition(headPosition);
         remoteCamera.setRotationQuat(headRotation);
         remoteCamera.updateViewMatrix();
-        poseStreamer->sendPose();
+        pose_id_t currPoseID = poseStreamer->sendPose();
+        poseStreamer->removePosesLessThan(currPoseID);
 
         QuadFrame::FrameType frameType = quasarReceiver->recvData();
         if (frameType != QuadFrame::FrameType::NONE) {
