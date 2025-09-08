@@ -191,10 +191,10 @@ private:
         if (frameType != QuadFrame::FrameType::NONE) {
             resNode.visible = frameType == QuadFrame::FrameType::RESIDUAL;
 
-            spdlog::info("Time to load: {:.3f}ms", quadsReceiver->stats.timeToLoadMs);
-            spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.timeToDecompressMs);
-            spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.timeToTransferMs);
-            spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.timeToCreateMeshMs);
+            spdlog::info("Time to load: {:.3f}ms", quadsReceiver->stats.loadTimeMs);
+            spdlog::info("Time to decompress: {:.3f}ms", quadsReceiver->stats.decompressTimeMs);
+            spdlog::info("Time to transfer to GPU: {:.3f}ms", quadsReceiver->stats.transferTimeMs);
+            spdlog::info("Time to create mesh: {:.3f}ms", quadsReceiver->stats.createMeshTimeMs);
             spdlog::info("Loaded {} quads ({:.3f} MB), {} depth offsets ({:.3f} MB)",
                          quadsReceiver->stats.sizes.numQuads, quadsReceiver->stats.sizes.quadsSize / BYTES_PER_MEGABYTE,
                          quadsReceiver->stats.sizes.numDepthOffsets, quadsReceiver->stats.sizes.depthOffsetsSize / BYTES_PER_MEGABYTE);
