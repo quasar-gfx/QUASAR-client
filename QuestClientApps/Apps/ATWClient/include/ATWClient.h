@@ -22,7 +22,7 @@ private:
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
 
-    glm::uvec2 videoSize = glm::uvec2(2048, 1024);
+    glm::uvec2 videoSize = glm::uvec2(3840, 1080);
 
 public:
     ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
