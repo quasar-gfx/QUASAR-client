@@ -27,12 +27,7 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 1.0f
-        });
-        scene->setAmbientLight(ambientLight);
+        scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{

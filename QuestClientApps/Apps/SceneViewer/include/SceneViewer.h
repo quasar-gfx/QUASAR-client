@@ -22,8 +22,6 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
         // Add lights
         AmbientLight* ambientLight = new AmbientLight({
             .intensity = 0.1f

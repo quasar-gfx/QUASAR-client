@@ -30,7 +30,6 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
         // Add controller models

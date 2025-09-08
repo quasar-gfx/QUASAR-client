@@ -30,7 +30,7 @@ public:
 
 private:
     void CreateResources() override {
-        scene->backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
         // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
@@ -50,11 +50,6 @@ private:
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
-
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.5f
-        });
-        scene->setAmbientLight(ambientLight);
 
         // Create video texture
         videoTexture = new VideoTexture({
