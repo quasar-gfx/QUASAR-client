@@ -49,7 +49,6 @@ private:
     std::unordered_map<GLuint, ImageCreateInfo> images{};
     std::unordered_map<GLuint, ImageViewCreateInfo> imageViews{};
 
-    std::unique_ptr<FullScreenQuad> outputFsQuad;
     GLuint framebuffer;
 };
 #endif

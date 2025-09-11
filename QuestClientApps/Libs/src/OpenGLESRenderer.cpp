@@ -47,15 +47,22 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance xrInstance, 
         std::cerr << "ERROR: OPENGL ES: The created OpenGL ES version " << glMajorVersion << "." << glMinorVersion << " doesn't meet the minimum required API version " << requiredMajorVersion << "." << requiredMinorVersion << " for OpenXR." << std::endl;
     }
 
-#if QUEST_CLIENT_ENABLE_MULTIVIEW
     const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
     const char* foundExtension = strstr((const char*)extensions, "GL_OVR_multiview");
     if (foundExtension == nullptr) {
         std::cerr << "ERROR: OPENGL ES: Unable to find GL_OVR_multiview extension." << std::endl;
         DEBUG_BREAK;
     }
-#endif
-    outputFsQuad = std::make_unique<FullScreenQuad>();
+
+    // Have to recreate resources here since some resources are created in the parent constructor and
+    // we need to wait until after we have a valid GL context.
+    pointLightsUBO = Buffer({
+        .target = GL_UNIFORM_BUFFER,
+        .dataSize = sizeof(Scene::GPUPointLightBlock),
+        .numElems = 1,
+        .usage = GL_DYNAMIC_DRAW,
+    });
+    outputFsQuad = FullScreenQuad();
 }
 
 OpenGLESRenderer::~OpenGLESRenderer() {
@@ -190,7 +197,7 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader &screenShader, const Ren
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.bind();
-    RenderStats stats = outputFsQuad->draw();
+    RenderStats stats = outputFsQuad.draw();
 
     if (overrideRenderTarget != nullptr) {
         endRendering();

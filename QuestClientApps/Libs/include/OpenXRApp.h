@@ -82,12 +82,12 @@ protected:
     void CreateInstance() {
         // Fill out an XrApplicationInfo structure detailing the names and OpenXR version.
         // The application/engine name and version are user-definied. These may help IHVs or runtimes.
-        XrApplicationInfo AI;
-        strncpy(AI.applicationName, "OpenXR App", XR_MAX_APPLICATION_NAME_SIZE);
-        AI.applicationVersion = 1;
-        strncpy(AI.engineName, "OpenXR Engine", XR_MAX_ENGINE_NAME_SIZE);
-        AI.engineVersion = 1;
-        AI.apiVersion = XR_CURRENT_API_VERSION;
+        XrApplicationInfo appInfo;
+        strncpy(appInfo.applicationName, "OpenXR App", XR_MAX_APPLICATION_NAME_SIZE);
+        appInfo.applicationVersion = 1;
+        strncpy(appInfo.engineName, "OpenXR Engine", XR_MAX_ENGINE_NAME_SIZE);
+        appInfo.engineVersion = 1;
+        appInfo.apiVersion = XR_CURRENT_API_VERSION;
 
         // Add additional instance layers/extensions that the application wants.
         // Add both required and requested instance extensions.
@@ -147,14 +147,14 @@ protected:
         }
 
         // Fill out an XrInstanceCreateInfo structure and create an XrInstance.
-        XrInstanceCreateInfo instanceCI{XR_TYPE_INSTANCE_CREATE_INFO};
-        instanceCI.createFlags = 0;
-        instanceCI.applicationInfo = AI;
-        instanceCI.enabledApiLayerCount = static_cast<uint32_t>(activeAPILayers.size());
-        instanceCI.enabledApiLayerNames = activeAPILayers.data();
-        instanceCI.enabledExtensionCount = static_cast<uint32_t>(activeInstanceExtensions.size());
-        instanceCI.enabledExtensionNames = activeInstanceExtensions.data();
-        OPENXR_CHECK(xrCreateInstance(&instanceCI, &xrInstance), "Failed to create Instance.");
+        XrInstanceCreateInfo instanceCreateInfo{XR_TYPE_INSTANCE_CREATE_INFO};
+        instanceCreateInfo.createFlags = 0;
+        instanceCreateInfo.applicationInfo = appInfo;
+        instanceCreateInfo.enabledApiLayerCount = static_cast<uint32_t>(activeAPILayers.size());
+        instanceCreateInfo.enabledApiLayerNames = activeAPILayers.data();
+        instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(activeInstanceExtensions.size());
+        instanceCreateInfo.enabledExtensionNames = activeInstanceExtensions.data();
+        OPENXR_CHECK(xrCreateInstance(&instanceCreateInfo, &xrInstance), "Failed to create Instance.");
     }
 
     void DestroyInstance() {
@@ -218,32 +218,32 @@ protected:
     }
 
     void CreateAction(XrAction &xrAction, const char* name, XrActionType xrActionType, std::vector<const char*> subaction_paths = {}) {
-        XrActionCreateInfo actionCI{XR_TYPE_ACTION_CREATE_INFO};
+        XrActionCreateInfo actionCreateInfo{XR_TYPE_ACTION_CREATE_INFO};
         // The type of action: float input, pose, haptic output etc.
-        actionCI.actionType = xrActionType;
+        actionCreateInfo.actionType = xrActionType;
         // Subaction paths, e.g. left and right hand. To distinguish the same action performed on different devices.
         std::vector<XrPath> subaction_xrpaths;
         for (auto p : subaction_paths) {
             subaction_xrpaths.push_back(CreateXrPath(p));
         }
-        actionCI.countSubactionPaths = (uint32_t)subaction_xrpaths.size();
-        actionCI.subactionPaths = subaction_xrpaths.data();
+        actionCreateInfo.countSubactionPaths = (uint32_t)subaction_xrpaths.size();
+        actionCreateInfo.subactionPaths = subaction_xrpaths.data();
         // The internal name the runtime uses for this Action.
-        strncpy(actionCI.actionName, name, XR_MAX_ACTION_NAME_SIZE);
+        strncpy(actionCreateInfo.actionName, name, XR_MAX_ACTION_NAME_SIZE);
         // Localized names are required so there is a human-readable action name to show the user if they are rebinding the Action in an options screen.
-        strncpy(actionCI.localizedActionName, name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
-        OPENXR_CHECK(xrCreateAction(actionSet, &actionCI, &xrAction), "Failed to create Action.");
+        strncpy(actionCreateInfo.localizedActionName, name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
+        OPENXR_CHECK(xrCreateAction(actionSet, &actionCreateInfo, &xrAction), "Failed to create Action.");
     };
 
     virtual void CreateActionSetInternal() {
-        XrActionSetCreateInfo actionSetCI{XR_TYPE_ACTION_SET_CREATE_INFO};
+        XrActionSetCreateInfo actionSetCreateInfo{XR_TYPE_ACTION_SET_CREATE_INFO};
         // The internal name the runtime uses for this Action Set.
-        strncpy(actionSetCI.actionSetName, "openxr-app-actionset", XR_MAX_ACTION_SET_NAME_SIZE);
+        strncpy(actionSetCreateInfo.actionSetName, "openxr-app-actionset", XR_MAX_ACTION_SET_NAME_SIZE);
         // Localized names are required so there is a human-readable action name to show the user if they are rebinding Actions in an options screen.
-        strncpy(actionSetCI.localizedActionSetName, "OpenXR App ActionSet", XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE);
-        OPENXR_CHECK(xrCreateActionSet(xrInstance, &actionSetCI, &actionSet), "Failed to create ActionSet.");
+        strncpy(actionSetCreateInfo.localizedActionSetName, "OpenXR App ActionSet", XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE);
+        OPENXR_CHECK(xrCreateActionSet(xrInstance, &actionSetCreateInfo, &actionSet), "Failed to create ActionSet.");
         // Set a priority: this comes into play when we have multiple Action Sets, and determines which Action takes priority in binding to a specific input.
-        actionSetCI.priority = 0;
+        actionSetCreateInfo.priority = 0;
 
         // An Action for the position of the palm of the user's hand - appropriate for the location of a grabbing Actions.
         CreateAction(palmPoseAction, "palm-pose", XR_ACTION_TYPE_POSE_INPUT, {"/user/hand/left", "/user/hand/right"});
@@ -310,12 +310,12 @@ protected:
             XrSpace xrSpace;
             const XrPosef xrPoseIdentity = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
             // Create frame of reference for a pose action
-            XrActionSpaceCreateInfo actionSpaceCI{XR_TYPE_ACTION_SPACE_CREATE_INFO};
-            actionSpaceCI.action = xrAction;
-            actionSpaceCI.poseInActionSpace = xrPoseIdentity;
+            XrActionSpaceCreateInfo actionSpaceCreateInfo{XR_TYPE_ACTION_SPACE_CREATE_INFO};
+            actionSpaceCreateInfo.action = xrAction;
+            actionSpaceCreateInfo.poseInActionSpace = xrPoseIdentity;
             if (subaction_path)
-                actionSpaceCI.subactionPath = CreateXrPath(subaction_path);
-            OPENXR_CHECK(xrCreateActionSpace(session, &actionSpaceCI, &xrSpace), "Failed to create ActionSpace.");
+                actionSpaceCreateInfo.subactionPath = CreateXrPath(subaction_path);
+            OPENXR_CHECK(xrCreateActionSpace(session, &actionSpaceCreateInfo, &xrSpace), "Failed to create ActionSpace.");
             return xrSpace;
         };
         handPoseSpace[0] = CreateActionPoseSpace(session, palmPoseAction, "/user/hand/left");
@@ -378,7 +378,7 @@ protected:
 
     void CreateSession() {
         // Create an XrSessionCreateInfo structure.
-        XrSessionCreateInfo sessionCI{XR_TYPE_SESSION_CREATE_INFO};
+        XrSessionCreateInfo sessionCreateInfo{XR_TYPE_SESSION_CREATE_INFO};
 
         // Create a std::unique_ptr<GraphicsAPI_...> from the instance and system.
         // This call sets up a graphics API that's suitable for use with OpenXR.
@@ -391,11 +391,11 @@ protected:
         }
         // Fill out the XrSessionCreateInfo structure and create an XrSession.
         //  XR_DOCS_TAG_LBEGIN_CreateSession2
-        sessionCI.next = graphicsAPI->GetGraphicsBinding();
-        sessionCI.createFlags = 0;
-        sessionCI.systemId = systemID;
+        sessionCreateInfo.next = graphicsAPI->GetGraphicsBinding();
+        sessionCreateInfo.createFlags = 0;
+        sessionCreateInfo.systemId = systemID;
 
-        OPENXR_CHECK(xrCreateSession(xrInstance, &sessionCI, &session), "Failed to create Session.");
+        OPENXR_CHECK(xrCreateSession(xrInstance, &sessionCreateInfo, &session), "Failed to create Session.");
     }
 
     void DestroySession() {
@@ -549,10 +549,10 @@ protected:
 
     void CreateReferenceSpace() {
         // Fill out an XrReferenceSpaceCreateInfo structure and create a reference XrSpace, specifying a Local space with an identity pose as the origin.
-        XrReferenceSpaceCreateInfo referenceSpaceCI{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
-        referenceSpaceCI.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-        referenceSpaceCI.poseInReferenceSpace = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
-        OPENXR_CHECK(xrCreateReferenceSpace(session, &referenceSpaceCI, &localSpace), "Failed to create ReferenceSpace.");
+        XrReferenceSpaceCreateInfo referenceSpaceCreateInfo{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
+        referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+        referenceSpaceCreateInfo.poseInReferenceSpace = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
+        OPENXR_CHECK(xrCreateReferenceSpace(session, &referenceSpaceCreateInfo, &localSpace), "Failed to create ReferenceSpace.");
     }
 
     void DestroyReferenceSpace() {
@@ -587,31 +587,31 @@ protected:
         // Create a color and depth swapchain, and their associated image views.
         // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain.
         // Color.
-        XrSwapchainCreateInfo swapchainCI{XR_TYPE_SWAPCHAIN_CREATE_INFO};
-        swapchainCI.createFlags = 0;
-        swapchainCI.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
-        swapchainCI.format = graphicsAPI->SelectColorSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
-        swapchainCI.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
-        swapchainCI.width = viewConfigurationView.recommendedImageRectWidth;
-        swapchainCI.height = viewConfigurationView.recommendedImageRectHeight;
-        swapchainCI.faceCount = 1;
-        swapchainCI.arraySize = viewCount;
-        swapchainCI.mipCount = 1;
-        OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCI, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
-        colorSwapchainInfo.swapchainFormat = swapchainCI.format;  // Save the swapchain format for later use.
+        XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+        swapchainCreateInfo.createFlags = 0;
+        swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+        swapchainCreateInfo.format = graphicsAPI->SelectColorSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
+        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCreateInfo.width = viewConfigurationView.recommendedImageRectWidth;
+        swapchainCreateInfo.height = viewConfigurationView.recommendedImageRectHeight;
+        swapchainCreateInfo.faceCount = 1;
+        swapchainCreateInfo.arraySize = viewCount;
+        swapchainCreateInfo.mipCount = 1;
+        OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
+        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
 
         // Depth.
-        swapchainCI.createFlags = 0;
-        swapchainCI.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        swapchainCI.format = graphicsAPI->SelectDepthSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
-        swapchainCI.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
-        swapchainCI.width = viewConfigurationView.recommendedImageRectWidth;
-        swapchainCI.height = viewConfigurationView.recommendedImageRectHeight;
-        swapchainCI.faceCount = 1;
-        swapchainCI.arraySize = viewCount;
-        swapchainCI.mipCount = 1;
-        OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCI, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
-        depthSwapchainInfo.swapchainFormat = swapchainCI.format;  // Save the swapchain format for later use.
+        swapchainCreateInfo.createFlags = 0;
+        swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        swapchainCreateInfo.format = graphicsAPI->SelectDepthSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
+        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCreateInfo.width = viewConfigurationView.recommendedImageRectWidth;
+        swapchainCreateInfo.height = viewConfigurationView.recommendedImageRectHeight;
+        swapchainCreateInfo.faceCount = 1;
+        swapchainCreateInfo.arraySize = viewCount;
+        swapchainCreateInfo.mipCount = 1;
+        OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
+        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
 
         // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
         // Get the number of images in the color/depth swapchain and allocate Swapchain image data via GraphicsAPI to store the returned array.
@@ -627,30 +627,30 @@ protected:
 
         // Per image in the swapchains, fill out a GraphicsAPI::ImageViewCreateInfo structure and create a color/depth image view.
         for (uint32_t j = 0; j < colorSwapchainImageCount; j++) {
-            GraphicsAPI::ImageViewCreateInfo imageViewCI;
-            imageViewCI.image = graphicsAPI->GetSwapchainImage(colorSwapchainInfo.swapchain, j);
-            imageViewCI.type = GraphicsAPI::ImageViewCreateInfo::Type::RTV;
-            imageViewCI.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
-            imageViewCI.format = colorSwapchainInfo.swapchainFormat;
-            imageViewCI.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::COLOR_BIT;
-            imageViewCI.baseMipLevel = 0;
-            imageViewCI.levelCount = 1;
-            imageViewCI.baseArrayLayer = 0;
-            imageViewCI.layerCount = viewCount;
-            colorSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCI));
+            GraphicsAPI::ImageViewCreateInfo imageViewCreateInfo;
+            imageViewCreateInfo.image = graphicsAPI->GetSwapchainImage(colorSwapchainInfo.swapchain, j);
+            imageViewCreateInfo.type = GraphicsAPI::ImageViewCreateInfo::Type::RTV;
+            imageViewCreateInfo.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
+            imageViewCreateInfo.format = colorSwapchainInfo.swapchainFormat;
+            imageViewCreateInfo.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::COLOR_BIT;
+            imageViewCreateInfo.baseMipLevel = 0;
+            imageViewCreateInfo.levelCount = 1;
+            imageViewCreateInfo.baseArrayLayer = 0;
+            imageViewCreateInfo.layerCount = viewCount;
+            colorSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCreateInfo));
         }
         for (uint32_t j = 0; j < depthSwapchainImageCount; j++) {
-            GraphicsAPI::ImageViewCreateInfo imageViewCI;
-            imageViewCI.image = graphicsAPI->GetSwapchainImage(depthSwapchainInfo.swapchain, j);
-            imageViewCI.type = GraphicsAPI::ImageViewCreateInfo::Type::DSV;
-            imageViewCI.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
-            imageViewCI.format = depthSwapchainInfo.swapchainFormat;
-            imageViewCI.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::DEPTH_BIT;
-            imageViewCI.baseMipLevel = 0;
-            imageViewCI.levelCount = 1;
-            imageViewCI.baseArrayLayer = 0;
-            imageViewCI.layerCount = viewCount;
-            depthSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCI));
+            GraphicsAPI::ImageViewCreateInfo imageViewCreateInfo;
+            imageViewCreateInfo.image = graphicsAPI->GetSwapchainImage(depthSwapchainInfo.swapchain, j);
+            imageViewCreateInfo.type = GraphicsAPI::ImageViewCreateInfo::Type::DSV;
+            imageViewCreateInfo.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
+            imageViewCreateInfo.format = depthSwapchainInfo.swapchainFormat;
+            imageViewCreateInfo.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::DEPTH_BIT;
+            imageViewCreateInfo.baseMipLevel = 0;
+            imageViewCreateInfo.levelCount = 1;
+            imageViewCreateInfo.baseArrayLayer = 0;
+            imageViewCreateInfo.layerCount = viewCount;
+            depthSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCreateInfo));
         }
 
         XR_LOG("Created swapchains with reccomended resolution: " << viewConfigurationView.recommendedImageRectWidth << "x" << viewConfigurationView.recommendedImageRectHeight);
