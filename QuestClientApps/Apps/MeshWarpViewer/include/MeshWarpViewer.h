@@ -21,7 +21,7 @@ using namespace quasar;
 
 class MeshWarpViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "san_miguel"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
+    std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("meshwarp/" + sceneName + "/");
 
     unsigned int surfelSize = 4;

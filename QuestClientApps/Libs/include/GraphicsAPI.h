@@ -131,12 +131,12 @@ public:
     virtual void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) = 0;
 
     // OpenGLRenderer-related functions:
-    virtual void setScreenShaderUniforms(const Shader &screenShader) override = 0;
+    virtual void setScreenShaderUniforms(const Shader& screenShader) override = 0;
 
     virtual void beginRendering() override = 0;
     virtual void endRendering() override = 0;
 
-    virtual RenderStats drawToScreen(const Shader &screenShader, const RenderTargetBase* overrideRenderTarget = nullptr) override = 0;
+    virtual RenderStats drawToScreen(const Shader& screenShader, const RenderTargetBase* overrideRenderTarget = nullptr) override = 0;
 
 protected:
     virtual const std::vector<int64_t> GetSupportedColorSwapchainFormats() = 0;
