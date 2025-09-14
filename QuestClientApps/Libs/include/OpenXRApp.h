@@ -59,6 +59,8 @@ public:
         CreateReferenceSpace();
         CreateSwapchains();
 
+        SetFoveation(XR_FOVEATION_LEVEL_HIGH_FB, 0.0f, XR_FOVEATION_DYNAMIC_DISABLED_FB);
+
         CreateResourcesInternal();
 
         while (applicationRunning) {
@@ -95,6 +97,10 @@ protected:
             // Ensure apiType is already defined when we call this line.
             instanceExtensions.push_back(GetGraphicsAPIInstanceExtensionString(apiType));
             instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            instanceExtensions.push_back(XR_FB_SWAPCHAIN_UPDATE_STATE_EXTENSION_NAME);
+            instanceExtensions.push_back(XR_FB_SWAPCHAIN_UPDATE_STATE_OPENGL_ES_EXTENSION_NAME);
+            instanceExtensions.push_back(XR_FB_FOVEATION_EXTENSION_NAME);
+            instanceExtensions.push_back(XR_FB_FOVEATION_CONFIGURATION_EXTENSION_NAME);
         }
 
         // Get all the API Layers from the OpenXR runtime.
@@ -418,6 +424,48 @@ protected:
 
     virtual void DestroyResources() {}
 
+    void SetFoveation(XrFoveationLevelFB level, float verticalOffset, XrFoveationDynamicFB dynamic) {
+        PFN_xrCreateFoveationProfileFB pfnCreateFoveationProfileFB;
+        OPENXR_CHECK(xrGetInstanceProcAddr(
+            xrInstance,
+            "xrCreateFoveationProfileFB",
+            (PFN_xrVoidFunction*)(&pfnCreateFoveationProfileFB)),
+            "Failed to get xrCreateFoveationProfileFB.");
+
+        PFN_xrDestroyFoveationProfileFB pfnDestroyFoveationProfileFB;
+        OPENXR_CHECK(xrGetInstanceProcAddr(
+            xrInstance,
+            "xrDestroyFoveationProfileFB",
+            (PFN_xrVoidFunction*)(&pfnDestroyFoveationProfileFB)),
+            "Failed to get xrDestroyFoveationProfileFB.");
+
+        PFN_xrUpdateSwapchainFB pfnUpdateSwapchainFB;
+        OPENXR_CHECK(xrGetInstanceProcAddr(
+            xrInstance, "xrUpdateSwapchainFB", (PFN_xrVoidFunction*)(&pfnUpdateSwapchainFB)),
+            "Failed to get xrUpdateSwapchainFB.");
+
+        XrFoveationLevelProfileCreateInfoFB levelProfileCreateInfo = {XR_TYPE_FOVEATION_LEVEL_PROFILE_CREATE_INFO_FB};
+        levelProfileCreateInfo.level = level;
+        levelProfileCreateInfo.verticalOffset = verticalOffset;
+        levelProfileCreateInfo.dynamic = dynamic;
+
+        XrFoveationProfileCreateInfoFB profileCreateInfo = {XR_TYPE_FOVEATION_PROFILE_CREATE_INFO_FB};
+        profileCreateInfo.next = &levelProfileCreateInfo;
+
+        XrFoveationProfileFB foveationProfile;
+
+        pfnCreateFoveationProfileFB(session, &profileCreateInfo, &foveationProfile);
+
+        XrSwapchainStateFoveationFB foveationUpdateState = {XR_TYPE_SWAPCHAIN_STATE_FOVEATION_FB};
+        foveationUpdateState.profile = foveationProfile;
+
+        pfnUpdateSwapchainFB(
+            colorSwapchainInfo.swapchain,
+            (XrSwapchainStateBaseHeaderFB*)(&foveationUpdateState));
+
+        pfnDestroyFoveationProfileFB(foveationProfile);
+    }
+
     void PollEvents() {
         // Poll OpenXR for a new event.
         XrEventDataBuffer eventData{XR_TYPE_EVENT_DATA_BUFFER};
@@ -588,6 +636,7 @@ protected:
         // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain.
         // Color.
         XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+        XrSwapchainCreateInfoFoveationFB swapChainFoveationCreateInfo = {XR_TYPE_SWAPCHAIN_CREATE_INFO_FOVEATION_FB};
         swapchainCreateInfo.createFlags = 0;
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.format = graphicsAPI->SelectColorSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
@@ -597,8 +646,9 @@ protected:
         swapchainCreateInfo.faceCount = 1;
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
+        swapchainCreateInfo.next = &swapChainFoveationCreateInfo;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
-        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
+        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;
 
         // Depth.
         swapchainCreateInfo.createFlags = 0;
@@ -611,7 +661,7 @@ protected:
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
-        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
+        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;
 
         // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
         // Get the number of images in the color/depth swapchain and allocate Swapchain image data via GraphicsAPI to store the returned array.
