@@ -16,6 +16,7 @@
 
 #include <Utils/DebugOutput.h>
 #include <Utils/OpenXRDebugUtils.h>
+#include <Utils/OpenXRFoveation.h>
 #include <Utils/GLM_XR_Interop.h>
 
 namespace quasar {
@@ -51,6 +52,13 @@ public:
 
         CreateReferenceSpace();
         CreateSwapchains();
+
+        if (foveationSupported) {
+            XrResult result = ApplyFoveation(xrInstance, session, colorSwapchainInfo.swapchain);
+            if (XR_FAILED(result)) {
+                XR_LOG_ERROR("Failed to apply foveation: " << result);
+            }
+        }
 
         CreateResourcesInternal();
 
@@ -112,6 +120,8 @@ protected:
                 XR_LOG_ERROR("Failed to find OpenXR instance extension: " << requestedInstanceExtension);
             }
         }
+
+        foveationSupported = EnableFoveationExtensions(extensionProperties, activeInstanceExtensions);
 
         // Fill out an XrInstanceCreateInfo structure and create an XrInstance
         XrInstanceCreateInfo instanceCreateInfo{XR_TYPE_INSTANCE_CREATE_INFO};
@@ -544,6 +554,7 @@ protected:
         // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain
         // Color
         XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+        XrSwapchainCreateInfoFoveationFB swapChainFoveationCreateInfo = {XR_TYPE_SWAPCHAIN_CREATE_INFO_FOVEATION_FB};
         swapchainCreateInfo.createFlags = 0;
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
         swapchainCreateInfo.format = renderer->SelectColorSwapchainFormat(formats);          // Use OpenGLESRenderer to select the first compatible format
@@ -553,9 +564,11 @@ protected:
         swapchainCreateInfo.faceCount = 1;
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
+        swapchainCreateInfo.next = foveationSupported ? &swapChainFoveationCreateInfo : nullptr;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
 
         // Depth
+        swapchainCreateInfo.next = nullptr;
         swapchainCreateInfo.createFlags = 0;
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         swapchainCreateInfo.format = renderer->SelectDepthSwapchainFormat(formats);          // Use OpenGLESRenderer to select the first compatible format
@@ -808,6 +821,7 @@ protected:
     XrInstance xrInstance = XR_NULL_HANDLE;
     std::vector<const char*> activeInstanceExtensions = {};
     std::vector<std::string> instanceExtensions = {};
+    bool foveationSupported = false;
 
     XrDebugUtilsMessengerEXT debugUtilsMessenger = XR_NULL_HANDLE;
 
