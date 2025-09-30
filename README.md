@@ -2,6 +2,8 @@
 
 | [Webpage](https://quasar-gfx.github.io/) | [Paper](https://quasar-gfx.github.io/assets/quasar_siggraph_2025.pdf) | [Video](https://www.youtube.com/watch?v=vWF89pXQkC0) | [Docs](https://quasar-gfx.github.io/QUASAR/openxr.html) | [Main Code](https://github.com/quasar-gfx/QUASAR) | [OpenXR Code](https://github.com/quasar-gfx/QUASAR-client) |
 
+**Note:** QUASAR is a research prototype, so expect API changes, unoptimized code, bugs, and missing features. Contributions are welcome!
+
 ## Documentation
 
 **Please visit the ☞☞ [QUASAR OpenXR documentation](https://quasar-gfx.github.io/QUASAR/openxr.html) ☜☜ for information on how to build and run this repo!**

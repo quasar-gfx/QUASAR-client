@@ -180,7 +180,7 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
 
 void OpenGLESRenderer::setScreenShaderUniforms(const Shader& screenShader) {
     // screenShader.setTexture("screenColor", gBuffer.colorBuffer, 0);
-    // screenShader.setTexture("screenDepth", gBuffer.depthBuffer, 1);
+    // screenShader.setTexture("screenDepth", gBuffer.depthTexture, 1);
 }
 
 RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const RenderTargetBase* overrideRenderTarget) {

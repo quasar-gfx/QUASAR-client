@@ -175,8 +175,8 @@ private:
                 thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f ||
                     glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras->left.getForwardVector();
-                    const glm::vec3 &right = cameras->left.getRightVector();
+                    const glm::vec3& forward = cameras->left.getForwardVector();
+                    const glm::vec3& right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
                 }

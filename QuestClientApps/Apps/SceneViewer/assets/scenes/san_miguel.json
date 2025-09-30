@@ -1,0 +1,288 @@
+{
+    "skybox": {
+        "path": "textures/ibr/barcelona.hdr",
+        "HDR": true,
+        "flipVertically": true,
+        "width": 1024,
+        "height": 1024
+    },
+    "models": [
+        {
+            "path": "models/scenes/SanMiguel.glb",
+            "IBL": 0.25,
+            "gammaCorrected": true
+        }
+    ],
+    "meshes": [],
+    "nodes": [
+        {
+            "model": 0,
+            "position": [0.0, 0.0, 0.0],
+            "rotation": [0.0, 0.0, 0.0],
+            "scale": [1.0, 1.0, 1.0]
+        }
+    ],
+    "camera": {
+        "fov": 60.0,
+        "near": 0.1,
+        "far": 1000.0,
+        "position": [15.0, 1.6, 10.0],
+        "rotation": [0.0, 0.0, 0.0]
+    },
+    "ambientLight": {
+        "color": [1.0, 1.0, 1.0],
+        "distance": 50.0,
+        "intensity": 0.25,
+        "orthoBoxSize": 250.0
+    },
+    "directionalLight": {
+        "color": [1.0, 0.98, 0.92],
+        "direction": [-1.0, -2.5, 0.8],
+        "distance": 5.0,
+        "intensity": 3.0
+    },
+    "pointLights": [
+        {
+            "color": [1.0, 0.84, 0.7],
+            "position": [7.5, 3, -1.7],
+            "intensity": 25.0,
+            "constant": 0.0,
+            "linear": 0.09,
+            "quadratic": 1.0
+        },
+        {
+            "color": [1.0, 0.84, 0.7],
+            "position": [14.5, 3, -1.7],
+            "intensity": 25.0,
+            "constant": 0.0,
+            "linear": 0.09,
+            "quadratic": 1.0
+        },
+        {
+            "color": [1.0, 0.84, 0.7],
+            "position": [22, 3, -1.7],
+            "intensity": 25.0,
+            "constant": 0.0,
+            "linear": 0.09,
+            "quadratic": 1.0
+        },
+        {
+            "color": [1.0, 0.84, 0.7],
+            "position": [25, 3, 2],
+            "intensity": 25.0,
+            "constant": 0.0,
+            "linear": 0.09,
+            "quadratic": 1.0
+        }
+    ],
+    "animations": [
+        {
+            "node": "Chair_Cafe_Round",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, -0.5, 0.0],
+            "duration": 9.41,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (2)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.88,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (5)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 4.49,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (17)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.04,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (19)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, -0.5, 0.0],
+            "duration": 2.12,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (20)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.58,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (21)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 4.03,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Round (25)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.89,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (3)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.0, 0.5, 0.0],
+            "duration": 9.33,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (7)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.0, 0.0],
+            "duration": 7.73,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (8)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.0, 0.0],
+            "duration": 3.82,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (10)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.0, -0.5, 0.0],
+            "duration": 6.83,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (11)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.0, 0.5, 0.0],
+            "duration": 3.6,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (30)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.0, 0.0],
+            "duration": 5.45,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Cafe_Square (31)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.0, 0.0],
+            "duration": 9.28,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (4)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 9.24,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (6)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.85,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (7)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 3.73,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (8)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 2.17,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (10)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 5.53,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (15)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 2.79,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (16)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 7.01,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (21)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.0, 0.5, 0.0],
+            "duration": 8.23,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (23)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [-0.5, 0.5, 0.0],
+            "duration": 2.39,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Chair_Wood (24)",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.5, 0.5, 0.0],
+            "duration": 6.58,
+            "reverse": true,
+            "loop": true
+        },
+        {
+            "node": "Water",
+            "fromPosition": [0.0, 0.0, 0.0],
+            "toPosition": [0.0, 0.0, -0.01],
+            "duration": 5.0,
+            "reverse": true,
+            "loop": true
+        }
+    ]
+}

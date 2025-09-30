@@ -76,7 +76,6 @@ include(${CMAKE_SOURCE_DIR}/cmake/gfxwrapper.cmake)
 if(TARGET openxr-gfxwrapper)
     target_include_directories(${TARGET} PRIVATE ${openxr_SOURCE_DIR}/src/common)
     target_link_libraries(${TARGET} PRIVATE openxr-gfxwrapper)
-    target_compile_definitions(${TARGET} PRIVATE QUASAR_CLIENT_USE_OPENGL_ES)
 endif()
 
 # link target libraries

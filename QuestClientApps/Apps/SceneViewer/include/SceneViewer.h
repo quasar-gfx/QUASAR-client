@@ -3,6 +3,7 @@
 
 #include <OpenXRApp.h>
 
+#include <SceneLoader.h>
 #include <Primitives/Mesh.h>
 #include <Primitives/Cube.h>
 #include <Primitives/Model.h>
@@ -14,7 +15,7 @@ using namespace quasar;
 
 class SceneViewer final : public OpenXRApp {
 private:
-    glm::uvec2 windowSize = glm::uvec2(1024, 1024);
+    std::string sceneFile = "scenes/robot_lab.json";
 
 public:
     SceneViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -22,48 +23,7 @@ public:
 
 private:
     void CreateResources() override {
-        // Add lights
-        AmbientLight* ambientLight = new AmbientLight({
-            .intensity = 0.1f
-        });
-        scene->setAmbientLight(ambientLight);
-
-        DirectionalLightCreateParams directionalLightParams{
-            .color = glm::vec3(1.0f, 1.0f, 1.0f),
-            .direction = glm::vec3(1.0f, 0.3f, -6.0f),
-            .distance = 1.0f,
-            .intensity = 1.25f,
-            .orthoBoxSize = 50.0f
-        };
-        DirectionalLight* directionalLight = new DirectionalLight(directionalLightParams);
-        scene->setDirectionalLight(directionalLight);
-
-        PointLightCreateParams pointLightParams{
-            .color = glm::vec3(0.95f, 0.95f, 1.0f),
-            .position = glm::vec3(5.0f, 5.0f, 5.0f),
-            .intensity = 2.0f,
-            .constant = 1.0f,
-            .linear = 0.07f,
-            .quadratic = 0.017f
-        };
-
-        pointLightParams.position = glm::vec3(5.0f, 5.0f, 5.0f);
-        PointLight* pointLight = new PointLight(pointLightParams);
-        scene->addPointLight(pointLight);
-
-        pointLightParams.position = glm::vec3(-5.0f, 5.0f, 5.0f);
-        pointLight = new PointLight(pointLightParams);
-        scene->addPointLight(pointLight);
-
-        pointLightParams.position = glm::vec3(5.0f, 5.0f, -5.0f);
-        pointLight = new PointLight(pointLightParams);
-        scene->addPointLight(pointLight);
-
-        pointLightParams.position = glm::vec3(-5.0f, 5.0f, -5.0f);
-        pointLight = new PointLight(pointLightParams);
-        scene->addPointLight(pointLight);
-
-        // Add the hand nodes
+        // Add the hand nodes.
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
@@ -82,92 +42,8 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
-        Model* robotLab = new Model({
-            .flipTextures = true,
-            .IBL = 0.01f,
-            .path = "models/scenes/RobotLab.glb"
-        });
-        scene->addChildNode(new Node(robotLab));
-
-        cameraPositionOffset += glm::vec3(0.0f, 3.0f, 10.0f);
-
-        // SceneLoader doesn't work on Android atm, so manually add animations
-        {
-            Node* node = robotLab->findNodeByName("prop_robotArbody");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addRotationKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addRotationKey({ 0.0f, 360.0f, 0.0f }, 60.0f);
-                anim->setRotationProperties(false, true);  // Not reversed, looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcFlyer_clean");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addPositionKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addPositionKey({ 0.0f, 2.0f, 0.0f }, 5.0f);
-                anim->setPositionProperties(true, true);  // Reversed and looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcLand_clean");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addPositionKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addPositionKey({ 0.0f, 0.0f, 3.0f }, 15.0f);
-                anim->setPositionProperties(true, true);  // Reversed and looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearLeft");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addRotationKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addRotationKey({ 360.0f, 0.0f, 0.0f }, 15.0f);
-                anim->setRotationProperties(true, true);  // Reversed and looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_rearRight");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addRotationKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addRotationKey({ 360.0f, 0.0f, 0.0f }, 15.0f);
-                anim->setRotationProperties(true, true);  // Reversed and looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontLeft");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addRotationKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addRotationKey({ 360.0f, 0.0f, 0.0f }, 15.0f);
-                anim->setRotationProperties(true, true);  // Reversed and looping
-            }
-        }
-
-        {
-            Node* node = robotLab->findNodeByName("vehicle_rcLand_wheel_frontRight");
-            if (node != nullptr) {
-                std::shared_ptr<Animation> anim = node->addAnimation();
-
-                anim->addRotationKey({ 0.0f, 0.0f, 0.0f }, 0.0f);
-                anim->addRotationKey({ 360.0f, 0.0f, 0.0f }, 15.0f);
-                anim->setRotationProperties(true, true);  // Reversed and looping
-            }
-        }
+        loader.loadScene(sceneFile, *scene, cameras->left);
+        cameraPositionOffset = cameras->left.getPosition();
     }
 
     void CreateActionSet() override {
@@ -239,8 +115,8 @@ private:
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras->left.getForwardVector();
-                    const glm::vec3 &right = cameras->left.getRightVector();
+                    const glm::vec3& forward = cameras->left.getForwardVector();
+                    const glm::vec3& right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
                 }
@@ -250,6 +126,7 @@ private:
     }
 
     void OnRender(double now, double dt) override {
+        // Render
         scene->updateAnimations(dt);
         graphicsAPI->drawObjects(*scene, *cameras);
 
@@ -257,6 +134,8 @@ private:
     }
 
     void DestroyResources() override {}
+
+    SceneLoader loader;
 
     // Actions.
     XrAction clickAction;

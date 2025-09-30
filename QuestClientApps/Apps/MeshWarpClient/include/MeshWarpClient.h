@@ -207,8 +207,8 @@ private:
 
             if (thumbstickState[i].isActive == XR_TRUE && thumbstickState[i].changedSinceLastSync == XR_TRUE) {
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
-                    const glm::vec3 &forward = cameras->left.getForwardVector();
-                    const glm::vec3 &right = cameras->left.getRightVector();
+                    const glm::vec3& forward = cameras->left.getForwardVector();
+                    const glm::vec3& right = cameras->left.getRightVector();
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
                     cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
                 }
@@ -277,6 +277,7 @@ private:
 
         // Render
         renderStats = graphicsAPI->drawObjects(*scene, *cameras);
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
 
         if (glm::abs(elapsedTimeColor) > 1e-5f) {
             XR_LOG("E2E Latency (RGB): " << elapsedTimeColor << "ms");
