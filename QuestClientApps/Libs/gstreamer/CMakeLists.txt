@@ -51,6 +51,7 @@ set(GSTREAMER_LIB_NAMES
     gstgl-1.0
     gstaudio-1.0
     gstphotography-1.0
+    gstmpegts-1.0
     gobject-2.0
     glib-2.0
     gmodule-2.0
@@ -61,6 +62,9 @@ set(GSTREAMER_LIB_NAMES
     intl
     iconv
     ffi
+    srt
+    ssl
+    crypto
 )
 
 set(GSTREAMER_PLUGIN_LIB_NAMES
@@ -73,6 +77,9 @@ set(GSTREAMER_PLUGIN_LIB_NAMES
     rtp
     rtpmanager
     udp
+    tcp
+    srt
+    mpegtsdemux
     playback
     androidmedia
     videoparsersbad
