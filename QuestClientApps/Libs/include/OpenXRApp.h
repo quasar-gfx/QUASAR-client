@@ -760,8 +760,8 @@ protected:
         OPENXR_CHECK(xrWaitSwapchainImage(depthSwapchainInfo.swapchain, &waitInfo), "Failed to wait for Image from the Depth Swapchain");
 
         // Get the width and height and construct the viewport and scissors.
-        const uint32_t &width = viewConfigurationViews[0].recommendedImageRectWidth;
-        const uint32_t &height = viewConfigurationViews[0].recommendedImageRectHeight;
+        const uint32_t& width = viewConfigurationViews[0].recommendedImageRectWidth;
+        const uint32_t& height = viewConfigurationViews[0].recommendedImageRectHeight;
 
         // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view.
         // This also associates the swapchain image with this layer projection view.
@@ -794,7 +794,6 @@ protected:
         });
 
         double now = renderLayerInfo.predictedDisplayTime / 1e+9; // Convert nanoseconds to seconds.
-        static double lastTime = now;
         double dt = (now - lastTime);
         OnRender(now, dt);
         lastTime = now;
@@ -928,6 +927,8 @@ protected:
         XrCompositionLayerProjection layerProjection = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
+
+    double lastTime = 0.0;
 
     float nearZ = 0.05f;
     float farZ = 1000.0f;

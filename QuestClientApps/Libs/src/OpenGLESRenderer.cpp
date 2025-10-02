@@ -17,13 +17,9 @@ void (*GetExtension(const char *functionName))() { return eglGetProcAddress(func
 
 using namespace quasar;
 
-OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance xrInstance, XrSystemId systemId)
+OpenGLESRenderer::OpenGLESRenderer(const Config& config, XrInstance xrInstance, XrSystemId systemId)
     : GraphicsAPI(config)
 {
-    OPENXR_CHECK(xrGetInstanceProcAddr(xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
-    XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
-    OPENXR_CHECK(xrGetOpenGLESGraphicsRequirementsKHR(xrInstance, systemId, &graphicsRequirements), "Failed to get Graphics Requirements for OpenGLES.");
-
     // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L101-L119
     // Initialize the gl extensions. Note we have to open a window.
     ksDriverInstance driverInstance{};
@@ -32,8 +28,13 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance xrInstance, 
     ksGpuSurfaceDepthFormat depthFormat{KS_GPU_SURFACE_DEPTH_FORMAT_D24};
     ksGpuSampleCount sampleCount{KS_GPU_SAMPLE_COUNT_1};
     if (!ksGpuWindow_Create(&window, &driverInstance, &queueInfo, 0, colorFormat, depthFormat, sampleCount, 640, 480, false)) {
-        std::cout << "ERROR: OPENGL ES: Failed to create Context." << std::endl;
+        spdlog::error("ERROR: OPENGL ES: Failed to create Context.");
     }
+
+    OPENXR_CHECK(xrGetInstanceProcAddr(xrInstance, "xrGetOpenGLESGraphicsRequirementsKHR",
+                    (PFN_xrVoidFunction*)&xrGetOpenGLESGraphicsRequirementsKHR), "Failed to get InstanceProcAddr for xrGetOpenGLESGraphicsRequirementsKHR.");
+    XrGraphicsRequirementsOpenGLESKHR graphicsRequirements{XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_ES_KHR};
+    OPENXR_CHECK(xrGetOpenGLESGraphicsRequirementsKHR(xrInstance, systemId, &graphicsRequirements), "Failed to get Graphics Requirements for OpenGLES.");
 
     GLint glMajorVersion = 0;
     GLint glMinorVersion = 0;
@@ -44,24 +45,31 @@ OpenGLESRenderer::OpenGLESRenderer(const Config &config, XrInstance xrInstance, 
     if (graphicsRequirements.minApiVersionSupported > glApiVersion) {
         int requiredMajorVersion = XR_VERSION_MAJOR(graphicsRequirements.minApiVersionSupported);
         int requiredMinorVersion = XR_VERSION_MINOR(graphicsRequirements.minApiVersionSupported);
-        std::cerr << "ERROR: OPENGL ES: The created OpenGL ES version " << glMajorVersion << "." << glMinorVersion << " doesn't meet the minimum required API version " << requiredMajorVersion << "." << requiredMinorVersion << " for OpenXR." << std::endl;
+        spdlog::error("ERROR: OPENGL ES: The created OpenGL ES version {}.{} doesn't meet the minimum required API version {}.{} for OpenXR.", glMajorVersion, glMinorVersion, requiredMajorVersion, requiredMinorVersion);
     }
 
     const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
     const char* foundExtension = strstr((const char*)extensions, "GL_OVR_multiview");
     if (foundExtension == nullptr) {
-        std::cerr << "ERROR: OPENGL ES: Unable to find GL_OVR_multiview extension." << std::endl;
+        spdlog::error("ERROR: OPENGL ES: Unable to find GL_OVR_multiview extension.");
         DEBUG_BREAK;
     }
 
     // Have to recreate resources here since some resources are created in the parent constructor and
     // we need to wait until after we have a valid GL context.
+    skyboxShader = Shader({
+        .vertexCodeData = SHADER_BUILTIN_SKYBOX_VERT,
+        .vertexCodeSize = SHADER_BUILTIN_SKYBOX_VERT_len,
+        .fragmentCodeData = SHADER_BUILTIN_SKYBOX_FRAG,
+        .fragmentCodeSize = SHADER_BUILTIN_SKYBOX_FRAG_len,
+    });
     pointLightsUBO = Buffer({
         .target = GL_UNIFORM_BUFFER,
         .dataSize = sizeof(Scene::GPUPointLightBlock),
         .numElems = 1,
         .usage = GL_DYNAMIC_DRAW,
     });
+
     outputFsQuad = std::make_unique<FullScreenQuad>();
 }
 
@@ -69,7 +77,7 @@ OpenGLESRenderer::~OpenGLESRenderer() {
     ksGpuWindow_Destroy(&window);
 }
 
-void *OpenGLESRenderer::GetGraphicsBinding() {
+void* OpenGLESRenderer::GetGraphicsBinding() {
     graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR};
     graphicsBinding.display = window.display;
     graphicsBinding.config = window.context.config;
@@ -77,19 +85,18 @@ void *OpenGLESRenderer::GetGraphicsBinding() {
     return &graphicsBinding;
 }
 
-XrSwapchainImageBaseHeader *OpenGLESRenderer::AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) {
+XrSwapchainImageBaseHeader* OpenGLESRenderer::AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) {
     swapchainImagesMap[swapchain].first = type;
     swapchainImagesMap[swapchain].second.resize(count, {XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
     return reinterpret_cast<XrSwapchainImageBaseHeader *>(swapchainImagesMap[swapchain].second.data());
 }
 
-void *OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
-    GLuint framebuffer = 0;
-    glGenFramebuffers(1, &framebuffer);
+void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
+    auto framebuffer = std::make_unique<Framebuffer>();
+    framebuffer->bind();
 
     GLenum attachment = imageViewCI.aspect == ImageViewCreateInfo::Aspect::COLOR_BIT ? GL_COLOR_ATTACHMENT0 : GL_DEPTH_ATTACHMENT;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
         glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, attachment, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
     }
@@ -101,42 +108,46 @@ void *OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) 
         std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
     }
 
-    GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-    if (result != GL_FRAMEBUFFER_COMPLETE) {
+    if (!framebuffer->checkStatus("CreateImageView")) {
         DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Framebuffer is not complete" << std::endl;
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    framebuffer->unbind();
 
-    imageViews[framebuffer] = imageViewCI;
-    return (void *)(uint64_t)framebuffer;
+    GLuint framebufferID = framebuffer->ID;
+    imageViews[framebufferID] = imageViewCI;
+    imageViewFramebuffers[framebufferID] = std::move(framebuffer);
+    return (void*)(uint64_t)framebufferID;
 }
 
-void OpenGLESRenderer::DestroyImageView(void *&imageView) {
-    GLuint framebuffer = (GLuint)(uint64_t)imageView;
-    imageViews.erase(framebuffer);
-    glDeleteFramebuffers(1, &framebuffer);
+void OpenGLESRenderer::DestroyImageView(void* &imageView) {
+    GLuint framebufferID = (GLuint)(uint64_t)imageView;
+    imageViews.erase(framebufferID);
+    imageViewFramebuffers.erase(framebufferID);
     imageView = nullptr;
 }
 
 void OpenGLESRenderer::beginRendering() {
     glViewport(0, 0, width, height);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    if (renderFramebuffer) {
+        renderFramebuffer->bind();
+    }
 }
 
 void OpenGLESRenderer::endRendering() {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (renderFramebuffer) {
+        renderFramebuffer->unbind();
+    }
 }
 
-void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewCount, void *depthStencilView, uint32_t width, uint32_t height) {
+void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) {
     // Reset framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &framebuffer);
-    framebuffer = 0;
+    if (renderFramebuffer) {
+        renderFramebuffer.reset();
+    }
 
     // Create new framebuffer
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    renderFramebuffer = std::make_unique<Framebuffer>();
+    renderFramebuffer->bind();
 
     // Color
     for (size_t i = 0; i < colorViewCount; i++) {
@@ -157,7 +168,7 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
     // DepthStencil
     if (depthStencilView) {
         GLuint glDepthView = (GLuint)(uint64_t)depthStencilView;
-        const ImageViewCreateInfo &imageViewCI = imageViews[glDepthView];
+        const ImageViewCreateInfo& imageViewCI = imageViews[glDepthView];
 
         if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
             glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
@@ -171,10 +182,8 @@ void OpenGLESRenderer::SetRenderAttachments(void **colorViews, size_t colorViewC
         }
     }
 
-    GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
-    if (result != GL_FRAMEBUFFER_COMPLETE) {
+    if (!renderFramebuffer->checkStatus("SetRenderAttachments")) {
         DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Framebuffer is not complete." << std::endl;
     }
 }
 
@@ -200,6 +209,9 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
     RenderStats stats = outputFsQuad->draw();
 
     if (overrideRenderTarget != nullptr) {
+        overrideRenderTarget->unbind();
+    }
+    else {
         endRendering();
     }
 

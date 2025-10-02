@@ -3,6 +3,8 @@
 
 #include <GraphicsAPI.h>
 #include <Primitives/FullScreenQuad.h>
+#include <Framebuffer.h>
+#include <memory>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
@@ -10,7 +12,7 @@ namespace quasar {
 
 class OpenGLESRenderer : public GraphicsAPI {
 public:
-    OpenGLESRenderer(const Config &config, XrInstance xrInstance, XrSystemId systemId);
+    OpenGLESRenderer(const Config& config, XrInstance xrInstance, XrSystemId systemId);
     ~OpenGLESRenderer();
 
     virtual void* GetGraphicsBinding() override;
@@ -47,8 +49,9 @@ private:
 
     std::unordered_map<GLuint, ImageCreateInfo> images{};
     std::unordered_map<GLuint, ImageViewCreateInfo> imageViews{};
+    std::unordered_map<GLuint, std::unique_ptr<Framebuffer>> imageViewFramebuffers{};
 
-    GLuint framebuffer;
+    std::unique_ptr<Framebuffer> renderFramebuffer;
     std::unique_ptr<FullScreenQuad> outputFsQuad;
 };
 #endif

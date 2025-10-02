@@ -19,7 +19,7 @@ bool CheckGraphicsAPI_TypeIsValidForPlatform(GraphicsAPI_Type type) {
     return false;
 }
 
-const char *GetGraphicsAPIInstanceExtensionString(GraphicsAPI_Type type) {
+const char* GetGraphicsAPIInstanceExtensionString(GraphicsAPI_Type type) {
 #if defined(XR_USE_GRAPHICS_API_D3D11)
     if (type == D3D11) {
         return XR_KHR_D3D11_ENABLE_EXTENSION_NAME;
@@ -56,10 +56,10 @@ const char *GetGraphicsAPIInstanceExtensionString(GraphicsAPI_Type type) {
 
 using namespace quasar;
 
-int64_t GraphicsAPI::SelectColorSwapchainFormat(const std::vector<int64_t> &formats) {
-    const std::vector<int64_t> &supportSwapchainFormats = GetSupportedColorSwapchainFormats();
+int64_t GraphicsAPI::SelectColorSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = GetSupportedColorSwapchainFormats();
 
-    const std::vector<int64_t>::const_iterator &swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
+    const std::vector<int64_t>::const_iterator& swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
                                                                                        std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
     if (swapchainFormatIt == formats.end()) {
         std::cout << "ERROR: Unable to find supported Color Swapchain Format" << std::endl;
@@ -70,8 +70,8 @@ int64_t GraphicsAPI::SelectColorSwapchainFormat(const std::vector<int64_t> &form
     return *swapchainFormatIt;
 }
 
-int64_t GraphicsAPI::SelectDepthSwapchainFormat(const std::vector<int64_t> &formats) {
-    const std::vector<int64_t> &supportSwapchainFormats = GetSupportedDepthSwapchainFormats();
+int64_t GraphicsAPI::SelectDepthSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = GetSupportedDepthSwapchainFormats();
 
     const std::vector<int64_t>::const_iterator &swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
                                                                                        std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));

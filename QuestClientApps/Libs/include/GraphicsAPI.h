@@ -113,7 +113,7 @@ public:
     };
 
 public:
-    GraphicsAPI(const Config &config) : OpenGLRenderer(config) {}
+    GraphicsAPI(const Config& config) : OpenGLRenderer(config) {}
     virtual ~GraphicsAPI() = default;
 
     int64_t SelectColorSwapchainFormat(const std::vector<int64_t>& formats);
