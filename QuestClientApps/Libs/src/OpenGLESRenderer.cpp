@@ -92,20 +92,20 @@ XrSwapchainImageBaseHeader* OpenGLESRenderer::AllocateSwapchainImageData(XrSwapc
 }
 
 void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
-    auto framebuffer = std::make_unique<Framebuffer>();
+    auto framebuffer = std::make_unique<MultiviewFramebuffer>();
     framebuffer->bind();
 
     GLenum attachment = imageViewCI.aspect == ImageViewCreateInfo::Aspect::COLOR_BIT ? GL_COLOR_ATTACHMENT0 : GL_DEPTH_ATTACHMENT;
 
     if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-        glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, attachment, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
+        framebuffer->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, attachment, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
     }
     else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
+        framebuffer->attachTexture((GLuint)(uint64_t)imageViewCI.image, attachment, imageViewCI.baseMipLevel);
     }
     else {
+        spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
         DEBUG_BREAK;
-        std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
     }
 
     if (!framebuffer->checkStatus("CreateImageView")) {
@@ -127,42 +127,43 @@ void OpenGLESRenderer::DestroyImageView(void* &imageView) {
 }
 
 void OpenGLESRenderer::beginRendering() {
-    glViewport(0, 0, width, height);
-    if (renderFramebuffer) {
-        renderFramebuffer->bind();
+    if (outputRT == nullptr) {
+        outputRT = std::make_unique<MultiviewRenderTarget>(RenderTargetCreateParams{
+            .width = width,
+            .height = height,
+        });
     }
+    outputRT->bind();
 }
 
 void OpenGLESRenderer::endRendering() {
-    if (renderFramebuffer) {
-        renderFramebuffer->unbind();
-    }
+    outputRT->unbind();
 }
 
 void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) {
     // Reset framebuffer
-    if (renderFramebuffer) {
-        renderFramebuffer.reset();
+    if (displayFBO) {
+        displayFBO.reset();
     }
 
     // Create new framebuffer
-    renderFramebuffer = std::make_unique<Framebuffer>();
-    renderFramebuffer->bind();
+    displayFBO = std::make_unique<MultiviewFramebuffer>();
+    displayFBO->bind();
 
     // Color
     for (size_t i = 0; i < colorViewCount; i++) {
         GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
-        const ImageViewCreateInfo &imageViewCI = imageViews[glColorView];
+        const ImageViewCreateInfo& imageViewCI = imageViews[glColorView];
 
         if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
+            displayFBO->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, GL_COLOR_ATTACHMENT0, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
         }
         else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
+            displayFBO->attachTexture((GLuint)(uint64_t)imageViewCI.image, GL_COLOR_ATTACHMENT0, imageViewCI.baseMipLevel);
         }
         else {
+            spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
             DEBUG_BREAK;
-            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
         }
     }
     // DepthStencil
@@ -171,25 +172,25 @@ void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewC
         const ImageViewCreateInfo& imageViewCI = imageViews[glDepthView];
 
         if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
+            displayFBO->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, GL_DEPTH_ATTACHMENT, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
         }
         else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel);
+            displayFBO->attachTexture((GLuint)(uint64_t)imageViewCI.image, GL_DEPTH_ATTACHMENT, imageViewCI.baseMipLevel);
         }
         else {
+            spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
             DEBUG_BREAK;
-            std::cout << "ERROR: OPENGL: Unknown ImageView View type." << std::endl;
         }
     }
 
-    if (!renderFramebuffer->checkStatus("SetRenderAttachments")) {
+    if (!displayFBO->checkStatus("SetRenderAttachments")) {
         DEBUG_BREAK;
     }
 }
 
 void OpenGLESRenderer::setScreenShaderUniforms(const Shader& screenShader) {
-    // screenShader.setTexture("screenColor", gBuffer.colorBuffer, 0);
-    // screenShader.setTexture("screenDepth", gBuffer.depthTexture, 1);
+    screenShader.setTexture("screenColor", outputRT->colorTexture, 0);
+    screenShader.setTexture("screenDepth", outputRT->depthStencilTexture, 1);
 }
 
 RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const RenderTargetBase* overrideRenderTarget) {
@@ -199,7 +200,8 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
         overrideRenderTarget->bind();
     }
     else {
-        beginRendering();
+        displayFBO->bind();
+        glViewport(0, 0, windowWidth, windowHeight);
     }
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -210,9 +212,6 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
 
     if (overrideRenderTarget != nullptr) {
         overrideRenderTarget->unbind();
-    }
-    else {
-        endRendering();
     }
 
     return stats;
