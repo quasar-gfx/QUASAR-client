@@ -12,6 +12,7 @@
 #include <Scene.h>
 #include <Cameras/VRCamera.h>
 #include <Utils/FileIO.h>
+#include <Utils/TimeUtils.h>
 
 #include <Utils/DebugOutput.h>
 #include <Utils/OpenXRDebugUtils.h>
@@ -677,7 +678,7 @@ protected:
         OPENXR_CHECK(xrDestroySwapchain(depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
 
-    virtual void HandleInteractions() {}
+    virtual void HandleInteractions(double now, double dt) {}
 
     virtual void OnRender(double now, double dt) {}
 
@@ -691,6 +692,9 @@ protected:
         XrFrameBeginInfo frameBeginInfo{XR_TYPE_FRAME_BEGIN_INFO};
         OPENXR_CHECK(xrBeginFrame(session, &frameBeginInfo), "Failed to begin the XR Frame.");
 
+        double now = timeutils::nanosToSeconds(frameState.predictedDisplayTime);
+        double dt = (now - lastTime);
+
         // Variables for rendering and layer composition.
         bool rendered = false;
         RenderLayerInfo renderLayerInfo;
@@ -702,9 +706,9 @@ protected:
             // Poll actions here because they require a predicted display time, which we've only just obtained.
             PollActionsInternal(frameState.predictedDisplayTime);
             // Handle interactions.
-            HandleInteractions();
+            HandleInteractions(now, dt);
             // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure.
-            rendered = RenderLayer(renderLayerInfo);
+            rendered = RenderLayer(renderLayerInfo, now, dt);
             if (rendered) {
                 renderLayerInfo.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&renderLayerInfo.layerProjection));
             }
@@ -717,9 +721,11 @@ protected:
         frameEndInfo.layerCount = static_cast<uint32_t>(renderLayerInfo.layers.size());
         frameEndInfo.layers = renderLayerInfo.layers.data();
         OPENXR_CHECK(xrEndFrame(session, &frameEndInfo), "Failed to end the XR Frame.");
+
+        lastTime = now;
     }
 
-    bool RenderLayer(RenderLayerInfo &renderLayerInfo) {
+    bool RenderLayer(RenderLayerInfo& renderLayerInfo, double now, double dt) {
         // Locate the views from the view configuration within the (reference) space at the display time.
         std::vector<XrView> views(viewConfigurationViews.size(), {XR_TYPE_VIEW});
 
@@ -796,10 +802,7 @@ protected:
             glm::inverse(gxi::toGlm(views[1].pose))
         });
 
-        double now = renderLayerInfo.predictedDisplayTime / 1e+9; // Convert nanoseconds to seconds.
-        double dt = (now - lastTime);
         OnRender(now, dt);
-        lastTime = now;
 
         // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};

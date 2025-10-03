@@ -8,6 +8,7 @@
 #include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
+#include <PostProcessing/Tonemapper.h>
 
 #include <Cameras/PerspectiveCamera.h>
 #include <Utils/FileIO.h>
@@ -31,8 +32,8 @@ private:
 
     const glm::uvec2 videoSize = glm::uvec2(1920, 1080);
 
-    unsigned int surfelSize = 1;
-    unsigned int depthFactor = 4;
+    uint surfelSize = 1;
+    uint depthFactor = 4;
     float remoteFOV = 120.0f;
 
 public:
@@ -65,8 +66,10 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
+        tonemapper = std::make_unique<Tonemapper>(false);
+
         // Create video texture for color stream
-        videoTextureColor = new VideoTexture({
+        videoTextureColor = std::make_unique<VideoTexture>(TextureDataCreateParams{
             .width = videoSize.x,
             .height = videoSize.y,
             .internalFormat = GL_RGB8,
@@ -79,7 +82,7 @@ private:
         }, videoURL);
 
         // Create BC4 depth texture
-        videoTextureDepth = new BC4DepthVideoTexture({
+        videoTextureDepth = std::make_unique<BC4DepthVideoTexture>(TextureDataCreateParams{
             .width = videoSize.x / depthFactor,
             .height = videoSize.y / depthFactor,
             .internalFormat = GL_R32F,
@@ -97,21 +100,21 @@ private:
 
         // Setup scene and mesh
         glm::uvec2 adjustedvideoSize = videoSize / surfelSize;
-        unsigned int maxVertices = adjustedvideoSize.x * adjustedvideoSize.y;
-        unsigned int numTriangles = (adjustedvideoSize.x-1) * (adjustedvideoSize.y-1) * 2;
-        unsigned int maxIndices = numTriangles * 3;
+        uint maxVertices = adjustedvideoSize.x * adjustedvideoSize.y;
+        uint numTriangles = (adjustedvideoSize.x-1) * (adjustedvideoSize.y-1) * 2;
+        uint maxIndices = numTriangles * 3;
 
-        mesh = new Mesh({
+        mesh = std::make_unique<Mesh>(MeshSizeCreateParams{
             .maxVertices = maxVertices,
             .maxIndices = maxIndices,
-            .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor }),
+            .material = new UnlitMaterial({ .baseColorTexture = videoTextureColor.get() }),
             .usage = GL_DYNAMIC_DRAW
         });
-        node.setEntity(mesh);
+        node.setEntity(mesh.get());
         node.frustumCulled = false;
         scene->addChildNode(&node);
 
-        nodeWireframe.setEntity(mesh);
+        nodeWireframe.setEntity(mesh.get());
         nodeWireframe.frustumCulled = false;
         nodeWireframe.wireframe = true;
         nodeWireframe.visible = false;
@@ -192,7 +195,7 @@ private:
         }
     }
 
-    void HandleInteractions() override {
+    void HandleInteractions(double now, double dt) override {
         for (int i = 0; i < 2; i++) {
             handNodes[i].visible = handPoseState[i].isActive;
 
@@ -209,8 +212,8 @@ private:
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3& forward = cameras->left.getForwardVector();
                     const glm::vec3& right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
+                    cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
                 // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
@@ -277,6 +280,7 @@ private:
 
         // Render
         renderStats = graphicsAPI->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*graphicsAPI);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
 
         if (glm::abs(elapsedTimeColor) > 1e-5f) {
@@ -288,13 +292,14 @@ private:
     }
 
     void DestroyResources() override {
-        delete videoTextureColor;
-        delete videoTextureDepth;
-        delete mesh;
+        // Resources are automatically cleaned up by unique_ptr
     }
 
-    VideoTexture* videoTextureColor;
-    BC4DepthVideoTexture* videoTextureDepth;
+private:
+    std::unique_ptr<Tonemapper> tonemapper;
+
+    std::unique_ptr<VideoTexture> videoTextureColor;
+    std::unique_ptr<BC4DepthVideoTexture> videoTextureDepth;
     std::unique_ptr<PoseStreamer> poseStreamer;
 
     pose_id_t poseIdColor = -1, poseIdDepth = -1;
@@ -304,7 +309,7 @@ private:
 
     PerspectiveCamera remoteCamera;
 
-    Mesh* mesh;
+    std::unique_ptr<Mesh> mesh;
     Node node, nodeWireframe;
 
     std::unique_ptr<ComputeShader> genMeshFromBC4Shader;
@@ -319,7 +324,7 @@ private:
     XrAction thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.03f;
+    float movementSpeed = 2.0f;
     // The haptic output action for grabbing.
     XrAction buzzAction;
     // The current haptic output value for each controller.

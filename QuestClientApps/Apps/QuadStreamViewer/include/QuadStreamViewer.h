@@ -7,6 +7,7 @@
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
 #include <Lights/AmbientLight.h>
+#include <PostProcessing/Tonemapper.h>
 
 #include <Receivers/QuadStreamReceiver.h>
 
@@ -50,6 +51,8 @@ private:
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
+
+        tonemapper = std::make_unique<Tonemapper>(false);
 
         quadSet = std::make_unique<QuadSet>(remoteGBufferSize);
         quadstreamReceiver = std::make_unique<QuadStreamReceiver>(*quadSet, maxViews);
@@ -138,7 +141,7 @@ private:
         }
     }
 
-    void HandleInteractions() override {
+    void HandleInteractions(double now, double dt) override {
         // For each hand:
         for (int i = 0; i < 2; i++) {
             // Draw the controllers:
@@ -161,8 +164,8 @@ private:
                     glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3& forward = cameras->left.getForwardVector();
                     const glm::vec3& right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
+                    cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
             }
         }
@@ -170,6 +173,7 @@ private:
 
     void OnRender(double now, double dt) override {
         graphicsAPI->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*graphicsAPI);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
@@ -189,6 +193,8 @@ private:
         glm::vec4(0.5f, 0.0f, 0.5f, 1.0f),
     };
 
+    std::unique_ptr<Tonemapper> tonemapper;
+
     std::unique_ptr<QuadSet> quadSet;
     std::unique_ptr<QuadStreamReceiver> quadstreamReceiver;
 
@@ -202,7 +208,7 @@ private:
     XrAction thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.03f;
+    float movementSpeed = 2.0f;
     // The haptic output action for grabbing.
     XrAction buzzAction;
     // The current haptic output value for each controller.

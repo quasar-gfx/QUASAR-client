@@ -3,11 +3,11 @@
 
 #include <OpenXRApp.h>
 
-#include <Primitives/Mesh.h>
 #include <Primitives/Cube.h>
 #include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
+#include <PostProcessing/Tonemapper.h>
 
 #include <Receivers/VideoTexture.h>
 #include <Streamers/PoseStreamer.h>
@@ -51,6 +51,8 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
+        tonemapper = std::make_unique<Tonemapper>(false);
+
         // Create video texture
         videoTexture = new VideoTexture({
             .width = videoSize.x,
@@ -67,6 +69,13 @@ private:
         // Create pose streamer
         poseStreamer = std::make_unique<PoseStreamer>(cameras.get(), poseURL);
 
+        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
+            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
+            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
+            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
+            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
+        });
+
         // // Add a screen for the video
         // Cube* videoScreen = new Cube({
         //     .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
@@ -76,13 +85,6 @@ private:
         // screen->setScale({ 1.0f, 0.5f, 0.05f });
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
-
-        atwShader = std::make_unique<Shader>(ShaderDataCreateParams{
-            .vertexCodeData = SHADER_BUILTIN_POSTPROCESS_VERT,
-            .vertexCodeSize = SHADER_BUILTIN_POSTPROCESS_VERT_len,
-            .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
-            .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
-        });
     }
 
     void CreateActionSet() override {
@@ -138,7 +140,7 @@ private:
         }
     }
 
-    void HandleInteractions() override {
+    void HandleInteractions(double now, double dt) override {
         // For each hand:
         for (int i = 0; i < 2; i++) {
             // Draw the controllers:
@@ -154,8 +156,8 @@ private:
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3& forward = cameras->left.getForwardVector();
                     const glm::vec3& right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
+                    cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
                 // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
@@ -195,21 +197,24 @@ private:
         // Draw both eyes in a single pass
         graphicsAPI->drawToScreen(*atwShader);
 
-        // Draw objects (uncomment to debug)
-        graphicsAPI->drawObjects(*scene, *cameras, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        prevPoseID = currPoseID;
+        // Draw objects
+        // graphicsAPI->drawObjects(*scene, *cameras, 0);
+        // tonemapper->drawToScreen(*graphicsAPI);
+        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
 
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");
         }
 
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
+        prevPoseID = currPoseID;
     }
 
     void DestroyResources() override {
         delete videoTexture;
     }
+
+private:
+    std::unique_ptr<Tonemapper> tonemapper;
 
     // Shader for the ATW effect.
     std::unique_ptr<Shader> atwShader;
@@ -232,7 +237,7 @@ private:
     XrAction thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.03f;
+    float movementSpeed = 2.0f;
     // The haptic output action for grabbing.
     XrAction buzzAction;
     // The current haptic output value for each controller.

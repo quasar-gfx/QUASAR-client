@@ -4,11 +4,6 @@
 #include <OpenXRApp.h>
 
 #include <SceneLoader.h>
-#include <Primitives/Mesh.h>
-#include <Primitives/Model.h>
-#include <Lights/AmbientLight.h>
-#include <Lights/DirectionalLight.h>
-#include <Lights/PointLight.h>
 #include <PostProcessing/Tonemapper.h>
 
 using namespace quasar;
@@ -16,6 +11,7 @@ using namespace quasar;
 class SceneViewer final : public OpenXRApp {
 private:
     std::string sceneFile = "scenes/robot_lab.json";
+    bool tonemap = true;
 
 public:
     SceneViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -42,10 +38,10 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
+        tonemapper = std::make_unique<Tonemapper>(tonemap);
+
         loader.loadScene(sceneFile, *scene, cameras->left);
         cameraPositionOffset = cameras->left.getPosition();
-
-        tonemapper = std::make_unique<Tonemapper>();
     }
 
     void CreateActionSet() override {
@@ -102,7 +98,7 @@ private:
         }
     }
 
-    void HandleInteractions() override {
+    void HandleInteractions(double now, double dt) override {
         // For each hand:
         for (int i = 0; i < 2; i++) {
             // Draw the controllers:
@@ -119,8 +115,8 @@ private:
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3& forward = cameras->left.getForwardVector();
                     const glm::vec3& right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
+                    cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
                 // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
@@ -132,12 +128,12 @@ private:
         scene->updateAnimations(dt);
         graphicsAPI->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*graphicsAPI);
-
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
     void DestroyResources() override {}
 
+protected:
     SceneLoader loader;
     std::unique_ptr<Tonemapper> tonemapper;
 
@@ -149,7 +145,7 @@ private:
     XrAction thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.03f;
+    float movementSpeed = 2.0f;
     // The haptic output action for grabbing.
     XrAction buzzAction;
     // The current haptic output value for each controller.

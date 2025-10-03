@@ -6,6 +6,8 @@
 #include <Primitives/Mesh.h>
 #include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
+#include <Lights/AmbientLight.h>
+#include <PostProcessing/Tonemapper.h>
 
 #include <Buffer.h>
 #include <Cameras/PerspectiveCamera.h>
@@ -24,9 +26,8 @@ private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("meshwarp/" + sceneName + "/");
 
-    unsigned int surfelSize = 4;
+    uint surfelSize = 4;
     float remoteFOV = 120.0f;
-    glm::uvec2 remoteWindowSize;
 
 public:
     MeshWarpViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
@@ -55,8 +56,10 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].setEntity(handModelRight.get());
 
+        tonemapper = std::make_unique<Tonemapper>(false);
+
         // Create texture
-        colorTexture = new Texture({
+        colorTexture = std::make_unique<Texture>(TextureFileCreateParams{
             .wrapS = GL_CLAMP_TO_EDGE,
             .wrapT = GL_CLAMP_TO_EDGE,
             .minFilter = GL_LINEAR,
@@ -64,7 +67,7 @@ private:
             .flipVertically = true,
             .path = dataPath / "color.jpg"
         });
-        remoteWindowSize = glm::uvec2(colorTexture->width, colorTexture->height);
+        remoteGBufferSize = glm::uvec2(colorTexture->width, colorTexture->height);
 
         // Remote camera
         remoteCamera.setAspect(colorTexture->width, colorTexture->height);
@@ -78,32 +81,32 @@ private:
         std::vector<char> depthData(expectedSize);
         codec.decompress(depthDataCompressed, depthData);
 
-        bc4BufferData = new Buffer({
+        bc4BufferData = std::make_unique<Buffer>(BufferCreateParams{
             .target = GL_SHADER_STORAGE_BUFFER,
             .dataSize = sizeof(BC4Block),
-            .numElems = (remoteWindowSize.x / 8) * (remoteWindowSize.y / 8),
+            .numElems = (remoteGBufferSize.x / 8) * (remoteGBufferSize.y / 8),
             .usage = GL_DYNAMIC_DRAW,
             .data = reinterpret_cast<BC4Block*>(depthData.data() + sizeof(pose_id_t)), // Skip the first pose_id_t
         });
 
-        // Setup scene & mesh
-        glm::uvec2 adjustedWindowSize = remoteWindowSize / surfelSize;
-        unsigned int maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
-        unsigned int numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
-        unsigned int maxIndices = numTriangles * 3;
+        // Setup scene and mesh
+        glm::uvec2 adjustedWindowSize = remoteGBufferSize / surfelSize;
+        uint maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
+        uint numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
+        uint maxIndices = numTriangles * 3;
 
-        mesh = new Mesh({
+        mesh = std::make_unique<Mesh>(MeshSizeCreateParams{
             .maxVertices = maxVertices,
             .maxIndices = maxIndices,
-            .material = new UnlitMaterial({ .baseColorTexture = colorTexture }),
+            .material = new UnlitMaterial({ .baseColorTexture = colorTexture.get() }),
             .usage = GL_DYNAMIC_DRAW
         });
 
-        node.setEntity(mesh);
+        node.setEntity(mesh.get());
         node.frustumCulled = false;
         scene->addChildNode(&node);
 
-        nodeWireframe.setEntity(mesh);
+        nodeWireframe.setEntity(mesh.get());
         nodeWireframe.frustumCulled = false;
         nodeWireframe.wireframe = true;
         nodeWireframe.visible = false;
@@ -111,7 +114,7 @@ private:
         nodeWireframe.overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(&nodeWireframe);
 
-        genMeshFromBC4Shader = new ComputeShader({
+        genMeshFromBC4Shader = std::make_unique<ComputeShader>(ComputeShaderDataCreateParams{
             .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
             .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
             .defines = {
@@ -174,7 +177,7 @@ private:
         }
     }
 
-    void HandleInteractions() override {
+    void HandleInteractions(double now, double dt) override {
         // For each hand:
         for (int i = 0; i < 2; i++) {
             // Draw the controllers:
@@ -193,8 +196,8 @@ private:
                 if (glm::abs(thumbstickState[i].currentState.x) > 0.2f || glm::abs(thumbstickState[i].currentState.y) > 0.2f) {
                     const glm::vec3& forward = cameras->left.getForwardVector();
                     const glm::vec3& right = cameras->left.getRightVector();
-                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y;
-                    cameraPositionOffset += movementSpeed * right * thumbstickState[i].currentState.x;
+                    cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
+                    cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
                 // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
@@ -207,7 +210,7 @@ private:
 
         genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
 
-        genMeshFromBC4Shader->setVec2("screenSize", remoteWindowSize);
+        genMeshFromBC4Shader->setVec2("screenSize", remoteGBufferSize);
         genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(colorTexture->width, colorTexture->height));
         genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
 
@@ -222,8 +225,8 @@ private:
         genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, *bc4BufferData);
 
         genMeshFromBC4Shader->dispatch(
-            (remoteWindowSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-            (remoteWindowSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (remoteGBufferSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
+            (remoteGBufferSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
             1
         );
 
@@ -238,27 +241,27 @@ private:
 
         // Render
         graphicsAPI->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*graphicsAPI);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
-    void DestroyResources() override {
-        delete colorTexture;
-        delete bc4BufferData;
-        delete mesh;
-        delete genMeshFromBC4Shader;
-    }
+    void DestroyResources() override {}
+
+private:
+    std::unique_ptr<Tonemapper> tonemapper;
+
+    glm::uvec2 remoteGBufferSize;
 
     PerspectiveCamera remoteCamera;
 
-    Buffer* bc4BufferData;
+    ZSTDCodec codec;
+    std::unique_ptr<Buffer> bc4BufferData;
 
-    Texture* colorTexture;
-    Mesh* mesh;
+    std::unique_ptr<Texture> colorTexture;
+    std::unique_ptr<Mesh> mesh;
     Node node, nodeWireframe;
 
-    ZSTDCodec codec;
-
-    ComputeShader* genMeshFromBC4Shader;
+    std::unique_ptr<ComputeShader> genMeshFromBC4Shader;
 
     // Actions.
     XrAction clickAction;
@@ -268,7 +271,7 @@ private:
     XrAction thumbstickAction;
     // The current thumbstick state for each controller.
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
-    float movementSpeed = 0.03f;
+    float movementSpeed = 2.0f;
     // The haptic output action for grabbing.
     XrAction buzzAction;
     // The current haptic output value for each controller.
