@@ -127,16 +127,18 @@ void OpenGLESRenderer::DestroyImageView(void* &imageView) {
 }
 
 void OpenGLESRenderer::beginRendering() {
-    glViewport(0, 0, width, height);
-    if (renderFramebuffer) {
-        renderFramebuffer->bind();
+    if (outputRT == nullptr) {
+        outputRT = std::make_unique<RenderTarget>(RenderTargetCreateParams{
+            .width = width,
+            .height = height,
+            .multiSampled = false,
+        });
     }
+    outputRT->bind();
 }
 
 void OpenGLESRenderer::endRendering() {
-    if (renderFramebuffer) {
-        renderFramebuffer->unbind();
-    }
+    outputRT->unbind();
 }
 
 void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) {
@@ -152,7 +154,7 @@ void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewC
     // Color
     for (size_t i = 0; i < colorViewCount; i++) {
         GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
-        const ImageViewCreateInfo &imageViewCI = imageViews[glColorView];
+        const ImageViewCreateInfo& imageViewCI = imageViews[glColorView];
 
         if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
             glFramebufferTextureMultiviewOVR(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, (GLuint)(uint64_t)imageViewCI.image, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
@@ -188,8 +190,8 @@ void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewC
 }
 
 void OpenGLESRenderer::setScreenShaderUniforms(const Shader& screenShader) {
-    // screenShader.setTexture("screenColor", gBuffer.colorBuffer, 0);
-    // screenShader.setTexture("screenDepth", gBuffer.depthTexture, 1);
+    screenShader.setTexture("screenColor", outputRT->colorTexture, 0);
+    screenShader.setTexture("screenDepth", outputRT->depthStencilTexture, 1);
 }
 
 RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const RenderTargetBase* overrideRenderTarget) {
@@ -199,7 +201,8 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
         overrideRenderTarget->bind();
     }
     else {
-        beginRendering();
+        renderFramebuffer->bind();
+        glViewport(0, 0, windowWidth, windowHeight);
     }
 
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -210,9 +213,6 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
 
     if (overrideRenderTarget != nullptr) {
         overrideRenderTarget->unbind();
-    }
-    else {
-        endRendering();
     }
 
     return stats;

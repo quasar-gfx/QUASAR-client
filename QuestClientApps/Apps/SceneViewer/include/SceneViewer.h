@@ -9,6 +9,7 @@
 #include <Lights/AmbientLight.h>
 #include <Lights/DirectionalLight.h>
 #include <Lights/PointLight.h>
+#include <PostProcessing/Tonemapper.h>
 
 using namespace quasar;
 
@@ -43,6 +44,8 @@ private:
 
         loader.loadScene(sceneFile, *scene, cameras->left);
         cameraPositionOffset = cameras->left.getPosition();
+
+        tonemapper = std::make_unique<Tonemapper>();
     }
 
     void CreateActionSet() override {
@@ -128,6 +131,7 @@ private:
         // Render
         scene->updateAnimations(dt);
         graphicsAPI->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*graphicsAPI);
 
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
@@ -135,6 +139,7 @@ private:
     void DestroyResources() override {}
 
     SceneLoader loader;
+    std::unique_ptr<Tonemapper> tonemapper;
 
     // Actions.
     XrAction clickAction;

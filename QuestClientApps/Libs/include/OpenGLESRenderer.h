@@ -1,10 +1,11 @@
 #ifndef OPENGLES_RENDERER_H
 #define OPENGLES_RENDERER_H
 
+#include <memory>
 #include <GraphicsAPI.h>
 #include <Primitives/FullScreenQuad.h>
+#include <RenderTargets/RenderTarget.h>
 #include <Framebuffer.h>
-#include <memory>
 
 #if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
 
@@ -53,6 +54,7 @@ private:
 
     std::unique_ptr<Framebuffer> renderFramebuffer;
     std::unique_ptr<FullScreenQuad> outputFsQuad;
+    std::unique_ptr<RenderTarget> outputRT;
 };
 #endif
 

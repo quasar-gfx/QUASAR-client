@@ -625,6 +625,9 @@ protected:
         XrSwapchainImageBaseHeader* depthSwapchainImages = graphicsAPI->AllocateSwapchainImageData(depthSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::DEPTH, depthSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(depthSwapchainInfo.swapchain, depthSwapchainImageCount, &depthSwapchainImageCount, depthSwapchainImages), "Failed to enumerate Depth Swapchain Images.");
 
+        graphicsAPI->resize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
+        graphicsAPI->setWindowSize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
+
         // Per image in the swapchains, fill out a GraphicsAPI::ImageViewCreateInfo structure and create a color/depth image view.
         for (uint32_t j = 0; j < colorSwapchainImageCount; j++) {
             GraphicsAPI::ImageViewCreateInfo imageViewCreateInfo;
