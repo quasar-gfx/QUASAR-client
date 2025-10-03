@@ -1,4 +1,4 @@
-// Copyright 2023, The Khronos Group Inc.
+// Copyright 2023, The Khronos Group Inc
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -104,7 +104,7 @@ class AndroidStreambuf : public std::streambuf {
 public:
     enum {
         bufsize = 128
-    };  // ... or some other suitable buffer size
+    };  // .. or some other suitable buffer size
     android_LogPriority logPriority;
     AndroidStreambuf(android_LogPriority p = ANDROID_LOG_DEBUG) {
         logPriority = p;

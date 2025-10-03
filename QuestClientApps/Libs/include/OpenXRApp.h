@@ -25,16 +25,8 @@ protected:
     struct RenderLayerInfo;
 
 public:
-    OpenXRApp(GraphicsAPI_Type apiType)
-        : apiType(apiType)
-    {
-        // Check API compatibility with Platform.
-        if (!CheckGraphicsAPI_TypeIsValidForPlatform(apiType)) {
-            XR_LOG_ERROR("ERROR: The provided Graphics API is not valid for this platform.");
-            DEBUG_BREAK;
-        }
-
-        // Set up spd for android logging.
+    OpenXRApp() {
+        // Set up spd for android logging
         spdlog::set_pattern("%v");
         std::string tag = "spdlog-android";
         auto logger = spdlog::android_logger_mt("android", tag);
@@ -81,8 +73,8 @@ public:
 
 protected:
     void CreateInstance() {
-        // Fill out an XrApplicationInfo structure detailing the names and OpenXR version.
-        // The application/engine name and version are user-definied. These may help IHVs or runtimes.
+        // Fill out an XrApplicationInfo structure detailing the names and OpenXR version
+        // The application/engine name and version are user-definied. These may help IHVs or runtimes
         XrApplicationInfo appInfo;
         strncpy(appInfo.applicationName, "OpenXR App", XR_MAX_APPLICATION_NAME_SIZE);
         appInfo.applicationVersion = 1;
@@ -90,25 +82,25 @@ protected:
         appInfo.engineVersion = 1;
         appInfo.apiVersion = XR_CURRENT_API_VERSION;
 
-        // Add additional instance layers/extensions that the application wants.
-        // Add both required and requested instance extensions.
+        // Add additional instance layers/extensions that the application wants
+        // Add both required and requested instance extensions
         {
-            // Ensure apiType is already defined when we call this line.
-            instanceExtensions.push_back(GetGraphicsAPIInstanceExtensionString(apiType));
+            // Add OpenGL ES extension directly since we only support OpenGL ES
+            instanceExtensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
             instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
-        // Get all the API Layers from the OpenXR runtime.
+        // Get all the API Layers from the OpenXR runtime
         uint32_t apiLayerCount = 0;
         std::vector<XrApiLayerProperties> apiLayerProperties;
         OPENXR_CHECK(xrEnumerateApiLayerProperties(0, &apiLayerCount, nullptr), "Failed to enumerate ApiLayerProperties.");
         apiLayerProperties.resize(apiLayerCount, {XR_TYPE_API_LAYER_PROPERTIES});
         OPENXR_CHECK(xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount, apiLayerProperties.data()), "Failed to enumerate ApiLayerProperties.");
 
-        // Check the requested API layers against the ones from the OpenXR. If found add it to the Active API Layers.
+        // Check the requested API layers against the ones from the OpenXR. If found add it to the Active API Layers
         for (auto &requestLayer : apiLayers) {
             for (auto &layerProperty : apiLayerProperties) {
-                // strcmp returns 0 if the strings match.
+                // strcmp returns 0 if the strings match
                 if (strcmp(requestLayer.c_str(), layerProperty.layerName) != 0) {
                     continue;
                 }
@@ -119,20 +111,20 @@ protected:
             }
         }
 
-        // Get all the Instance Extensions from the OpenXR instance.
+        // Get all the Instance Extensions from the OpenXR instance
         uint32_t extensionCount = 0;
         std::vector<XrExtensionProperties> extensionProperties;
         OPENXR_CHECK(xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr), "Failed to enumerate InstanceExtensionProperties.");
         extensionProperties.resize(extensionCount, {XR_TYPE_EXTENSION_PROPERTIES});
         OPENXR_CHECK(xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensionProperties.data()), "Failed to enumerate InstanceExtensionProperties.");
 
-        // Check the requested Instance Extensions against the ones from the OpenXR runtime.
-        // If an extension is found add it to Active Instance Extensions.
-        // Log error if the Instance Extension is not found.
+        // Check the requested Instance Extensions against the ones from the OpenXR runtime
+        // If an extension is found add it to Active Instance Extensions
+        // Log error if the Instance Extension is not found
         for (auto &requestedInstanceExtension : instanceExtensions) {
             bool found = false;
             for (auto &extensionProperty : extensionProperties) {
-                // strcmp returns 0 if the strings match.
+                // strcmp returns 0 if the strings match
                 if (strcmp(requestedInstanceExtension.c_str(), extensionProperty.extensionName) != 0) {
                     continue;
                 }
@@ -147,7 +139,7 @@ protected:
             }
         }
 
-        // Fill out an XrInstanceCreateInfo structure and create an XrInstance.
+        // Fill out an XrInstanceCreateInfo structure and create an XrInstance
         XrInstanceCreateInfo instanceCreateInfo{XR_TYPE_INSTANCE_CREATE_INFO};
         instanceCreateInfo.createFlags = 0;
         instanceCreateInfo.applicationInfo = appInfo;
@@ -159,26 +151,26 @@ protected:
     }
 
     void DestroyInstance() {
-        // Destroy the XrInstance.
+        // Destroy the XrInstance
         OPENXR_CHECK(xrDestroyInstance(xrInstance), "Failed to destroy Instance.");
     }
 
     void CreateDebugMessenger() {
-        // Check that "XR_EXT_debug_utils" is in the active Instance Extensions before creating an XrDebugUtilsMessengerEXT.
+        // Check that "XR_EXT_debug_utils" is in the active Instance Extensions before creating an XrDebugUtilsMessengerEXT
         if (IsStringInVector(activeInstanceExtensions, XR_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
-            debugUtilsMessenger = CreateOpenXRDebugUtilsMessenger(xrInstance);  // From OpenXRDebugUtils.h.
+            debugUtilsMessenger = CreateOpenXRDebugUtilsMessenger(xrInstance);  // From OpenXRDebugUtils.h
         }
     }
 
     void DestroyDebugMessenger() {
-        // Check that "XR_EXT_debug_utils" is in the active Instance Extensions before destroying the XrDebugUtilsMessengerEXT.
+        // Check that "XR_EXT_debug_utils" is in the active Instance Extensions before destroying the XrDebugUtilsMessengerEXT
         if (debugUtilsMessenger != XR_NULL_HANDLE) {
-            DestroyOpenXRDebugUtilsMessenger(xrInstance, debugUtilsMessenger);  // From OpenXRDebugUtils.h.
+            DestroyOpenXRDebugUtilsMessenger(xrInstance, debugUtilsMessenger);  // From OpenXRDebugUtils.h
         }
     }
 
     void GetInstanceProperties() {
-        // Get the instance's properties and log the runtime name and version.
+        // Get the instance's properties and log the runtime name and version
         XrInstanceProperties instanceProperties{XR_TYPE_INSTANCE_PROPERTIES};
         OPENXR_CHECK(xrGetInstanceProperties(xrInstance, &instanceProperties), "Failed to get InstanceProperties.");
 
@@ -189,12 +181,12 @@ protected:
     }
 
     void GetSystemID() {
-        // Get the XrSystemId from the instance and the supplied XrFormFactor.
+        // Get the XrSystemId from the instance and the supplied XrFormFactor
         XrSystemGetInfo systemGI{XR_TYPE_SYSTEM_GET_INFO};
         systemGI.formFactor = formFactor;
         OPENXR_CHECK(xrGetSystem(xrInstance, &systemGI, &systemID), "Failed to get SystemID.");
 
-        // Get the System's properties for some general information about the hardware and the vendor.
+        // Get the System's properties for some general information about the hardware and the vendor
         OPENXR_CHECK(xrGetSystemProperties(xrInstance, systemID, &systemProperties), "Failed to get SystemProperties.");
     }
 
@@ -222,33 +214,33 @@ protected:
         XrActionCreateInfo actionCreateInfo{XR_TYPE_ACTION_CREATE_INFO};
         // The type of action: float input, pose, haptic output etc.
         actionCreateInfo.actionType = xrActionType;
-        // Subaction paths, e.g. left and right hand. To distinguish the same action performed on different devices.
+        // Subaction paths, e.g. left and right hand. To distinguish the same action performed on different devices
         std::vector<XrPath> subaction_xrpaths;
         for (auto p : subaction_paths) {
             subaction_xrpaths.push_back(CreateXrPath(p));
         }
         actionCreateInfo.countSubactionPaths = (uint32_t)subaction_xrpaths.size();
         actionCreateInfo.subactionPaths = subaction_xrpaths.data();
-        // The internal name the runtime uses for this Action.
+        // The internal name the runtime uses for this Action
         strncpy(actionCreateInfo.actionName, name, XR_MAX_ACTION_NAME_SIZE);
-        // Localized names are required so there is a human-readable action name to show the user if they are rebinding the Action in an options screen.
+        // Localized names are required so there is a human-readable action name to show the user if they are rebinding the Action in an options screen
         strncpy(actionCreateInfo.localizedActionName, name, XR_MAX_LOCALIZED_ACTION_NAME_SIZE);
         OPENXR_CHECK(xrCreateAction(actionSet, &actionCreateInfo, &xrAction), "Failed to create Action.");
     };
 
     virtual void CreateActionSetInternal() {
         XrActionSetCreateInfo actionSetCreateInfo{XR_TYPE_ACTION_SET_CREATE_INFO};
-        // The internal name the runtime uses for this Action Set.
+        // The internal name the runtime uses for this Action Set
         strncpy(actionSetCreateInfo.actionSetName, "openxr-app-actionset", XR_MAX_ACTION_SET_NAME_SIZE);
-        // Localized names are required so there is a human-readable action name to show the user if they are rebinding Actions in an options screen.
+        // Localized names are required so there is a human-readable action name to show the user if they are rebinding Actions in an options screen
         strncpy(actionSetCreateInfo.localizedActionSetName, "OpenXR App ActionSet", XR_MAX_LOCALIZED_ACTION_SET_NAME_SIZE);
         OPENXR_CHECK(xrCreateActionSet(xrInstance, &actionSetCreateInfo, &actionSet), "Failed to create ActionSet.");
         // Set a priority: this comes into play when we have multiple Action Sets, and determines which Action takes priority in binding to a specific input.
         actionSetCreateInfo.priority = 0;
 
-        // An Action for the position of the palm of the user's hand - appropriate for the location of a grabbing Actions.
+        // An Action for the position of the palm of the user's hand - appropriate for the location of a grabbing Actions
         CreateAction(palmPoseAction, "palm-pose", XR_ACTION_TYPE_POSE_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // For later convenience we create the XrPaths for the subaction path names.
+        // For later convenience we create the XrPaths for the subaction path names
         handPaths[0] = CreateXrPath("/user/hand/left");
         handPaths[1] = CreateXrPath("/user/hand/right");
 
@@ -257,7 +249,7 @@ protected:
     virtual void CreateActionSet() {}
 
     bool SuggestBindingsForPath(const char* profilePath, std::vector<XrActionSuggestedBinding> bindings) {
-        // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports.
+        // The application can call xrSuggestInteractionProfileBindings once per interaction profile that it supports
         XrInteractionProfileSuggestedBinding interactionProfileSuggestedBinding{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
         interactionProfileSuggestedBinding.interactionProfile = CreateXrPath(profilePath);
         interactionProfileSuggestedBinding.suggestedBindings = bindings.data();
@@ -271,10 +263,10 @@ protected:
     virtual void SuggestBindingsInternal() {
         std::map<std::string, std::vector<XrActionSuggestedBinding>> bindings;
 
-        // Each Action here has two paths, one for each SubAction path.
+        // Each Action here has two paths, one for each SubAction path
         bindings["/interaction_profiles/khr/simple_controller"] = {{palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
                                                                    {palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")}};
-        // Each Action here has two paths, one for each SubAction path.
+        // Each Action here has two paths, one for each SubAction path
         bindings["/interaction_profiles/oculus/touch_controller"] = {{palmPoseAction, CreateXrPath("/user/hand/left/input/grip/pose")},
                                                                      {palmPoseAction, CreateXrPath("/user/hand/right/input/grip/pose")}};
         SuggestBindings(bindings);
@@ -306,7 +298,7 @@ protected:
     }
 
     void CreateActionPoses() {
-        // Create an xrSpace for a pose action.
+        // Create an xrSpace for a pose action
         auto CreateActionPoseSpace = [this](XrSession session, XrAction xrAction, const char* subaction_path = nullptr) -> XrSpace {
             XrSpace xrSpace;
             const XrPosef xrPoseIdentity = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
@@ -324,7 +316,7 @@ protected:
     }
 
     void AttachActionSet() {
-        // Attach the action set we just made to the session. We could attach multiple action sets!
+        // Attach the action set we just made to the session We could attach multiple action sets!
         XrSessionActionSetsAttachInfo actionSetAttachInfo{XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
         actionSetAttachInfo.countActionSets = 1;
         actionSetAttachInfo.actionSets = &actionSet;
@@ -332,13 +324,13 @@ protected:
     }
 
     void GetEnvironmentBlendModes() {
-        // Retrieves the available blend modes. The first call gets the count of the array that will be returned. The next call fills out the array.
+        // Retrieves the available blend modes. The first call gets the count of the array that will be returned. The next call fills out the array
         uint32_t environmentBlendModeCount = 0;
         OPENXR_CHECK(xrEnumerateEnvironmentBlendModes(xrInstance, systemID, viewConfiguration, 0, &environmentBlendModeCount, nullptr), "Failed to enumerate EnvironmentBlend Modes.");
         environmentBlendModes.resize(environmentBlendModeCount);
         OPENXR_CHECK(xrEnumerateEnvironmentBlendModes(xrInstance, systemID, viewConfiguration, environmentBlendModeCount, &environmentBlendModeCount, environmentBlendModes.data()), "Failed to enumerate EnvironmentBlend Modes.");
 
-        // Pick the first application supported blend mode supported by the hardware.
+        // Pick the first application supported blend mode supported by the hardware
         for (const XrEnvironmentBlendMode &appEnvironmentBlendMode : applicationEnvironmentBlendModes) {
             if (std::find(environmentBlendModes.begin(), environmentBlendModes.end(), appEnvironmentBlendMode) != environmentBlendModes.end()) {
                 environmentBlendMode = appEnvironmentBlendMode;
@@ -352,13 +344,13 @@ protected:
     }
 
     void GetViewConfigurationViews() {
-        // Gets the View Configuration Types. The first call gets the count of the array that will be returned. The next call fills out the array.
+        // Gets the View Configuration Types. The first call gets the count of the array that will be returned. The next call fills out the array
         uint32_t viewConfigurationCount = 0;
         OPENXR_CHECK(xrEnumerateViewConfigurations(xrInstance, systemID, 0, &viewConfigurationCount, nullptr), "Failed to enumerate View Configurations.");
         viewConfigurations.resize(viewConfigurationCount);
         OPENXR_CHECK(xrEnumerateViewConfigurations(xrInstance, systemID, viewConfigurationCount, &viewConfigurationCount, viewConfigurations.data()), "Failed to enumerate View Configurations.");
 
-        // Pick the first application supported View Configuration Type con supported by the hardware.
+        // Pick the first application supported View Configuration Type con supported by the hardware
         for (const XrViewConfigurationType &appViewConfiguration : applicationViewConfigurations) {
             if (std::find(viewConfigurations.begin(), viewConfigurations.end(), appViewConfiguration) != viewConfigurations.end()) {
                 viewConfiguration = appViewConfiguration;
@@ -370,7 +362,7 @@ protected:
             viewConfiguration = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
         }
 
-        // Gets the View Configuration Views. The first call gets the count of the array that will be returned. The next call fills out the array.
+        // Gets the View Configuration Views. The first call gets the count of the array that will be returned. The next call fills out the array
         uint32_t viewConfigurationViewCount = 0;
         OPENXR_CHECK(xrEnumerateViewConfigurationViews(xrInstance, systemID, viewConfiguration, 0, &viewConfigurationViewCount, nullptr), "Failed to enumerate ViewConfiguration Views.");
         viewConfigurationViews.resize(viewConfigurationViewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
@@ -378,21 +370,16 @@ protected:
     }
 
     void CreateSession() {
-        // Create an XrSessionCreateInfo structure.
+        // Create an XrSessionCreateInfo structure
         XrSessionCreateInfo sessionCreateInfo{XR_TYPE_SESSION_CREATE_INFO};
 
-        // Create a std::unique_ptr<GraphicsAPI_...> from the instance and system.
-        // This call sets up a graphics API that's suitable for use with OpenXR.
-        if (apiType == OPENGL_ES) {
-            graphicsAPI = std::make_unique<OpenGLESRenderer>(config, xrInstance, systemID);
-        }
-        else {
-            XR_LOG_ERROR("ERROR: Unknown Graphics API.");
-            DEBUG_BREAK;
-        }
-        // Fill out the XrSessionCreateInfo structure and create an XrSession.
+        // Create a std::unique_ptr<OpenGLESRenderer> from the instance and system.
+        // This call sets up OpenGL ES rendering that's suitable for use with OpenXR
+        renderer = std::make_unique<OpenGLESRenderer>(config, xrInstance, systemID);
+
+        // Fill out the XrSessionCreateInfo structure and create an XrSession
         //  XR_DOCS_TAG_LBEGIN_CreateSession2
-        sessionCreateInfo.next = graphicsAPI->GetGraphicsBinding();
+        sessionCreateInfo.next = renderer->GetGraphicsBinding();
         sessionCreateInfo.createFlags = 0;
         sessionCreateInfo.systemId = systemID;
 
@@ -400,7 +387,7 @@ protected:
     }
 
     void DestroySession() {
-        // Destroy the XrSession.
+        // Destroy the XrSession
         OPENXR_CHECK(xrDestroySession(session), "Failed to destroy Session.");
     }
 
@@ -420,7 +407,7 @@ protected:
     virtual void DestroyResources() {}
 
     void PollEvents() {
-        // Poll OpenXR for a new event.
+        // Poll OpenXR for a new event
         XrEventDataBuffer eventData{XR_TYPE_EVENT_DATA_BUFFER};
         auto XrPollEvents = [&]() -> bool {
             eventData = {XR_TYPE_EVENT_DATA_BUFFER};
@@ -429,13 +416,13 @@ protected:
 
         while (XrPollEvents()) {
             switch (eventData.type) {
-            // Log the number of lost events from the runtime.
+            // Log the number of lost events from the runtime
             case XR_TYPE_EVENT_DATA_EVENTS_LOST: {
                 XrEventDataEventsLost* eventsLost = reinterpret_cast<XrEventDataEventsLost*>(&eventData);
                 XR_LOG("OPENXR: Events Lost: " << eventsLost->lostEventCount);
                 break;
             }
-            // Log that an instance loss is pending and shutdown the application.
+            // Log that an instance loss is pending and shutdown the application
             case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING: {
                 XrEventDataInstanceLossPending* instanceLossPending = reinterpret_cast<XrEventDataInstanceLossPending*>(&eventData);
                 XR_LOG("OPENXR: Instance Loss Pending at: " << instanceLossPending->lossTime);
@@ -443,7 +430,7 @@ protected:
                 applicationRunning = false;
                 break;
             }
-            // Log that the interaction profile has changed.
+            // Log that the interaction profile has changed
             case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED: {
                 XrEventDataInteractionProfileChanged* interactionProfileChanged = reinterpret_cast<XrEventDataInteractionProfileChanged*>(&eventData);
                 XR_LOG("OPENXR: Interaction Profile changed for Session: " << interactionProfileChanged->session);
@@ -454,7 +441,7 @@ protected:
                 RecordCurrentBindings();
                 break;
             }
-            // Log that there's a reference space change pending.
+            // Log that there's a reference space change pending
             case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING: {
                 XrEventDataReferenceSpaceChangePending* referenceSpaceChangePending = reinterpret_cast<XrEventDataReferenceSpaceChangePending*>(&eventData);
                 XR_LOG("OPENXR: Reference Space Change pending for Session: " << referenceSpaceChangePending->session);
@@ -473,29 +460,29 @@ protected:
                 }
 
                 if (sessionStateChanged->state == XR_SESSION_STATE_READY) {
-                    // SessionState is ready. Begin the XrSession using the XrViewConfigurationType.
+                    // SessionState is ready. Begin the XrSession using the XrViewConfigurationType
                     XrSessionBeginInfo sessionBeginInfo{XR_TYPE_SESSION_BEGIN_INFO};
                     sessionBeginInfo.primaryViewConfigurationType = viewConfiguration;
                     OPENXR_CHECK(xrBeginSession(session, &sessionBeginInfo), "Failed to begin Session.");
                     sessionRunning = true;
                 }
                 if (sessionStateChanged->state == XR_SESSION_STATE_STOPPING) {
-                    // SessionState is stopping. End the XrSession.
+                    // SessionState is stopping. End the XrSession
                     OPENXR_CHECK(xrEndSession(session), "Failed to end Session.");
                     sessionRunning = false;
                 }
                 if (sessionStateChanged->state == XR_SESSION_STATE_EXITING) {
-                    // SessionState is exiting. Exit the application.
+                    // SessionState is exiting. Exit the application
                     sessionRunning = false;
                     applicationRunning = false;
                 }
                 if (sessionStateChanged->state == XR_SESSION_STATE_LOSS_PENDING) {
-                    // SessionState is loss pending. Exit the application.
-                    // It's possible to try a reestablish an XrInstance and XrSession, but we will simply exit here.
+                    // SessionState is loss pending. Exit the application
+                    // It's possible to try a reestablish an XrInstance and XrSession, but we will simply exit here
                     sessionRunning = false;
                     applicationRunning = false;
                 }
-                // Store state for reference across the application.
+                // Store state for reference across the application
                 sessionState = sessionStateChanged->state;
                 break;
             }
@@ -507,24 +494,24 @@ protected:
     }
 
     void PollActionsInternal(XrTime predictedTime) {
-        // Update our action set with up-to-date input data.
-        // First, we specify the actionSet we are polling.
+        // Update our action set with up-to-date input data
+        // First, we specify the actionSet we are polling
         XrActiveActionSet activeActionSet{};
         activeActionSet.actionSet = actionSet;
         activeActionSet.subactionPath = XR_NULL_PATH;
 
-        // Now we sync the Actions to make sure they have current data.
+        // Now we sync the Actions to make sure they have current data
         XrActionsSyncInfo actionsSyncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
         actionsSyncInfo.countActiveActionSets = 1;
         actionsSyncInfo.activeActionSets = &activeActionSet;
         OPENXR_CHECK(xrSyncActions(session, &actionsSyncInfo), "Failed to sync Actions.");
 
         XrActionStateGetInfo actionStateGetInfo{XR_TYPE_ACTION_STATE_GET_INFO};
-        // We pose a single Action, twice - once for each subAction Path.
+        // We pose a single Action, twice - once for each subAction Path
         actionStateGetInfo.action = palmPoseAction;
-        // For each hand, get the pose state if possible.
+        // For each hand, get the pose state if possible
         for (int i = 0; i < 2; i++) {
-            // Specify the subAction Path.
+            // Specify the subAction Path
             actionStateGetInfo.subactionPath = handPaths[i];
             OPENXR_CHECK(xrGetActionStatePose(session, &actionStateGetInfo, &handPoseState[i]), "Failed to get Pose State.");
             if (handPoseState[i].isActive) {
@@ -549,7 +536,7 @@ protected:
     virtual void PollActions(XrTime predictedTime) {}
 
     void CreateReferenceSpace() {
-        // Fill out an XrReferenceSpaceCreateInfo structure and create a reference XrSpace, specifying a Local space with an identity pose as the origin.
+        // Fill out an XrReferenceSpaceCreateInfo structure and create a reference XrSpace, specifying a Local space with an identity pose as the origin
         XrReferenceSpaceCreateInfo referenceSpaceCreateInfo{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
         referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
         referenceSpaceCreateInfo.poseInReferenceSpace = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}};
@@ -557,24 +544,24 @@ protected:
     }
 
     void DestroyReferenceSpace() {
-        // Destroy the reference XrSpace.
+        // Destroy the reference XrSpace
         OPENXR_CHECK(xrDestroySpace(localSpace), "Failed to destroy Space.")
     }
 
     void CreateSwapchains() {
-        // Get the supported swapchain formats as an array of int64_t and ordered by runtime preference.
+        // Get the supported swapchain formats as an array of int64_t and ordered by runtime preference
         uint32_t formatCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainFormats(session, 0, &formatCount, nullptr), "Failed to enumerate Swapchain Formats");
         std::vector<int64_t> formats(formatCount);
         OPENXR_CHECK(xrEnumerateSwapchainFormats(session, formatCount, &formatCount, formats.data()), "Failed to enumerate Swapchain Formats");
-        if (graphicsAPI->SelectDepthSwapchainFormat(formats) == 0) {
+        if (renderer->SelectDepthSwapchainFormat(formats) == 0) {
             XR_LOG_ERROR("Failed to find depth format for Swapchain.");
             DEBUG_BREAK;
         }
 
         bool coherentViews = viewConfiguration == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
         for (const XrViewConfigurationView &viewConfigurationView : viewConfigurationViews) {
-            // Check the current view size against the first view.
+            // Check the current view size against the first view
             coherentViews |= viewConfigurationViews[0].recommendedImageRectWidth == viewConfigurationView.recommendedImageRectWidth;
             coherentViews |= viewConfigurationViews[0].recommendedImageRectHeight == viewConfigurationView.recommendedImageRectHeight;
         }
@@ -585,95 +572,95 @@ protected:
         const XrViewConfigurationView &viewConfigurationView = viewConfigurationViews[0];
         uint32_t viewCount = static_cast<uint32_t>(viewConfigurationViews.size());
 
-        // Create a color and depth swapchain, and their associated image views.
-        // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain.
-        // Color.
+        // Create a color and depth swapchain, and their associated image views
+        // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain
+        // Color
         XrSwapchainCreateInfo swapchainCreateInfo{XR_TYPE_SWAPCHAIN_CREATE_INFO};
         swapchainCreateInfo.createFlags = 0;
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
-        swapchainCreateInfo.format = graphicsAPI->SelectColorSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
-        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCreateInfo.format = renderer->SelectColorSwapchainFormat(formats);          // Use OpenGLESRenderer to select the first compatible format
+        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView
         swapchainCreateInfo.width = viewConfigurationView.recommendedImageRectWidth;
         swapchainCreateInfo.height = viewConfigurationView.recommendedImageRectHeight;
         swapchainCreateInfo.faceCount = 1;
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
-        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
+        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use
 
-        // Depth.
+        // Depth
         swapchainCreateInfo.createFlags = 0;
         swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        swapchainCreateInfo.format = graphicsAPI->SelectDepthSwapchainFormat(formats);          // Use GraphicsAPI to select the first compatible format.
-        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCreateInfo.format = renderer->SelectDepthSwapchainFormat(formats);          // Use OpenGLESRenderer to select the first compatible format
+        swapchainCreateInfo.sampleCount = viewConfigurationView.recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView
         swapchainCreateInfo.width = viewConfigurationView.recommendedImageRectWidth;
         swapchainCreateInfo.height = viewConfigurationView.recommendedImageRectHeight;
         swapchainCreateInfo.faceCount = 1;
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
-        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use.
+        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use
 
         // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
-        // Get the number of images in the color/depth swapchain and allocate Swapchain image data via GraphicsAPI to store the returned array.
+        // Get the number of images in the color/depth swapchain and allocate Swapchain image data via OpenGLESRenderer to store the returned array
         uint32_t colorSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(colorSwapchainInfo.swapchain, 0, &colorSwapchainImageCount, nullptr), "Failed to enumerate Color Swapchain Images.");
-        XrSwapchainImageBaseHeader* colorSwapchainImages = graphicsAPI->AllocateSwapchainImageData(colorSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::COLOR, colorSwapchainImageCount);
+        XrSwapchainImageBaseHeader* colorSwapchainImages = renderer->AllocateSwapchainImageData(colorSwapchainInfo.swapchain, SwapchainType::COLOR, colorSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(colorSwapchainInfo.swapchain, colorSwapchainImageCount, &colorSwapchainImageCount, colorSwapchainImages), "Failed to enumerate Color Swapchain Images.");
 
         uint32_t depthSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(depthSwapchainInfo.swapchain, 0, &depthSwapchainImageCount, nullptr), "Failed to enumerate Depth Swapchain Images.");
-        XrSwapchainImageBaseHeader* depthSwapchainImages = graphicsAPI->AllocateSwapchainImageData(depthSwapchainInfo.swapchain, GraphicsAPI::SwapchainType::DEPTH, depthSwapchainImageCount);
+        XrSwapchainImageBaseHeader* depthSwapchainImages = renderer->AllocateSwapchainImageData(depthSwapchainInfo.swapchain, SwapchainType::DEPTH, depthSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(depthSwapchainInfo.swapchain, depthSwapchainImageCount, &depthSwapchainImageCount, depthSwapchainImages), "Failed to enumerate Depth Swapchain Images.");
 
-        graphicsAPI->resize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
-        graphicsAPI->setWindowSize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
+        renderer->resize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
+        renderer->setWindowSize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
 
-        // Per image in the swapchains, fill out a GraphicsAPI::ImageViewCreateInfo structure and create a color/depth image view.
+        // Per image in the swapchains, fill out an ImageViewCreateInfo structure and create a color/depth image view
         for (uint32_t j = 0; j < colorSwapchainImageCount; j++) {
-            GraphicsAPI::ImageViewCreateInfo imageViewCreateInfo;
-            imageViewCreateInfo.image = graphicsAPI->GetSwapchainImage(colorSwapchainInfo.swapchain, j);
-            imageViewCreateInfo.type = GraphicsAPI::ImageViewCreateInfo::Type::RTV;
-            imageViewCreateInfo.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
+            ImageViewCreateInfo imageViewCreateInfo;
+            imageViewCreateInfo.image = renderer->GetSwapchainImage(colorSwapchainInfo.swapchain, j);
+            imageViewCreateInfo.type = ImageViewCreateInfo::Type::RTV;
+            imageViewCreateInfo.view = ImageViewCreateInfo::View::TYPE_2D_ARRAY;
             imageViewCreateInfo.format = colorSwapchainInfo.swapchainFormat;
-            imageViewCreateInfo.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::COLOR_BIT;
+            imageViewCreateInfo.aspect = ImageViewCreateInfo::Aspect::COLOR_BIT;
             imageViewCreateInfo.baseMipLevel = 0;
             imageViewCreateInfo.levelCount = 1;
             imageViewCreateInfo.baseArrayLayer = 0;
             imageViewCreateInfo.layerCount = viewCount;
-            colorSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCreateInfo));
+            colorSwapchainInfo.imageViews.push_back(renderer->CreateImageView(imageViewCreateInfo));
         }
         for (uint32_t j = 0; j < depthSwapchainImageCount; j++) {
-            GraphicsAPI::ImageViewCreateInfo imageViewCreateInfo;
-            imageViewCreateInfo.image = graphicsAPI->GetSwapchainImage(depthSwapchainInfo.swapchain, j);
-            imageViewCreateInfo.type = GraphicsAPI::ImageViewCreateInfo::Type::DSV;
-            imageViewCreateInfo.view = GraphicsAPI::ImageViewCreateInfo::View::TYPE_2D_ARRAY;
+            ImageViewCreateInfo imageViewCreateInfo;
+            imageViewCreateInfo.image = renderer->GetSwapchainImage(depthSwapchainInfo.swapchain, j);
+            imageViewCreateInfo.type = ImageViewCreateInfo::Type::DSV;
+            imageViewCreateInfo.view = ImageViewCreateInfo::View::TYPE_2D_ARRAY;
             imageViewCreateInfo.format = depthSwapchainInfo.swapchainFormat;
-            imageViewCreateInfo.aspect = GraphicsAPI::ImageViewCreateInfo::Aspect::DEPTH_BIT;
+            imageViewCreateInfo.aspect = ImageViewCreateInfo::Aspect::DEPTH_BIT;
             imageViewCreateInfo.baseMipLevel = 0;
             imageViewCreateInfo.levelCount = 1;
             imageViewCreateInfo.baseArrayLayer = 0;
             imageViewCreateInfo.layerCount = viewCount;
-            depthSwapchainInfo.imageViews.push_back(graphicsAPI->CreateImageView(imageViewCreateInfo));
+            depthSwapchainInfo.imageViews.push_back(renderer->CreateImageView(imageViewCreateInfo));
         }
 
         XR_LOG("Created swapchains with reccomended resolution: " << viewConfigurationView.recommendedImageRectWidth << "x" << viewConfigurationView.recommendedImageRectHeight);
     }
 
     void DestroySwapchains() {
-        // Destroy the color and depth image views from GraphicsAPI.
+        // Destroy the color and depth image views from OpenGLESRenderer
         for (void*& imageView : colorSwapchainInfo.imageViews) {
-            graphicsAPI->DestroyImageView(imageView);
+            renderer->DestroyImageView(imageView);
         }
         for (void*& imageView : depthSwapchainInfo.imageViews) {
-            graphicsAPI->DestroyImageView(imageView);
+            renderer->DestroyImageView(imageView);
         }
 
-        // Free the Swapchain Image Data.
-        graphicsAPI->FreeSwapchainImageData(colorSwapchainInfo.swapchain);
-        graphicsAPI->FreeSwapchainImageData(depthSwapchainInfo.swapchain);
+        // Free the Swapchain Image Data
+        renderer->FreeSwapchainImageData(colorSwapchainInfo.swapchain);
+        renderer->FreeSwapchainImageData(depthSwapchainInfo.swapchain);
 
-        // Destroy the swapchains.
+        // Destroy the swapchains
         OPENXR_CHECK(xrDestroySwapchain(colorSwapchainInfo.swapchain), "Failed to destroy Color Swapchain");
         OPENXR_CHECK(xrDestroySwapchain(depthSwapchainInfo.swapchain), "Failed to destroy Depth Swapchain");
     }
@@ -683,38 +670,38 @@ protected:
     virtual void OnRender(double now, double dt) {}
 
     void RenderFrame() {
-        // Get the XrFrameState for timing and rendering info.
+        // Get the XrFrameState for timing and rendering info
         XrFrameState frameState{XR_TYPE_FRAME_STATE};
         XrFrameWaitInfo frameWaitInfo{XR_TYPE_FRAME_WAIT_INFO};
         OPENXR_CHECK(xrWaitFrame(session, &frameWaitInfo, &frameState), "Failed to wait for XR Frame.");
 
-        // Tell the OpenXR compositor that the application is beginning the frame.
+        // Tell the OpenXR compositor that the application is beginning the frame
         XrFrameBeginInfo frameBeginInfo{XR_TYPE_FRAME_BEGIN_INFO};
         OPENXR_CHECK(xrBeginFrame(session, &frameBeginInfo), "Failed to begin the XR Frame.");
 
         double now = timeutils::nanosToSeconds(frameState.predictedDisplayTime);
         double dt = (now - lastTime);
 
-        // Variables for rendering and layer composition.
+        // Variables for rendering and layer composition
         bool rendered = false;
         RenderLayerInfo renderLayerInfo;
         renderLayerInfo.predictedDisplayTime = frameState.predictedDisplayTime;
 
-        // Check that the session is active and that we should render.
+        // Check that the session is active and that we should render
         bool sessionActive = (sessionState == XR_SESSION_STATE_SYNCHRONIZED || sessionState == XR_SESSION_STATE_VISIBLE || sessionState == XR_SESSION_STATE_FOCUSED);
         if (sessionActive && frameState.shouldRender) {
-            // Poll actions here because they require a predicted display time, which we've only just obtained.
+            // Poll actions here because they require a predicted display time, which we've only just obtained
             PollActionsInternal(frameState.predictedDisplayTime);
-            // Handle interactions.
+            // Handle interactions
             HandleInteractions(now, dt);
-            // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure.
+            // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure
             rendered = RenderLayer(renderLayerInfo, now, dt);
             if (rendered) {
                 renderLayerInfo.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&renderLayerInfo.layerProjection));
             }
         }
 
-        // Tell OpenXR that we are finished with this frame; specifying its display time, environment blending and layers.
+        // Tell OpenXR that we are finished with this frame; specifying its display time, environment blending and layers
         XrFrameEndInfo frameEndInfo{XR_TYPE_FRAME_END_INFO};
         frameEndInfo.displayTime = frameState.predictedDisplayTime;
         frameEndInfo.environmentBlendMode = environmentBlendMode;
@@ -726,10 +713,10 @@ protected:
     }
 
     bool RenderLayer(RenderLayerInfo& renderLayerInfo, double now, double dt) {
-        // Locate the views from the view configuration within the (reference) space at the display time.
+        // Locate the views from the view configuration within the (reference) space at the display time
         std::vector<XrView> views(viewConfigurationViews.size(), {XR_TYPE_VIEW});
 
-        XrViewState viewState{XR_TYPE_VIEW_STATE};  // Will contain information on whether the position and/or orientation is valid and/or tracked.
+        XrViewState viewState{XR_TYPE_VIEW_STATE};  // Will contain information on whether the position and/or orientation is valid and/or tracked
         XrViewLocateInfo viewLocateInfo{XR_TYPE_VIEW_LOCATE_INFO};
         viewLocateInfo.viewConfigurationType = viewConfiguration;
         viewLocateInfo.displayTime = renderLayerInfo.predictedDisplayTime;
@@ -741,11 +728,11 @@ protected:
             return false;
         }
 
-        // Resize the layer projection views to match the view count. The layer projection views are used in the layer projection.
+        // Resize the layer projection views to match the view count. The layer projection views are used in the layer projection
         renderLayerInfo.layerProjectionViews.resize(viewCount, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW});
 
         for (uint32_t i = 0; i < viewCount; i++) {
-            // Apply the camera position offset to the view.
+            // Apply the camera position offset to the view
             views[i].pose.position.x += cameraPositionOffset.x;
             views[i].pose.position.y += cameraPositionOffset.y;
             views[i].pose.position.z += cameraPositionOffset.z;
@@ -754,9 +741,9 @@ protected:
             handNodeParents[i].setPosition(handNodeParents[i].getPosition() + cameraPositionOffset);
         }
 
-        // Acquire and wait for an image from the swapchains.
-        // Get the image index of an image in the swapchains.
-        // The timeout is infinite.
+        // Acquire and wait for an image from the swapchains
+        // Get the image index of an image in the swapchains
+        // The timeout is infinite
         uint32_t colorImageIndex = 0;
         uint32_t depthImageIndex = 0;
         XrSwapchainImageAcquireInfo acquireInfo{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
@@ -768,12 +755,12 @@ protected:
         OPENXR_CHECK(xrWaitSwapchainImage(colorSwapchainInfo.swapchain, &waitInfo), "Failed to wait for Image from the Color Swapchain");
         OPENXR_CHECK(xrWaitSwapchainImage(depthSwapchainInfo.swapchain, &waitInfo), "Failed to wait for Image from the Depth Swapchain");
 
-        // Get the width and height and construct the viewport and scissors.
+        // Get the width and height and construct the viewport and scissors
         const uint32_t& width = viewConfigurationViews[0].recommendedImageRectWidth;
         const uint32_t& height = viewConfigurationViews[0].recommendedImageRectHeight;
 
-        // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view.
-        // This also associates the swapchain image with this layer projection view.
+        // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view
+        // This also associates the swapchain image with this layer projection view
         // Per view in the view configuration:
         for (uint32_t i = 0; i < viewCount; i++) {
             renderLayerInfo.layerProjectionViews[i] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
@@ -784,18 +771,18 @@ protected:
             renderLayerInfo.layerProjectionViews[i].subImage.imageRect.offset.y = 0;
             renderLayerInfo.layerProjectionViews[i].subImage.imageRect.extent.width = static_cast<int32_t>(width);
             renderLayerInfo.layerProjectionViews[i].subImage.imageRect.extent.height = static_cast<int32_t>(height);
-            renderLayerInfo.layerProjectionViews[i].subImage.imageArrayIndex = i;  // Useful for multiview rendering.
+            renderLayerInfo.layerProjectionViews[i].subImage.imageArrayIndex = i;  // Useful for multiview rendering
         }
 
         // Prepare to render
         glViewport(0, 0, width, height);
-        graphicsAPI->resize(width, height);
-        graphicsAPI->SetRenderAttachments(&colorSwapchainInfo.imageViews[colorImageIndex], 1, depthSwapchainInfo.imageViews[depthImageIndex], width, height);
+        renderer->resize(width, height);
+        renderer->SetRenderAttachments(&colorSwapchainInfo.imageViews[colorImageIndex], 1, depthSwapchainInfo.imageViews[depthImageIndex], width, height);
 
         // Update vr cameras
         cameras->setProjectionMatrices({
-            gxi::toGLM(views[0].fov, apiType, nearZ, farZ),
-            gxi::toGLM(views[1].fov, apiType, nearZ, farZ)
+            gxi::toGLM(views[0].fov, nearZ, farZ),
+            gxi::toGLM(views[1].fov, nearZ, farZ)
         });
         cameras->setViewMatrices({
             glm::inverse(gxi::toGlm(views[0].pose)),
@@ -804,12 +791,12 @@ protected:
 
         OnRender(now, dt);
 
-        // Give the swapchain image back to OpenXR, allowing the compositor to use the image.
+        // Give the swapchain image back to OpenXR, allowing the compositor to use the image
         XrSwapchainImageReleaseInfo releaseInfo{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         OPENXR_CHECK(xrReleaseSwapchainImage(colorSwapchainInfo.swapchain, &releaseInfo), "Failed to release Image back to the Color Swapchain");
         OPENXR_CHECK(xrReleaseSwapchainImage(depthSwapchainInfo.swapchain, &releaseInfo), "Failed to release Image back to the Depth Swapchain");
 
-        // Fill out the XrCompositionLayerProjection structure for usage with xrEndFrame().
+        // Fill out the XrCompositionLayerProjection structure for usage with xrEndFrame()
         renderLayerInfo.layerProjection.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
         renderLayerInfo.layerProjection.space = localSpace;
         renderLayerInfo.layerProjection.viewCount = static_cast<uint32_t>(renderLayerInfo.layerProjectionViews.size());
@@ -819,24 +806,24 @@ protected:
     }
 
 public:
-    // Stored pointer to the android_app structure from android_main().
+    // Stored pointer to the android_app structure from android_main()
     static android_app* androidApp;
 
-    // Custom data structure that is used by PollSystemEvents().
-    // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/main.cpp#L133C1-L189C2
+    // Custom data structure that is used by PollSystemEvents()
+    // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/maincpp#L133C1-L189C2
     struct AndroidAppState {
         ANativeWindow* nativeWindow = nullptr;
         bool resumed = false;
     };
     static AndroidAppState androidAppState;
 
-    // Processes the next command from the Android OS. It updates AndroidAppState.
+    // Processes the next command from the Android OS. It updates AndroidAppState
     static void AndroidAppHandleCmd(struct android_app* app, int32_t cmd) {
         AndroidAppState* appState = (AndroidAppState*)app->userData;
 
         switch (cmd) {
-        // There is no APP_CMD_CREATE. The ANativeActivity creates the application thread from onCreate().
-        // The application thread then calls android_main().
+        // There is no APP_CMD_CREATE. The ANativeActivity creates the application thread from onCreate()
+        // The application thread then calls android_main()
         case APP_CMD_START: {
             break;
         }
@@ -868,16 +855,16 @@ public:
 
 protected:
     void PollSystemEvents() {
-        // Checks whether Android has requested that application should by destroyed.
+        // Checks whether Android has requested that application should by destroyed
         if (androidApp->destroyRequested != 0) {
             applicationRunning = false;
             return;
         }
         while (true) {
-            // Poll and process the Android OS system events.
+            // Poll and process the Android OS system events
             struct android_poll_source *source = nullptr;
             int events = 0;
-            // The timeout depends on whether the application is active.
+            // The timeout depends on whether the application is active
             const int timeoutMilliseconds = (!androidAppState.resumed && !sessionRunning && androidApp->destroyRequested == 0) ? -1 : 0;
             if (ALooper_pollOnce(timeoutMilliseconds, nullptr, &events, (void**)&source) >= 0) {
                 if (source != nullptr) {
@@ -901,8 +888,7 @@ protected:
     XrSystemId systemID = {};
     XrSystemProperties systemProperties = {XR_TYPE_SYSTEM_PROPERTIES};
 
-    GraphicsAPI_Type apiType = UNKNOWN;
-    std::unique_ptr<GraphicsAPI> graphicsAPI = nullptr;
+    std::unique_ptr<OpenGLESRenderer> renderer = nullptr;
 
     XrSession session = {};
     XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -946,18 +932,18 @@ protected:
 
     glm::vec3 cameraPositionOffset{0.0f, 0.0f, 0.0f};
 
-    // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position.
+    // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position
     float viewHeightM = 1.6f;
 
     XrActionSet actionSet;
-    // The action for getting the hand or controller position and orientation.
+    // The action for getting the hand or controller position and orientation
     XrAction palmPoseAction;
-    // The XrPaths for left and right hand hands or controllers.
+    // The XrPaths for left and right hand hands or controllers
     XrPath handPaths[2] = {0, 0};
-    // The spaces that represents the two hand poses.
+    // The spaces that represents the two hand poses
     XrSpace handPoseSpace[2];
     XrActionStatePose handPoseState[2] = {{XR_TYPE_ACTION_STATE_POSE}, {XR_TYPE_ACTION_STATE_POSE}};
-    // The current poses obtained from the XrSpaces.
+    // The current poses obtained from the XrSpaces
     Node handNodes[2];
     Node handNodeParents[2];
 };

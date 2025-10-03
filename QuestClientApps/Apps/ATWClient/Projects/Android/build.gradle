@@ -18,10 +18,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdk 32
-    namespace 'app.wiselab.ATWClient'
+    namespace 'app.quasar.ATWClient'
 
     defaultConfig {
-        applicationId "app.wiselab.ATWClient"
+        applicationId "app.quasar.ATWClient"
         minSdk 26
         targetSdk 32
         versionCode 1

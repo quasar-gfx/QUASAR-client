@@ -4,7 +4,7 @@ import subprocess
 import time
 import argparse
 
-PACKAGE_NAME = "app.wiselab.ATWClient"
+PACKAGE_NAME = "app.quasar.ATWClient"
 ACTIVITY_NAME = "android.app.NativeActivity"
 
 def build():

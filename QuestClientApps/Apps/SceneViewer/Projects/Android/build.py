@@ -4,7 +4,7 @@ import subprocess
 import time
 import argparse
 
-PACKAGE_NAME = "app.wiselab.SceneViewer"
+PACKAGE_NAME = "app.quasar.SceneViewer"
 ACTIVITY_NAME = "android.app.NativeActivity"
 
 def build():

@@ -17,11 +17,39 @@ void (*GetExtension(const char *functionName))() { return eglGetProcAddress(func
 
 using namespace quasar;
 
+int64_t OpenGLESRenderer::SelectColorSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = GetSupportedColorSwapchainFormats();
+
+    const std::vector<int64_t>::const_iterator& swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
+                                                                                       std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
+    if (swapchainFormatIt == formats.end()) {
+        spdlog::error("ERROR: Unable to find supported Color Swapchain Format");
+        DEBUG_BREAK;
+        return 0;
+    }
+
+    return *swapchainFormatIt;
+}
+
+int64_t OpenGLESRenderer::SelectDepthSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = GetSupportedDepthSwapchainFormats();
+
+    const std::vector<int64_t>::const_iterator &swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
+                                                                                       std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
+    if (swapchainFormatIt == formats.end()) {
+        spdlog::error("ERROR: Unable to find supported Depth Swapchain Format");
+        DEBUG_BREAK;
+        return 0;
+    }
+
+    return *swapchainFormatIt;
+}
+
 OpenGLESRenderer::OpenGLESRenderer(const Config& config, XrInstance xrInstance, XrSystemId systemId)
-    : GraphicsAPI(config)
+    : OpenGLRenderer(config)
 {
-    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L101-L119
-    // Initialize the gl extensions. Note we have to open a window.
+    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_openglescpp#L101-L119
+    // Initialize the gl extensions. Note we have to open a window
     ksDriverInstance driverInstance{};
     ksGpuQueueInfo queueInfo{};
     ksGpuSurfaceColorFormat colorFormat{KS_GPU_SURFACE_COLOR_FORMAT_B8G8R8A8};
@@ -56,7 +84,7 @@ OpenGLESRenderer::OpenGLESRenderer(const Config& config, XrInstance xrInstance, 
     }
 
     // Have to recreate resources here since some resources are created in the parent constructor and
-    // we need to wait until after we have a valid GL context.
+    // we need to wait until after we have a valid GL context
     skyboxShader = Shader({
         .vertexCodeData = SHADER_BUILTIN_SKYBOX_VERT,
         .vertexCodeSize = SHADER_BUILTIN_SKYBOX_VERT_len,
@@ -218,7 +246,7 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
 }
 
 const std::vector<int64_t> OpenGLESRenderer::GetSupportedColorSwapchainFormats() {
-    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L208-L216
+    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_openglescpp#L208-L216
     GLint glMajorVersion = 0;
     glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersion);
     if (glMajorVersion >= 3) {

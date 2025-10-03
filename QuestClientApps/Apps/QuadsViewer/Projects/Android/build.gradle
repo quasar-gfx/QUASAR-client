@@ -18,10 +18,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdk 32
-    namespace 'app.wiselab.QuadsViewer'
+    namespace 'app.quasar.QuadsViewer'
 
     defaultConfig {
-        applicationId "app.wiselab.QuadsViewer"
+        applicationId "app.quasar.QuadsViewer"
         minSdk 26
         targetSdk 32
         versionCode 1

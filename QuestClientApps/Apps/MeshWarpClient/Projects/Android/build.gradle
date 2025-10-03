@@ -18,10 +18,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdk 32
-    namespace 'app.wiselab.MeshWarpClient'
+    namespace 'app.quasar.MeshWarpClient'
 
     defaultConfig {
-        applicationId "app.wiselab.MeshWarpClient"
+        applicationId "app.quasar.MeshWarpClient"
         minSdk 26
         targetSdk 32
         versionCode 1

@@ -18,10 +18,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdk 32
-    namespace 'app.wiselab.SceneViewer'
+    namespace 'app.quasar.SceneViewer'
 
     defaultConfig {
-        applicationId "app.wiselab.SceneViewer"
+        applicationId "app.quasar.SceneViewer"
         minSdk 26
         targetSdk 32
         versionCode 1

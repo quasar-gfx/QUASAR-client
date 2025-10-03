@@ -14,12 +14,12 @@ private:
     bool tonemap = true;
 
 public:
-    SceneViewer(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    SceneViewer() = default;
     ~SceneViewer() = default;
 
 private:
     void CreateResources() override {
-        // Add the hand nodes.
+        // Add the hand nodes
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
@@ -45,11 +45,11 @@ private:
     }
 
     void CreateActionSet() override {
-        // An Action for clicking on the controller.
+        // An Action for clicking on the controller
         CreateAction(clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for the position of the thumbstick.
+        // An Action for the position of the thumbstick
         CreateAction(thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for a vibration output on one or other hand.
+        // An Action for a vibration output on one or other hand
         CreateAction(buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
@@ -126,8 +126,8 @@ private:
     void OnRender(double now, double dt) override {
         // Render
         scene->updateAnimations(dt);
-        graphicsAPI->drawObjects(*scene, *cameras);
-        tonemapper->drawToScreen(*graphicsAPI);
+        renderer->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*renderer);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
@@ -137,18 +137,18 @@ protected:
     SceneLoader loader;
     std::unique_ptr<Tonemapper> tonemapper;
 
-    // Actions.
+    // Actions
     XrAction clickAction;
-    // The realtime states of these actions.
+    // The realtime states of these actions
     XrActionStateBoolean clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
-    // The thumbstick input action.
+    // The thumbstick input action
     XrAction thumbstickAction;
-    // The current thumbstick state for each controller.
+    // The current thumbstick state for each controller
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
     float movementSpeed = 2.0f;
-    // The haptic output action for grabbing.
+    // The haptic output action for grabbing
     XrAction buzzAction;
-    // The current haptic output value for each controller.
+    // The current haptic output value for each controller
     float buzz[2] = {0, 0};
 
     std::unique_ptr<Model> handModelLeft;

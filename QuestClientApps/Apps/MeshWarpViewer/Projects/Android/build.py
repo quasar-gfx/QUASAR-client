@@ -4,7 +4,7 @@ import subprocess
 import time
 import argparse
 
-PACKAGE_NAME = "app.wiselab.MeshWarpViewer"
+PACKAGE_NAME = "app.quasar.MeshWarpViewer"
 ACTIVITY_NAME = "android.app.NativeActivity"
 
 def build():

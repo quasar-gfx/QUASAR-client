@@ -34,15 +34,15 @@ inline glm::mat4 toGlm(const XrPosef& p) {
     return translation * orientation;
 }
 
-glm::mat4 toGLM(const XrFovf& fov, GraphicsAPI_Type graphicsApi, float nearZ = 0.1f, float farZ = 1000.0f) {
+glm::mat4 toGLM(const XrFovf& fov, float nearZ = 0.1f, float farZ = 1000.0f) {
     const float tanAngleLeft = tanf(fov.angleLeft);
     const float tanAngleRight = tanf(fov.angleRight);
     const float tanAngleUp = tanf(fov.angleUp);
     const float tanAngleDown = tanf(fov.angleDown);
 
     const float tanAngleWidth = tanAngleRight - tanAngleLeft;
-    const float tanAngleHeight = graphicsApi == VULKAN ? (tanAngleDown - tanAngleUp) : (tanAngleUp - tanAngleDown);
-    const float offsetZ = (graphicsApi == OPENGL || graphicsApi == OPENGL_ES) ? nearZ : 0;
+    const float tanAngleHeight = tanAngleUp - tanAngleDown; // OpenGL ES only
+    const float offsetZ = nearZ; // OpenGL ES only
 
     glm::mat4 result(0.0f);
 

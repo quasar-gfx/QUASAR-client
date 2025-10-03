@@ -30,9 +30,7 @@ private:
     float remoteFOV = 90.0f;
 
 public:
-    QUASARClient(GraphicsAPI_Type apiType)
-        : OpenXRApp(apiType)
-    {}
+    QUASARClient() = default;
     ~QUASARClient() = default;
 
 private:
@@ -98,21 +96,21 @@ private:
 
         // // Add a screen for the video
         // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ .baseColorTexture = &quasarReceiver->atlasVideoTexture }),
+        //     .material = new UnlitMaterial({ baseColorTexture = &quasarReceiver->atlasVideoTexture }),
         // });
         // Node* screen = new Node(videoScreen);
-        // screen->setPosition({ 0.0f, 0.0f, -2.0f });
-        // screen->setScale({ 1.5f, 1.6f, 0.05f });
+        // screen->setPosition({ 0.0f, 0.0f, -20f });
+        // screen->setScale({ 1.5f, 1.6f, 005f });
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
-        // An Action for clicking on the controller.
+        // An Action for clicking on the controller
         CreateAction(clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for the position of the thumbstick.
+        // An Action for the position of the thumbstick
         CreateAction(thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for a vibration output on one or other hand.
+        // An Action for a vibration output on one or other hand
         CreateAction(buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
@@ -221,8 +219,8 @@ private:
         }
         resNodeWireframe.visible = resNode.visible && showWireframe;
 
-        graphicsAPI->drawObjects(*scene, *cameras);
-        tonemapper->drawToScreen(*graphicsAPI);
+        renderer->drawObjects(*scene, *cameras);
+        tonemapper->drawToScreen(*renderer);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
 
@@ -253,22 +251,22 @@ private:
 
     PerspectiveCamera remoteCamera;
 
-    // Pose streaming.
+    // Pose streaming
     pose_id_t prevPoseID = -1;
     std::unique_ptr<PoseStreamer> poseStreamer;
 
-    // Actions.
+    // Actions
     XrAction clickAction;
-    // The realtime states of these actions.
+    // The realtime states of these actions
     XrActionStateBoolean clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
-    // The thumbstick input action.
+    // The thumbstick input action
     XrAction thumbstickAction;
-    // The current thumbstick state for each controller.
+    // The current thumbstick state for each controller
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
     float movementSpeed = 2.0f;
-    // The haptic output action for grabbing.
+    // The haptic output action for grabbing
     XrAction buzzAction;
-    // The current haptic output value for each controller.
+    // The current haptic output value for each controller
     float buzz[2] = {0, 0};
 
     std::unique_ptr<Model> handModelLeft;

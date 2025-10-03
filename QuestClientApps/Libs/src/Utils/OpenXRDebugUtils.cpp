@@ -1,4 +1,4 @@
-// Copyright 2023, The Khronos Group Inc.
+// Copyright 2023, The Khronos Group Inc
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -63,18 +63,18 @@ XrBool32 OpenXRMessageCallbackFunction(XrDebugUtilsMessageSeverityFlagsEXT messa
         return msgFlags;
     };
 
-    // Collect message data.
+    // Collect message data
     std::string functionName = (pCallbackData->functionName) ? pCallbackData->functionName : "";
     std::string messageSeverityStr = GetMessageSeverityString(messageSeverity);
     std::string messageTypeStr = GetMessageTypeString(messageType);
     std::string messageId = (pCallbackData->messageId) ? pCallbackData->messageId : "";
     std::string message = (pCallbackData->message) ? pCallbackData->message : "";
 
-    // String stream final message.
+    // String stream final message
     std::stringstream errorMessage;
     errorMessage << functionName << "(" << messageSeverityStr << " / " << messageTypeStr << "): msgNum: " << messageId << " - " << message;
 
-    // Log and debug break.
+    // Log and debug break
     std::cerr << errorMessage.str() << std::endl;
     if (BitwiseCheck(messageSeverity, XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)) {
         DEBUG_BREAK;

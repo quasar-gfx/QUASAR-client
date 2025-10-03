@@ -25,14 +25,14 @@ private:
     glm::uvec2 videoSize = glm::uvec2(3840, 1080);
 
 public:
-    ATWClient(GraphicsAPI_Type apiType) : OpenXRApp(apiType) {}
+    ATWClient() = default;
     ~ATWClient() = default;
 
 private:
     void CreateResources() override {
         scene->setAmbientLight(new AmbientLight({ .intensity = 1.0f }));
 
-        // Add the hand nodes.
+        // Add the hand nodes
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
             .gammaCorrected = true,
@@ -78,21 +78,21 @@ private:
 
         // // Add a screen for the video
         // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ .baseColorTexture = videoTexture }),
+        //     .material = new UnlitMaterial({ baseColorTexture = videoTexture }),
         // });
         // Node* screen = new Node(videoScreen);
-        // screen->setPosition({ 0.0f, 0.0f, -2.0f });
-        // screen->setScale({ 1.0f, 0.5f, 0.05f });
+        // screen->setPosition({ 0.0f, 0.0f, -20f });
+        // screen->setScale({ 1.0f, 0.5f, 005f });
         // screen->frustumCulled = false;
         // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
-        // An Action for clicking on the controller.
+        // An Action for clicking on the controller
         CreateAction(clickAction, "click-controller", XR_ACTION_TYPE_BOOLEAN_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for the position of the thumbstick.
+        // An Action for the position of the thumbstick
         CreateAction(thumbstickAction, "thumbstick", XR_ACTION_TYPE_VECTOR2F_INPUT, {"/user/hand/left", "/user/hand/right"});
-        // An Action for a vibration output on one or other hand.
+        // An Action for a vibration output on one or other hand
         CreateAction(buzzAction, "buzz", XR_ACTION_TYPE_VIBRATION_OUTPUT, {"/user/hand/left", "/user/hand/right"});
     }
 
@@ -195,11 +195,11 @@ private:
         atwShader->setTexture("videoTexture", *videoTexture, 0);
 
         // Draw both eyes in a single pass
-        graphicsAPI->drawToScreen(*atwShader);
+        renderer->drawToScreen(*atwShader);
 
         // Draw objects
-        // graphicsAPI->drawObjects(*scene, *cameras, 0);
-        // tonemapper->drawToScreen(*graphicsAPI);
+        // renderer->drawObjects(*scene, *cameras, 0);
+        // tonemapper->drawToScreen(*renderer);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
 
         if (glm::abs(elapsedTime) > 1e-5f) {
@@ -216,31 +216,31 @@ private:
 private:
     std::unique_ptr<Tonemapper> tonemapper;
 
-    // Shader for the ATW effect.
+    // Shader for the ATW effect
     std::unique_ptr<Shader> atwShader;
     bool atwEnabled = true;
 
     VideoTexture* videoTexture;
 
-    // Pose streaming.
+    // Pose streaming
     pose_id_t prevPoseID = -1;
     std::unique_ptr<PoseStreamer> poseStreamer;
     Pose currentFramePose;
 
     double elapsedTime = 0.0f;
 
-    // Actions.
+    // Actions
     XrAction clickAction;
-    // The realtime states of these actions.
+    // The realtime states of these actions
     XrActionStateBoolean clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
-    // The thumbstick input action.
+    // The thumbstick input action
     XrAction thumbstickAction;
-    // The current thumbstick state for each controller.
+    // The current thumbstick state for each controller
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
     float movementSpeed = 2.0f;
-    // The haptic output action for grabbing.
+    // The haptic output action for grabbing
     XrAction buzzAction;
-    // The current haptic output value for each controller.
+    // The current haptic output value for each controller
     float buzz[2] = {0, 0};
 
     std::unique_ptr<Model> handModelLeft;
