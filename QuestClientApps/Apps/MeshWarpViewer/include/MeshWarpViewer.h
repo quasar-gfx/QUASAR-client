@@ -13,11 +13,7 @@
 #include <Cameras/PerspectiveCamera.h>
 #include <Utils/FileIO.h>
 
-#include <Receivers/BC4DepthVideoTexture.h>
-
-#include <shaders_common.h>
-
-#define GEN_MESH_THREADS_PER_LOCALGROUP 16
+#include <Receivers/MeshWarpReceiver.h>
 
 using namespace quasar;
 
@@ -26,7 +22,10 @@ private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("meshwarp/" + sceneName + "/");
 
-    uint surfelSize = 4;
+    const glm::uvec2 remoteGBufferSize{3840, 2160};
+
+    uint vertexGroupSize = 4;
+    uint depthFactor = 1;
     float remoteFOV = 120.0f;
 
 public:
@@ -58,55 +57,15 @@ private:
 
         tonemapper = std::make_unique<Tonemapper>(false);
 
-        // Create texture
-        colorTexture = std::make_unique<Texture>(TextureFileCreateParams{
-            .wrapS = GL_CLAMP_TO_EDGE,
-            .wrapT = GL_CLAMP_TO_EDGE,
-            .minFilter = GL_LINEAR,
-            .magFilter = GL_LINEAR,
-            .flipVertically = true,
-            .path = dataPath / "color.jpg"
-        });
-        remoteGBufferSize = glm::uvec2(colorTexture->width, colorTexture->height);
+        // Create MeshWarpReceiver and load from disk
+        meshWarpReceiver = std::make_unique<MeshWarpReceiver>(remoteGBufferSize, depthFactor, vertexGroupSize, remoteFOV);
 
-        // Remote camera
-        remoteCamera.setAspect(colorTexture->width, colorTexture->height);
-        remoteCamera.updateViewMatrix();
-        remoteCamera.setFovyDegrees(remoteFOV);
-
-        // Load BC4 depth bufferloadFromBinaryFile
-        auto depthDataCompressed = FileIO::loadFromBinaryFile(dataPath / "depth.bc4.zstd");
-        // Decompress BC4 data
-        size_t expectedSize = depthDataCompressed.size() * sizeof(BC4Block);
-        std::vector<char> depthData(expectedSize);
-        codec.decompress(depthDataCompressed, depthData);
-
-        bc4BufferData = std::make_unique<Buffer>(BufferCreateParams{
-            .target = GL_SHADER_STORAGE_BUFFER,
-            .dataSize = sizeof(BC4Block),
-            .numElems = (remoteGBufferSize.x / 8) * (remoteGBufferSize.y / 8),
-            .usage = GL_DYNAMIC_DRAW,
-            .data = reinterpret_cast<BC4Block*>(depthData.data() + sizeof(pose_id_t)), // Skip the first pose_id_t
-        });
-
-        // Setup scene and mesh
-        glm::uvec2 adjustedWindowSize = remoteGBufferSize / surfelSize;
-        uint maxVertices = adjustedWindowSize.x * adjustedWindowSize.y;
-        uint numTriangles = (adjustedWindowSize.x-1) * (adjustedWindowSize.y-1) * 2;
-        uint maxIndices = numTriangles * 3;
-
-        mesh = std::make_unique<Mesh>(MeshSizeCreateParams{
-            .maxVertices = maxVertices,
-            .maxIndices = maxIndices,
-            .material = new UnlitMaterial({ .baseColorTexture = colorTexture.get() }),
-            .usage = GL_DYNAMIC_DRAW
-        });
-
-        node.setEntity(mesh.get());
+        // Attach receiver mesh to nodes
+        node.setEntity(&meshWarpReceiver->getMesh());
         node.frustumCulled = false;
         scene->addChildNode(&node);
 
-        nodeWireframe.setEntity(mesh.get());
+        nodeWireframe.setEntity(&meshWarpReceiver->getMesh());
         nodeWireframe.frustumCulled = false;
         nodeWireframe.wireframe = true;
         nodeWireframe.visible = false;
@@ -114,13 +73,10 @@ private:
         nodeWireframe.overrideMaterial = new UnlitMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(&nodeWireframe);
 
-        genMeshFromBC4Shader = std::make_unique<ComputeShader>(ComputeShaderDataCreateParams{
-            .computeCodeData = SHADER_COMMON_MESH_FROM_BC4_COMP,
-            .computeCodeSize = SHADER_COMMON_MESH_FROM_BC4_COMP_len,
-            .defines = {
-                "#define THREADS_PER_LOCALGROUP " + std::to_string(GEN_MESH_THREADS_PER_LOCALGROUP)
-            }
-        });
+        // Load data from files
+        meshWarpReceiver->loadFromFiles(dataPath);
+        auto& remoteCamera = meshWarpReceiver->getRemoteCamera();
+        cameraPositionOffset = remoteCamera.getPosition();
     }
 
     void CreateActionSet() override {
@@ -205,41 +161,7 @@ private:
     }
 
     void OnRender(double now, double dt) override {
-        double startTime = timeutils::getTimeMicros();
-        genMeshFromBC4Shader->bind();
-
-        genMeshFromBC4Shader->setBool("unlinearizeDepth", true);
-
-        genMeshFromBC4Shader->setVec2("screenSize", remoteGBufferSize);
-        genMeshFromBC4Shader->setVec2("depthMapSize", glm::vec2(colorTexture->width, colorTexture->height));
-        genMeshFromBC4Shader->setInt("surfelSize", surfelSize);
-
-        genMeshFromBC4Shader->setMat4("projection", remoteCamera.getProjectionMatrix());
-        genMeshFromBC4Shader->setMat4("projectionInverse", glm::inverse(remoteCamera.getProjectionMatrix()));
-        genMeshFromBC4Shader->setMat4("viewInverseDepth", glm::inverse(remoteCamera.getViewMatrix()));
-        genMeshFromBC4Shader->setFloat("near", remoteCamera.getNear());
-        genMeshFromBC4Shader->setFloat("far", remoteCamera.getFar());
-
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 0, mesh->vertexBuffer);
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 1, mesh->indexBuffer);
-        genMeshFromBC4Shader->setBuffer(GL_SHADER_STORAGE_BUFFER, 2, *bc4BufferData);
-
-        genMeshFromBC4Shader->dispatch(
-            (remoteGBufferSize.x / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-            (remoteGBufferSize.y / surfelSize + GEN_MESH_THREADS_PER_LOCALGROUP - 1) / GEN_MESH_THREADS_PER_LOCALGROUP,
-            1
-        );
-
-        genMeshFromBC4Shader->memoryBarrier(
-            GL_SHADER_STORAGE_BARRIER_BIT |
-            GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT |
-            GL_ELEMENT_ARRAY_BARRIER_BIT
-        );
-
-        double endTime = timeutils::getTimeMicros();
-        spdlog::info("Time to create mesh: {:.3f}ms", timeutils::microsToMillis(endTime - startTime));
-
-        // Render
+        // Mesh is generated/loaded by MeshWarpReceiver; just render the scene
         renderer->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*renderer);
         // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
@@ -250,18 +172,11 @@ private:
 private:
     std::unique_ptr<Tonemapper> tonemapper;
 
-    glm::uvec2 remoteGBufferSize;
-
-    PerspectiveCamera remoteCamera;
-
     ZSTDCodec codec;
-    std::unique_ptr<Buffer> bc4BufferData;
-
     std::unique_ptr<Texture> colorTexture;
-    std::unique_ptr<Mesh> mesh;
     Node node, nodeWireframe;
 
-    std::unique_ptr<ComputeShader> genMeshFromBC4Shader;
+    std::unique_ptr<MeshWarpReceiver> meshWarpReceiver;
 
     // Actions
     XrAction clickAction;

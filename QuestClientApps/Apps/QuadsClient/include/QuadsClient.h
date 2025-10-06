@@ -23,7 +23,7 @@ private:
     std::string videoURL = "0.0.0.0:12345";
     std::string proxiesURL = serverIP + ":65432";
 
-    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    const glm::uvec2 remoteGBufferSize{1920, 1080};
 
     float remoteFOV = 90.0f;
 

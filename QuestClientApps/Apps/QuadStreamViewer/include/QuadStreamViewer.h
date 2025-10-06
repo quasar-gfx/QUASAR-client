@@ -21,7 +21,7 @@ private:
     uint maxAdditionalViews = 8;
     uint maxViews = maxAdditionalViews + 2; // +2 for primary and wide fov views
 
-    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    const glm::uvec2 remoteGBufferSize{1920, 1080};
 
 public:
     QuadStreamViewer() = default;

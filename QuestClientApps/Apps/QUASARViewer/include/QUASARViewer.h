@@ -18,7 +18,7 @@ private:
     std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("quads/" + sceneName + "/");
 
-    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    const glm::uvec2 remoteGBufferSize{1920, 1080};
 
     uint numHiddenLayers = 3;
     uint maxLayers = numHiddenLayers + 2; // add visible and wide FOV layer

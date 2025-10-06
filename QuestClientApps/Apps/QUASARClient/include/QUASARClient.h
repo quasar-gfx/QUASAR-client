@@ -23,7 +23,7 @@ private:
     std::string videoURL = "0.0.0.0:12345";
     std::string proxiesURL = serverIP + ":65432";
 
-    const glm::uvec2 remoteGBufferSize = glm::uvec2(1920, 1080);
+    const glm::uvec2 remoteGBufferSize{1920, 1080};
 
     uint numHiddenLayers = 3;
     uint maxLayers = numHiddenLayers + 2; // add visible and wide FOV layer
