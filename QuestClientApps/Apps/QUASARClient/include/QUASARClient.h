@@ -18,7 +18,7 @@ using namespace quasar;
 
 class QUASARClient final : public OpenXRApp {
 private:
-    std::string serverIP = "192.168.22.227";
+    std::string serverIP = "10.0.0.68";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
     std::string proxiesURL = serverIP + ":65432";
