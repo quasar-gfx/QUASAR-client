@@ -27,7 +27,7 @@ private:
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
         handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[0].setEntity(handModelLeft.get());
+        handNodes[0].addChildNode(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
@@ -36,12 +36,12 @@ private:
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[1].setEntity(handModelRight.get());
-
-        tonemapper = std::make_unique<Tonemapper>(tonemap);
+        handNodes[1].addChildNode(handModelRight.get());
 
         loader.loadScene(sceneFile, *scene, cameras->left);
         cameraPositionOffset = cameras->left.getPosition();
+
+        tonemapper = std::make_unique<Tonemapper>(tonemap);
     }
 
     void CreateActionSet() override {

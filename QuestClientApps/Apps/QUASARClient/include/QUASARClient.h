@@ -18,7 +18,7 @@ using namespace quasar;
 
 class QUASARClient final : public OpenXRApp {
 private:
-    std::string serverIP = "10.0.0.68";
+    std::string serverIP = "192.168.22.227";
     std::string poseURL = serverIP + ":54321";
     std::string videoURL = "0.0.0.0:12345";
     std::string proxiesURL = serverIP + ":65432";
@@ -45,7 +45,7 @@ private:
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
         handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[0].setEntity(handModelLeft.get());
+        handNodes[0].addChildNode(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
@@ -54,7 +54,7 @@ private:
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[1].setEntity(handModelRight.get());
+        handNodes[1].addChildNode(handModelRight.get());
 
         tonemapper = std::make_unique<Tonemapper>(false);
 
@@ -82,11 +82,11 @@ private:
             scene->addChildNode(&refNodeWireframes[layer]);
         }
 
-        resNode.setEntity(&quasarReceiver->getResidualMesh());
+        resNode.addEntity(&quasarReceiver->getResidualMesh());
         resNode.frustumCulled = false;
         scene->addChildNode(&resNode);
 
-        resNodeWireframe.setEntity(&quasarReceiver->getResidualMesh());
+        resNodeWireframe.addEntity(&quasarReceiver->getResidualMesh());
         resNodeWireframe.frustumCulled = false;
         resNodeWireframe.wireframe = true;
         resNodeWireframe.visible = false;

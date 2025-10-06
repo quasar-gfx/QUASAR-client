@@ -36,7 +36,7 @@ private:
         });
         handNodes[0].setPosition({ 0.0065f, -0.008f, -0.04f });
         handNodes[0].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[0].setEntity(handModelLeft.get());
+        handNodes[0].addChildNode(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
             .flipTextures = true,
@@ -45,7 +45,7 @@ private:
         });
         handNodes[1].setPosition({ -0.0065f, -0.008f, -0.04f });
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
-        handNodes[1].setEntity(handModelRight.get());
+        handNodes[1].addChildNode(handModelRight.get());
 
         tonemapper = std::make_unique<Tonemapper>(false);
 
@@ -53,11 +53,11 @@ private:
         quadsReceiver = std::make_unique<QuadsReceiver>(*quadSet);
 
         // Create nodes
-        refNode.setEntity(&quadsReceiver->getReferenceMesh());
+        refNode.addEntity(&quadsReceiver->getReferenceMesh());
         refNode.frustumCulled = false;
         scene->addChildNode(&refNode);
 
-        refNodeWireframe.setEntity(&quadsReceiver->getReferenceMesh());
+        refNodeWireframe.addEntity(&quadsReceiver->getReferenceMesh());
         refNodeWireframe.frustumCulled = false;
         refNodeWireframe.wireframe = true;
         refNodeWireframe.visible = false;
@@ -65,11 +65,11 @@ private:
         refNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f) });
         scene->addChildNode(&refNodeWireframe);
 
-        resNode.setEntity(&quadsReceiver->getResidualMesh());
+        resNode.addEntity(&quadsReceiver->getResidualMesh());
         resNode.frustumCulled = false;
         scene->addChildNode(&resNode);
 
-        resNodeWireframe.setEntity(&quadsReceiver->getResidualMesh());
+        resNodeWireframe.addEntity(&quadsReceiver->getResidualMesh());
         resNodeWireframe.frustumCulled = false;
         resNodeWireframe.wireframe = true;
         resNodeWireframe.visible = false;

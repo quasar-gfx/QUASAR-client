@@ -232,7 +232,7 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
         glViewport(0, 0, windowWidth, windowHeight);
     }
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     screenShader.bind();
