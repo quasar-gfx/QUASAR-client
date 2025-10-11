@@ -240,11 +240,10 @@ private:
 
     std::unordered_map<GLuint, ImageCreateInfo> images{};
     std::unordered_map<GLuint, ImageViewCreateInfo> imageViews{};
-    std::unordered_map<GLuint, std::unique_ptr<MultiviewFramebuffer>> imageViewFramebuffers{};
+    std::unordered_map<GLuint, std::shared_ptr<MultiviewFramebuffer>> imageViewFramebuffers{};
 
-    std::unique_ptr<FullScreenQuad> outputFsQuad;
-    std::unique_ptr<MultiviewRenderTarget> outputRT;
-    std::unique_ptr<MultiviewFramebuffer> displayFBO;
+    std::shared_ptr<MultiviewRenderTarget> outputRT;
+    std::shared_ptr<MultiviewFramebuffer> displayFBO;
 };
 #endif
 

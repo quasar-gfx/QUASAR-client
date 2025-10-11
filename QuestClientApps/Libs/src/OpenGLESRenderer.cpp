@@ -85,20 +85,7 @@ OpenGLESRenderer::OpenGLESRenderer(const Config& config, XrInstance xrInstance, 
 
     // Have to recreate resources here since some resources are created in the parent constructor and
     // we need to wait until after we have a valid GL context
-    skyboxShader = Shader({
-        .vertexCodeData = SHADER_BUILTIN_SKYBOX_VERT,
-        .vertexCodeSize = SHADER_BUILTIN_SKYBOX_VERT_len,
-        .fragmentCodeData = SHADER_BUILTIN_SKYBOX_FRAG,
-        .fragmentCodeSize = SHADER_BUILTIN_SKYBOX_FRAG_len,
-    });
-    pointLightsUBO = Buffer({
-        .target = GL_UNIFORM_BUFFER,
-        .dataSize = sizeof(Scene::GPUPointLightBlock),
-        .numElems = 1,
-        .usage = GL_DYNAMIC_DRAW,
-    });
-
-    outputFsQuad = std::make_unique<FullScreenQuad>();
+    createResources();
 }
 
 OpenGLESRenderer::~OpenGLESRenderer() {
@@ -120,7 +107,7 @@ XrSwapchainImageBaseHeader* OpenGLESRenderer::AllocateSwapchainImageData(XrSwapc
 }
 
 void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
-    auto framebuffer = std::make_unique<MultiviewFramebuffer>();
+    auto framebuffer = std::make_shared<MultiviewFramebuffer>();
     framebuffer->bind();
 
     GLenum attachment = imageViewCI.aspect == ImageViewCreateInfo::Aspect::COLOR_BIT ? GL_COLOR_ATTACHMENT0 : GL_DEPTH_ATTACHMENT;
@@ -143,7 +130,7 @@ void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) 
 
     GLuint framebufferID = framebuffer->ID;
     imageViews[framebufferID] = imageViewCI;
-    imageViewFramebuffers[framebufferID] = std::move(framebuffer);
+    imageViewFramebuffers[framebufferID] = framebuffer;
     return (void*)(uint64_t)framebufferID;
 }
 
@@ -156,7 +143,7 @@ void OpenGLESRenderer::DestroyImageView(void* &imageView) {
 
 void OpenGLESRenderer::beginRendering() {
     if (outputRT == nullptr) {
-        outputRT = std::make_unique<MultiviewRenderTarget>(RenderTargetCreateParams{
+        outputRT = std::make_shared<MultiviewRenderTarget>(RenderTargetCreateParams{
             .width = width,
             .height = height,
         });
@@ -175,7 +162,7 @@ void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewC
     }
 
     // Create new framebuffer
-    displayFBO = std::make_unique<MultiviewFramebuffer>();
+    displayFBO = std::make_shared<MultiviewFramebuffer>();
     displayFBO->bind();
 
     // Color
