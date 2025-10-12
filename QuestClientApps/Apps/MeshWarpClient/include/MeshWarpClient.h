@@ -18,8 +18,6 @@
 
 #include <shaders_common.h>
 
-#define GEN_MESH_THREADS_PER_LOCALGROUP 16
-
 using namespace quasar;
 
 class MeshWarpClient final : public OpenXRApp {
