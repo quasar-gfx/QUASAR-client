@@ -34,7 +34,7 @@ private:
 
         // Add the hand nodes
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
-            .flipTextures = true,
+            .flipTextureY = true,
             .gammaCorrected = true,
             .path = "models/quest-touch-plus-left.glb"
         });
@@ -43,7 +43,7 @@ private:
         handNodes[0].addChildNode(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
-            .flipTextures = true,
+            .flipTextureY = true,
             .gammaCorrected = true,
             .path = "models/quest-touch-plus-right.glb"
         });

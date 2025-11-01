@@ -43,7 +43,7 @@ private:
 
         // Add the hand nodes
         handModelLeft = std::make_unique<Model>(ModelCreateParams{
-            .flipTextures = true,
+            .flipTextureY = true,
             .gammaCorrected = true,
             .path = "models/quest-touch-plus-left.glb"
         });
@@ -52,7 +52,7 @@ private:
         handNodes[0].addChildNode(handModelLeft.get());
 
         handModelRight = std::make_unique<Model>(ModelCreateParams{
-            .flipTextures = true,
+            .flipTextureY = true,
             .gammaCorrected = true,
             .path = "models/quest-touch-plus-right.glb"
         });
@@ -60,7 +60,7 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].addChildNode(handModelRight.get());
 
-        tonemapper = std::make_unique<Tonemapper>(false);
+        tonemapper = std::make_unique<Tonemapper>();
 
         // Create MeshWarpReceiver which encapsulates streaming and mesh generation
         meshWarpReceiver = std::make_unique<MeshWarpReceiver>(videoSize, depthFactor, vertexGroupSize, remoteFOV, videoURL, depthURL);
