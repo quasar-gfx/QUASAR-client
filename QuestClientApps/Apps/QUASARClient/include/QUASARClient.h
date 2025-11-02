@@ -71,7 +71,6 @@ private:
         for (int layer = 0; layer < maxLayers; layer++) {
             refNodes.emplace_back(&quasarReceiver->getMesh(layer));
             refNodes[layer].frustumCulled = false;
-            scene->addChildNode(&refNodes[layer]);
 
             refNodeWireframes.emplace_back(&quasarReceiver->getMesh(layer));
             refNodeWireframes[layer].frustumCulled = false;
@@ -79,12 +78,10 @@ private:
             refNodeWireframes[layer].visible = false;
             refNodeWireframes[layer].primitiveType = GL_LINES;
             refNodeWireframes[layer].overrideMaterial = new QuadMaterial({ .baseColor = colors[layer % colors.size()] });
-            scene->addChildNode(&refNodeWireframes[layer]);
         }
 
         resNode.addEntity(&quasarReceiver->getResidualMesh());
         resNode.frustumCulled = false;
-        scene->addChildNode(&resNode);
 
         resNodeWireframe.addEntity(&quasarReceiver->getResidualMesh());
         resNodeWireframe.frustumCulled = false;
@@ -92,6 +89,13 @@ private:
         resNodeWireframe.visible = false;
         resNodeWireframe.primitiveType = GL_LINES;
         resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
+
+        // Add nodes in reverse order so that closer layers are drawn last
+        for (int layer = maxLayers - 1; layer >= 0; layer--) {
+            scene->addChildNode(&refNodes[layer]);
+            scene->addChildNode(&refNodeWireframes[layer]);
+        }
+        scene->addChildNode(&resNode);
         scene->addChildNode(&resNodeWireframe);
 
         // // Add a screen for the video

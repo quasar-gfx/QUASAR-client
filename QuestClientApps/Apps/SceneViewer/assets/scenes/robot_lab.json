@@ -18,7 +18,7 @@
         }
     ],
     "camera": {
-        "fov": 60.0,
+        "fov": 80.0,
         "near": 0.1,
         "far": 1000.0,
         "position": [0.0, 3.0, 10.0],
@@ -74,7 +74,7 @@
             "node": "prop_robotArm_body",
             "fromRotation": [0.0, 360.0, 0.0],
             "toRotation": [0.0, 0.0, 0.0],
-            "duration": 60.0,
+            "duration": 80.0,
             "loop": true
         },
         {

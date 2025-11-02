@@ -920,16 +920,17 @@ protected:
         std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
     };
 
+    Config config;
+
     double lastTime = 0.0;
 
-    float nearZ = 0.05f;
-    float farZ = 1000.0f;
-
-    Config config;
+    float nearZ = DEFAULT_NEAR;
+    float farZ = DEFAULT_FAR;
 
     std::unique_ptr<VRCamera> cameras;
     std::unique_ptr<Scene> scene;
 
+    // Offset to apply to the camera position
     glm::vec3 cameraPositionOffset{0.0f, 0.0f, 0.0f};
 
     // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position

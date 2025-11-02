@@ -31,7 +31,7 @@ private:
 
     uint vertexGroupSize = 1;
     uint depthFactor = 4;
-    float remoteFOV = 120.0f;
+    float remoteFOV = 90.0f;
 
 public:
     MeshWarpClient() = default;

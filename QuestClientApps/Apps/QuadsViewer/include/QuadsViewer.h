@@ -15,7 +15,7 @@ using namespace quasar;
 
 class QuadsViewer final : public OpenXRApp {
 private:
-    std::string sceneName = "robot_lab"; // choose from robot_lab, sun_temple, viking_village, or san_miguel
+    std::string sceneName = "robot_lab"; // choose from robot_lab, robot_lab_transparent, sun_temple, viking_village, or san_miguel
     Path dataPath = Path("quads/" + sceneName + "/");
 
     const glm::uvec2 remoteGBufferSize{1920, 1080};
