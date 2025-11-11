@@ -3,13 +3,24 @@
 	<uses-feature
 		android:name="android.hardware.vr.headtracking"
 		android:required="true" />
+    <uses-feature
+        android:name="android.software.xr.api.openxr"
+        android:required="true" />
+
 	<uses-permission
 		android:name="android.permission.READ_DEVICE_CONFIG" />
     <uses-permission
 		android:name="android.permission.INTERNET" />
+
 	<application
       android:allowBackup="false"
       android:label="@string/app_name">
+	  	<uses-native-library
+            android:name="libopenxr.google.so"
+            android:required="false" />
+        <property
+            android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+            android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_UNMANAGED" />
 		<activity
 			android:name="android.app.NativeActivity"
 			android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
