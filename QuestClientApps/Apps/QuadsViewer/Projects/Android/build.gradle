@@ -45,9 +45,11 @@ android {
     buildTypes {
         debug {
             debuggable true
+            manifestPlaceholders = [lib_name: "QuadsViewer_d"]
         }
         release {
             debuggable false
+            manifestPlaceholders = [lib_name: "QuadsViewer"]
         }
     }
 
