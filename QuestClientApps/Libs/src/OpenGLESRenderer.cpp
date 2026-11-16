@@ -3,18 +3,6 @@
 #include <Utils/DebugOutput.h>
 #include <Utils/OpenXRDebugUtils.h>
 
-#if defined(XR_USE_GRAPHICS_API_OPENGL_ES)
-
-#if defined(OS_WINDOWS)
-PROC GetExtension(const char *functionName) { return wglGetProcAddress(functionName); }
-#elif defined(OS_APPLE)
-void (*GetExtension(const char *functionName))() { return NULL; }
-#elif defined(OS_LINUX_XCB) || defined(OS_LINUX_XLIB) || defined(OS_LINUX_XCB_GLX)
-void (*GetExtension(const char *functionName))() { return glXGetProcAddress((const GLubyte *)functionName); }
-#elif defined(OS_ANDROID) || defined(OS_LINUX_WAYLAND)
-void (*GetExtension(const char *functionName))() { return eglGetProcAddress(functionName); }
-#endif
-
 using namespace quasar;
 
 int64_t OpenGLESRenderer::SelectColorSwapchainFormat(const std::vector<int64_t>& formats) {
@@ -100,10 +88,10 @@ void* OpenGLESRenderer::GetGraphicsBinding() {
     return &graphicsBinding;
 }
 
-XrSwapchainImageBaseHeader* OpenGLESRenderer::AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count) {
-    swapchainImagesMap[swapchain].first = type;
-    swapchainImagesMap[swapchain].second.resize(count, {XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
-    return reinterpret_cast<XrSwapchainImageBaseHeader *>(swapchainImagesMap[swapchain].second.data());
+XrSwapchainImageBaseHeader* OpenGLESRenderer::AllocateSwapchainImageData(XrSwapchain swapchain, uint32_t count) {
+    auto& images = swapchainImagesMap[swapchain];
+    images.resize(count, {XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR});
+    return reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data());
 }
 
 void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) {
@@ -112,16 +100,7 @@ void* OpenGLESRenderer::CreateImageView(const ImageViewCreateInfo &imageViewCI) 
 
     GLenum attachment = imageViewCI.aspect == ImageViewCreateInfo::Aspect::COLOR_BIT ? GL_COLOR_ATTACHMENT0 : GL_DEPTH_ATTACHMENT;
 
-    if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-        framebuffer->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, attachment, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
-    }
-    else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-        framebuffer->attachTexture((GLuint)(uint64_t)imageViewCI.image, attachment, imageViewCI.baseMipLevel);
-    }
-    else {
-        spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
-        DEBUG_BREAK;
-    }
+    framebuffer->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, attachment, 0, 0, imageViewCI.layerCount);
 
     if (!framebuffer->checkStatus("CreateImageView")) {
         DEBUG_BREAK;
@@ -155,7 +134,7 @@ void OpenGLESRenderer::endRendering() {
     outputRT->unbind();
 }
 
-void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height) {
+void OpenGLESRenderer::SetRenderAttachments(void* colorView, void* depthStencilView) {
     // Reset framebuffer
     if (displayFBO) {
         displayFBO.reset();
@@ -166,36 +145,14 @@ void OpenGLESRenderer::SetRenderAttachments(void** colorViews, size_t colorViewC
     displayFBO->bind();
 
     // Color
-    for (size_t i = 0; i < colorViewCount; i++) {
-        GLuint glColorView = (GLuint)(uint64_t)colorViews[i];
-        const ImageViewCreateInfo& imageViewCI = imageViews[glColorView];
-
-        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            displayFBO->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, GL_COLOR_ATTACHMENT0, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
-        }
-        else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            displayFBO->attachTexture((GLuint)(uint64_t)imageViewCI.image, GL_COLOR_ATTACHMENT0, imageViewCI.baseMipLevel);
-        }
-        else {
-            spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
-            DEBUG_BREAK;
-        }
-    }
+    const ImageViewCreateInfo& colorImageView = imageViews[(GLuint)(uint64_t)colorView];
+    displayFBO->attachTextureMultiview((GLuint)(uint64_t)colorImageView.image, GL_COLOR_ATTACHMENT0, 0, 0, colorImageView.layerCount);
     // DepthStencil
     if (depthStencilView) {
         GLuint glDepthView = (GLuint)(uint64_t)depthStencilView;
         const ImageViewCreateInfo& imageViewCI = imageViews[glDepthView];
 
-        if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D_ARRAY) {
-            displayFBO->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, GL_DEPTH_ATTACHMENT, imageViewCI.baseMipLevel, imageViewCI.baseArrayLayer, imageViewCI.layerCount);
-        }
-        else if (imageViewCI.view == ImageViewCreateInfo::View::TYPE_2D) {
-            displayFBO->attachTexture((GLuint)(uint64_t)imageViewCI.image, GL_DEPTH_ATTACHMENT, imageViewCI.baseMipLevel);
-        }
-        else {
-            spdlog::error("ERROR: OPENGL: Unknown ImageView View type.");
-            DEBUG_BREAK;
-        }
+        displayFBO->attachTextureMultiview((GLuint)(uint64_t)imageViewCI.image, GL_DEPTH_ATTACHMENT, 0, 0, imageViewCI.layerCount);
     }
 
     if (!displayFBO->checkStatus("SetRenderAttachments")) {
@@ -247,5 +204,3 @@ const std::vector<int64_t> OpenGLESRenderer::GetSupportedColorSwapchainFormats()
 const std::vector<int64_t> OpenGLESRenderer::GetSupportedDepthSwapchainFormats() {
     return {GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT16};
 }
-
-#endif

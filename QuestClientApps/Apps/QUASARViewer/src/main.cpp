@@ -4,7 +4,7 @@ android_app* OpenXRApp::androidApp = nullptr;
 OpenXRApp::AndroidAppState OpenXRApp::androidAppState = {};
 
 void OpenXRApp_Main() {
-    DebugOutput debugOutput; // This redirects std::cerr and std::cout to the IDE's output or Android Studio's logcat.
+    DebugOutput debugOutput; // Redirect std::cerr and std::cout to logcat.
     XR_LOG("Starting QUASARViewer...");
 
     QUASARViewer app;
@@ -13,11 +13,9 @@ void OpenXRApp_Main() {
 
 void android_main(struct android_app* app) {
     // Allow interaction with JNI and the JVM on this thread
-    // Https://developer.androidcom/training/articles/perf-jni#threads
     JNIEnv* env;
     app->activity->vm->AttachCurrentThread(&env, nullptr);
 
-    // Https://registry.khronos.org/OpenXR/specs/1.0/html/xrspechtml#XR_KHR_loader_init
     // Load xrInitializeLoaderKHR() function pointer. On Android, the loader must be initialized with variables from android_app*
     // Without this, there's is no loader and thus our function calls to OpenXR would fail
     XrInstance xrInstance = XR_NULL_HANDLE;  // Dummy XrInstance variable for OPENXR_CHECK macro

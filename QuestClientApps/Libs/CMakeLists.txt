@@ -70,7 +70,6 @@ target_compile_options(${TARGET} PRIVATE -Wno-cast-calling-convention -Wunused-v
 
 # apply graphics api definitions
 AddGraphicsAPIDefine(${TARGET})
-target_compile_definitions(${TARGET} PRIVATE QUASAR_CLIENT_ENABLE_MULTIVIEW)
 
 # include gfxwrapper if available
 include(${CMAKE_SOURCE_DIR}/cmake/gfxwrapper.cmake)

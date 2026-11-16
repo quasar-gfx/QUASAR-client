@@ -82,34 +82,8 @@ protected:
         appInfo.engineVersion = 1;
         appInfo.apiVersion = XR_CURRENT_API_VERSION;
 
-        // Add additional instance layers/extensions that the application wants
-        // Add both required and requested instance extensions
-        {
-            // Add OpenGL ES extension directly since we only support OpenGL ES
-            instanceExtensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
-            instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
-
-        // Get all the API Layers from the OpenXR runtime
-        uint32_t apiLayerCount = 0;
-        std::vector<XrApiLayerProperties> apiLayerProperties;
-        OPENXR_CHECK(xrEnumerateApiLayerProperties(0, &apiLayerCount, nullptr), "Failed to enumerate ApiLayerProperties.");
-        apiLayerProperties.resize(apiLayerCount, {XR_TYPE_API_LAYER_PROPERTIES});
-        OPENXR_CHECK(xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount, apiLayerProperties.data()), "Failed to enumerate ApiLayerProperties.");
-
-        // Check the requested API layers against the ones from the OpenXR. If found add it to the Active API Layers
-        for (auto &requestLayer : apiLayers) {
-            for (auto &layerProperty : apiLayerProperties) {
-                // strcmp returns 0 if the strings match
-                if (strcmp(requestLayer.c_str(), layerProperty.layerName) != 0) {
-                    continue;
-                }
-                else {
-                    activeAPILayers.push_back(requestLayer.c_str());
-                    break;
-                }
-            }
-        }
+        instanceExtensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
+        instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
         // Get all the Instance Extensions from the OpenXR instance
         uint32_t extensionCount = 0;
@@ -143,8 +117,6 @@ protected:
         XrInstanceCreateInfo instanceCreateInfo{XR_TYPE_INSTANCE_CREATE_INFO};
         instanceCreateInfo.createFlags = 0;
         instanceCreateInfo.applicationInfo = appInfo;
-        instanceCreateInfo.enabledApiLayerCount = static_cast<uint32_t>(activeAPILayers.size());
-        instanceCreateInfo.enabledApiLayerNames = activeAPILayers.data();
         instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(activeInstanceExtensions.size());
         instanceCreateInfo.enabledExtensionNames = activeInstanceExtensions.data();
         OPENXR_CHECK(xrCreateInstance(&instanceCreateInfo, &xrInstance), "Failed to create Instance.");
@@ -186,8 +158,6 @@ protected:
         systemGI.formFactor = formFactor;
         OPENXR_CHECK(xrGetSystem(xrInstance, &systemGI, &systemID), "Failed to get SystemID.");
 
-        // Get the System's properties for some general information about the hardware and the vendor
-        OPENXR_CHECK(xrGetSystemProperties(xrInstance, systemID, &systemProperties), "Failed to get SystemProperties.");
     }
 
     XrPath CreateXrPath(const char* path_string) {
@@ -377,8 +347,6 @@ protected:
         // This call sets up OpenGL ES rendering that's suitable for use with OpenXR
         renderer = std::make_unique<OpenGLESRenderer>(config, xrInstance, systemID);
 
-        // Fill out the XrSessionCreateInfo structure and create an XrSession
-        //  XR_DOCS_TAG_LBEGIN_CreateSession2
         sessionCreateInfo.next = renderer->GetGraphicsBinding();
         sessionCreateInfo.createFlags = 0;
         sessionCreateInfo.systemId = systemID;
@@ -586,7 +554,6 @@ protected:
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
-        colorSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use
 
         // Depth
         swapchainCreateInfo.createFlags = 0;
@@ -599,18 +566,16 @@ protected:
         swapchainCreateInfo.arraySize = viewCount;
         swapchainCreateInfo.mipCount = 1;
         OPENXR_CHECK(xrCreateSwapchain(session, &swapchainCreateInfo, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
-        depthSwapchainInfo.swapchainFormat = swapchainCreateInfo.format;  // Save the swapchain format for later use
 
-        // XR_DOCS_TAG_BEGIN_EnumerateSwapchainImages
         // Get the number of images in the color/depth swapchain and allocate Swapchain image data via OpenGLESRenderer to store the returned array
         uint32_t colorSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(colorSwapchainInfo.swapchain, 0, &colorSwapchainImageCount, nullptr), "Failed to enumerate Color Swapchain Images.");
-        XrSwapchainImageBaseHeader* colorSwapchainImages = renderer->AllocateSwapchainImageData(colorSwapchainInfo.swapchain, SwapchainType::COLOR, colorSwapchainImageCount);
+        XrSwapchainImageBaseHeader* colorSwapchainImages = renderer->AllocateSwapchainImageData(colorSwapchainInfo.swapchain, colorSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(colorSwapchainInfo.swapchain, colorSwapchainImageCount, &colorSwapchainImageCount, colorSwapchainImages), "Failed to enumerate Color Swapchain Images.");
 
         uint32_t depthSwapchainImageCount = 0;
         OPENXR_CHECK(xrEnumerateSwapchainImages(depthSwapchainInfo.swapchain, 0, &depthSwapchainImageCount, nullptr), "Failed to enumerate Depth Swapchain Images.");
-        XrSwapchainImageBaseHeader* depthSwapchainImages = renderer->AllocateSwapchainImageData(depthSwapchainInfo.swapchain, SwapchainType::DEPTH, depthSwapchainImageCount);
+        XrSwapchainImageBaseHeader* depthSwapchainImages = renderer->AllocateSwapchainImageData(depthSwapchainInfo.swapchain, depthSwapchainImageCount);
         OPENXR_CHECK(xrEnumerateSwapchainImages(depthSwapchainInfo.swapchain, depthSwapchainImageCount, &depthSwapchainImageCount, depthSwapchainImages), "Failed to enumerate Depth Swapchain Images.");
 
         renderer->resize(viewConfigurationView.recommendedImageRectWidth, viewConfigurationView.recommendedImageRectHeight);
@@ -620,31 +585,19 @@ protected:
         for (uint32_t j = 0; j < colorSwapchainImageCount; j++) {
             ImageViewCreateInfo imageViewCreateInfo;
             imageViewCreateInfo.image = renderer->GetSwapchainImage(colorSwapchainInfo.swapchain, j);
-            imageViewCreateInfo.type = ImageViewCreateInfo::Type::RTV;
-            imageViewCreateInfo.view = ImageViewCreateInfo::View::TYPE_2D_ARRAY;
-            imageViewCreateInfo.format = colorSwapchainInfo.swapchainFormat;
             imageViewCreateInfo.aspect = ImageViewCreateInfo::Aspect::COLOR_BIT;
-            imageViewCreateInfo.baseMipLevel = 0;
-            imageViewCreateInfo.levelCount = 1;
-            imageViewCreateInfo.baseArrayLayer = 0;
             imageViewCreateInfo.layerCount = viewCount;
             colorSwapchainInfo.imageViews.push_back(renderer->CreateImageView(imageViewCreateInfo));
         }
         for (uint32_t j = 0; j < depthSwapchainImageCount; j++) {
             ImageViewCreateInfo imageViewCreateInfo;
             imageViewCreateInfo.image = renderer->GetSwapchainImage(depthSwapchainInfo.swapchain, j);
-            imageViewCreateInfo.type = ImageViewCreateInfo::Type::DSV;
-            imageViewCreateInfo.view = ImageViewCreateInfo::View::TYPE_2D_ARRAY;
-            imageViewCreateInfo.format = depthSwapchainInfo.swapchainFormat;
             imageViewCreateInfo.aspect = ImageViewCreateInfo::Aspect::DEPTH_BIT;
-            imageViewCreateInfo.baseMipLevel = 0;
-            imageViewCreateInfo.levelCount = 1;
-            imageViewCreateInfo.baseArrayLayer = 0;
             imageViewCreateInfo.layerCount = viewCount;
             depthSwapchainInfo.imageViews.push_back(renderer->CreateImageView(imageViewCreateInfo));
         }
 
-        XR_LOG("Created swapchains with reccomended resolution: " << viewConfigurationView.recommendedImageRectWidth << "x" << viewConfigurationView.recommendedImageRectHeight);
+        XR_LOG("Created swapchains with recommended resolution: " << viewConfigurationView.recommendedImageRectWidth << "x" << viewConfigurationView.recommendedImageRectHeight);
     }
 
     void DestroySwapchains() {
@@ -777,7 +730,7 @@ protected:
         // Prepare to render
         glViewport(0, 0, width, height);
         renderer->resize(width, height);
-        renderer->SetRenderAttachments(&colorSwapchainInfo.imageViews[colorImageIndex], 1, depthSwapchainInfo.imageViews[depthImageIndex], width, height);
+        renderer->SetRenderAttachments(colorSwapchainInfo.imageViews[colorImageIndex], depthSwapchainInfo.imageViews[depthImageIndex]);
 
         // Update vr cameras
         cameras->setProjectionMatrices({
@@ -812,7 +765,6 @@ public:
     // Custom data structure that is used by PollSystemEvents()
     // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/maincpp#L133C1-L189C2
     struct AndroidAppState {
-        ANativeWindow* nativeWindow = nullptr;
         bool resumed = false;
     };
     static AndroidAppState androidAppState;
@@ -822,11 +774,6 @@ public:
         AndroidAppState* appState = (AndroidAppState*)app->userData;
 
         switch (cmd) {
-        // There is no APP_CMD_CREATE. The ANativeActivity creates the application thread from onCreate()
-        // The application thread then calls android_main()
-        case APP_CMD_START: {
-            break;
-        }
         case APP_CMD_RESUME: {
             appState->resumed = true;
             break;
@@ -835,19 +782,7 @@ public:
             appState->resumed = false;
             break;
         }
-        case APP_CMD_STOP: {
-            break;
-        }
-        case APP_CMD_DESTROY: {
-            appState->nativeWindow = nullptr;
-            break;
-        }
-        case APP_CMD_INIT_WINDOW: {
-            appState->nativeWindow = app->window;
-            break;
-        }
-        case APP_CMD_TERM_WINDOW: {
-            appState->nativeWindow = nullptr;
+        default: {
             break;
         }
         }
@@ -877,16 +812,13 @@ protected:
     }
 
     XrInstance xrInstance = XR_NULL_HANDLE;
-    std::vector<const char*> activeAPILayers = {};
     std::vector<const char*> activeInstanceExtensions = {};
-    std::vector<std::string> apiLayers = {};
     std::vector<std::string> instanceExtensions = {};
 
     XrDebugUtilsMessengerEXT debugUtilsMessenger = XR_NULL_HANDLE;
 
     XrFormFactor formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
     XrSystemId systemID = {};
-    XrSystemProperties systemProperties = {XR_TYPE_SYSTEM_PROPERTIES};
 
     std::unique_ptr<OpenGLESRenderer> renderer = nullptr;
 
@@ -902,7 +834,6 @@ protected:
 
     struct SwapchainInfo {
         XrSwapchain swapchain = XR_NULL_HANDLE;
-        int64_t swapchainFormat = 0;
         std::vector<void*> imageViews;
     };
     SwapchainInfo colorSwapchainInfo = {};
@@ -932,9 +863,6 @@ protected:
 
     // Offset to apply to the camera position
     glm::vec3 cameraPositionOffset{0.0f, 0.0f, 0.0f};
-
-    // In STAGE space, viewHeightM should be 0. In LOCAL space, it should be offset downwards, below the viewer's initial position
-    float viewHeightM = 1.6f;
 
     XrActionSet actionSet;
     // The action for getting the hand or controller position and orientation

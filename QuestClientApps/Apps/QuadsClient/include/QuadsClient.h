@@ -5,9 +5,7 @@
 
 #include <Path.h>
 #include <Primitives/Mesh.h>
-#include <Primitives/Cube.h>
 #include <Primitives/Model.h>
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
 #include <PostProcessing/Tonemapper.h>
 
@@ -89,16 +87,6 @@ private:
         resNodeWireframe.primitiveType = GL_LINES;
         resNodeWireframe.overrideMaterial = new QuadMaterial({ .baseColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f) });
         scene->addChildNode(&resNodeWireframe);
-
-        // // Add a screen for the video
-        // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ baseColorTexture = &quadsReceiver->atlasVideoTexture }),
-        // });
-        // Node* screen = new Node(videoScreen);
-        // screen->setPosition({ 0.0f, 0.0f, -20f });
-        // screen->setScale({ 1.5f, 0.5f, 005f });
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
@@ -158,7 +146,6 @@ private:
             handNodes[i].visible = handPoseState[i].isActive;
 
             if (clickState[i].isActive == XR_TRUE && clickState[i].currentState == XR_FALSE && clickState[i].changedSinceLastSync == XR_TRUE) {
-                // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
                 showWireframe = !showWireframe;
@@ -171,7 +158,6 @@ private:
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
                     cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
-                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
         }
     }
@@ -208,10 +194,7 @@ private:
 
         renderer->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*renderer);
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
-
-    void DestroyResources() override {}
 
 private:
     std::unique_ptr<Tonemapper> tonemapper;
@@ -226,7 +209,6 @@ private:
     PerspectiveCamera remoteCamera;
 
     // Pose streaming
-    pose_id_t prevPoseID = -1;
     std::unique_ptr<PoseStreamer> poseStreamer;
 
     // Actions

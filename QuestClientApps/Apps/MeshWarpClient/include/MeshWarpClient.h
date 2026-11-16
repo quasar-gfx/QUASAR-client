@@ -4,7 +4,6 @@
 #include <OpenXRApp.h>
 
 #include <Primitives/Mesh.h>
-#include <Primitives/Cube.h>
 #include <Primitives/Model.h>
 #include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
@@ -80,16 +79,6 @@ private:
 
         // Create pose streamer bound to receiver's remote camera
         poseStreamer = std::make_unique<PoseStreamer>(&meshWarpReceiver->getRemoteCamera(), poseURL);
-
-        // // Add a screen for the video
-        // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ baseColorTexture = videoTexture }),
-        // });
-        // Node* screen = new Node(videoScreen);
-        // screen->setPosition({ 0.0f, 0.0f, -20f });
-        // screen->setScale({ 1.0f, 0.5f, 005f });
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
@@ -153,7 +142,6 @@ private:
             if (clickState[i].isActive == XR_TRUE &&
                 clickState[i].currentState == XR_FALSE &&
                 clickState[i].changedSinceLastSync == XR_TRUE) {
-                // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
                 nodeWireframe.visible = !nodeWireframe.visible;
@@ -166,7 +154,6 @@ private:
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
                     cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
-                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
         }
     }
@@ -190,9 +177,8 @@ private:
         poseStreamer->removePosesLessThan(std::min(meshWarpReceiver->poseIdColor, meshWarpReceiver->poseIdDepth));
 
         // Render
-        renderStats = renderer->drawObjects(*scene, *cameras);
+        renderer->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*renderer);
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
 
         if (glm::abs(elapsedTimeColor) > 1e-5f) {
             XR_LOG("E2E Latency (RGB): " << elapsedTimeColor << "ms");
@@ -202,25 +188,17 @@ private:
         }
     }
 
-    void DestroyResources() override {
-        // Resources are automatically cleaned up by unique_ptr
-    }
-
 private:
     std::unique_ptr<Tonemapper> tonemapper;
     std::unique_ptr<PoseStreamer> poseStreamer;
 
-    // Timing/pose ids returned by the receiver for latest frames
-    pose_id_t poseIdColor = -1, poseIdDepth = -1;
+    // Timing returned by the receiver for the latest frames
     double elapsedTimeColor, elapsedTimeDepth;
-    Pose currentColorFramePose, currentDepthFramePose;
 
     // Remote camera is owned by the receiver; access through meshWarpReceiver->getRemoteCamera()
     std::unique_ptr<MeshWarpReceiver> meshWarpReceiver;
 
     Node node, nodeWireframe;
-
-    RenderStats renderStats;
 
     // Actions
     XrAction clickAction;

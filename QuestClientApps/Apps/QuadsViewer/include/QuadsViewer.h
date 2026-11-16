@@ -147,7 +147,6 @@ private:
             handNodes[i].visible = handPoseState[i].isActive;
 
             if (clickState[i].isActive == XR_TRUE && clickState[i].currentState == XR_FALSE && clickState[i].changedSinceLastSync == XR_TRUE) {
-                // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
                 showWireframe = !showWireframe;
@@ -160,7 +159,6 @@ private:
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
                     cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
-                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
         }
     }
@@ -171,10 +169,7 @@ private:
 
         renderer->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*renderer);
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
-
-    void DestroyResources() override {}
 
 private:
     std::unique_ptr<Tonemapper> tonemapper;

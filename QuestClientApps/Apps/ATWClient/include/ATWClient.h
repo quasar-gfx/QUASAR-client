@@ -3,11 +3,8 @@
 
 #include <OpenXRApp.h>
 
-#include <Primitives/Cube.h>
 #include <Primitives/Model.h>
-#include <Materials/UnlitMaterial.h>
 #include <Lights/AmbientLight.h>
-#include <PostProcessing/Tonemapper.h>
 
 #include <Receivers/VideoTexture.h>
 #include <Streamers/PoseStreamer.h>
@@ -51,8 +48,6 @@ private:
         handNodes[1].setRotationEuler({ -16.0f, 0.0f, 0.0f });
         handNodes[1].addChildNode(handModelRight.get());
 
-        tonemapper = std::make_unique<Tonemapper>(false);
-
         // Create video texture
         videoTexture = new VideoTexture({
             .width = videoSize.x,
@@ -75,16 +70,6 @@ private:
             .fragmentCodeData = SHADER_COMMON_ATW_FRAG,
             .fragmentCodeSize = SHADER_COMMON_ATW_FRAG_len
         });
-
-        // // Add a screen for the video
-        // Cube* videoScreen = new Cube({
-        //     .material = new UnlitMaterial({ baseColorTexture = videoTexture }),
-        // });
-        // Node* screen = new Node(videoScreen);
-        // screen->setPosition({ 0.0f, 0.0f, -20f });
-        // screen->setScale({ 1.0f, 0.5f, 005f });
-        // screen->frustumCulled = false;
-        // scene->addChildNode(screen);
     }
 
     void CreateActionSet() override {
@@ -147,7 +132,6 @@ private:
             handNodes[i].visible = handPoseState[i].isActive;
 
             if (clickState[i].isActive == XR_TRUE && clickState[i].currentState == XR_FALSE && clickState[i].changedSinceLastSync == XR_TRUE) {
-                // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
                 atwEnabled = !atwEnabled;
             }
@@ -159,7 +143,6 @@ private:
                     cameraPositionOffset += movementSpeed * forward * thumbstickState[i].currentState.y * static_cast<float>(dt);
                     cameraPositionOffset += movementSpeed *   right * thumbstickState[i].currentState.x * static_cast<float>(dt);
                 }
-                // XR_LOG("Thumbstick action triggered for hand: " << i << " with value: " << thumbstickState[i].currentState.x << ", " << thumbstickState[i].currentState.y);
             }
         }
     }
@@ -197,11 +180,6 @@ private:
         // Draw both eyes in a single pass
         renderer->drawToScreen(*atwShader);
 
-        // Draw objects
-        // renderer->drawObjects(*scene, *cameras, 0);
-        // tonemapper->drawToScreen(*renderer);
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
-
         if (glm::abs(elapsedTime) > 1e-5f) {
             XR_LOG("E2E Latency: " << elapsedTime << "ms");
         }
@@ -214,8 +192,6 @@ private:
     }
 
 private:
-    std::unique_ptr<Tonemapper> tonemapper;
-
     // Shader for the ATW effect
     std::unique_ptr<Shader> atwShader;
     bool atwEnabled = true;

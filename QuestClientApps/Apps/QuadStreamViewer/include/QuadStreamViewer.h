@@ -148,7 +148,6 @@ private:
             if (clickState[i].isActive == XR_TRUE &&
                 clickState[i].currentState == XR_FALSE &&
                 clickState[i].changedSinceLastSync == XR_TRUE) {
-                // XR_LOG("Click action triggered for hand: " << i);
                 buzz[i] = 0.5f;
 
                 for (int view = 0; view < maxViews; view++) {
@@ -172,10 +171,7 @@ private:
     void OnRender(double now, double dt) override {
         renderer->drawObjects(*scene, *cameras);
         tonemapper->drawToScreen(*renderer);
-        // spdlog::info("Total Frame time: {:.3f}ms", timeutils::secondsToMillis(dt));
     }
-
-    void DestroyResources() override {}
 
 private:
     const std::vector<glm::vec4> colors = {

@@ -5,178 +5,69 @@
 // OpenXR Tutorial for Khronos Group
 
 #pragma once
-#ifdef _MSC_VER
-#define NOMINMAX
-#include <direct.h>
-#include <windows.h>
-#ifndef _MAX_PATH
-#define _MAX_PATH 500
-#endif
-#include <time.h>
 
-#include <cerrno>
-#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 
-#ifndef _MSC_VER
-#define __stdcall
-#endif
-typedef void(__stdcall *DebugOutputCallback)(const char *);
-
-class vsBufferedStringStreamBuf : public std::streambuf {
-public:
-    vsBufferedStringStreamBuf(int bufferSize) {
-        if (bufferSize) {
-            char *ptr = new char[bufferSize];
-            setp(ptr, ptr + bufferSize);
-        } else
-            setp(0, 0);
-    }
-    virtual ~vsBufferedStringStreamBuf() {
-        // sync();
-        delete[] pbase();
-    }
-    virtual void writeString(const std::string &str) = 0;
-
-private:
-    int overflow(int c) {
-        sync();
-
-        if (c != EOF) {
-            if (pbase() == epptr()) {
-                std::string temp;
-                temp += char(c);
-                writeString(temp);
-            } else
-                sputc((char)c);
-        }
-
-        return 0;
-    }
-
-    int sync() {
-        if (pbase() != pptr()) {
-            int len = int(pptr() - pbase());
-            std::string temp(pbase(), len);
-            writeString(temp);
-            setp(pbase(), epptr());
-        }
-        return 0;
-    }
-};
-
-class DebugOutput : public vsBufferedStringStreamBuf {
-public:
-    DebugOutput(size_t bufsize = (size_t)16)
-        : vsBufferedStringStreamBuf((int)bufsize), old_cout_buffer(NULL), old_cerr_buffer(NULL) {
-        old_cout_buffer = std::cout.rdbuf(this);
-        old_cerr_buffer = std::cerr.rdbuf(this);
-    }
-    virtual ~DebugOutput() {
-        std::cout.rdbuf(old_cout_buffer);
-        std::cerr.rdbuf(old_cerr_buffer);
-    }
-    virtual void writeString(const std::string &str) {
-        OutputDebugStringA(str.c_str());
-    }
-
-protected:
-    std::streambuf *old_cout_buffer;
-    std::streambuf *old_cerr_buffer;
-};
-
-#elif defined(__linux__) && !defined(__ANDROID__)
-#include <iostream>
-class DebugOutput {
-public:
-    DebugOutput() {
-        std::cout << "Testing cout redirect." << std::endl;
-        std::cerr << "Testing cerr redirect." << std::endl;
-    }
-};
-#elif defined(__ANDROID__)
 #include <android/log.h>
-#include <stdarg.h>
 
-#include <iostream>
 class AndroidStreambuf : public std::streambuf {
 public:
-    enum {
-        bufsize = 128
-    };  // .. or some other suitable buffer size
-    android_LogPriority logPriority;
-    AndroidStreambuf(android_LogPriority p = ANDROID_LOG_DEBUG) {
-        logPriority = p;
-        this->setp(buffer, buffer + bufsize - 1);
-    }
+    explicit AndroidStreambuf(android_LogPriority priority = ANDROID_LOG_DEBUG)
+        : logPriority(priority) {}
 
 private:
-    int overflow(int c) {
-        if (c == traits_type::eof()) {
-            *this->pptr() = traits_type::to_char_type(c);
-            this->sbumpc();
-        }
-        return this->sync() ? traits_type::eof() : traits_type::not_eof(c);
-    }
-    std::string str;
-    int sync() {
-        int rc = 0;
-        if (this->pbase() != this->pptr()) {
-            char writebuf[bufsize + 1];
-            memcpy(writebuf, this->pbase(), this->pptr() - this->pbase());
-            writebuf[this->pptr() - this->pbase()] = '\0';
-            str += writebuf;
-            for (size_t pos = 0; pos < str.length(); pos++) {
-                if (str[pos] == '\n') {
-                    str[pos] = 0;
-                    rc = __android_log_write(logPriority, "quest_client", str.c_str()) > 0;
-                    if (str.length() > pos + 1)
-                        str = str.substr(pos + 1, str.length() - pos - 1);
-                    else
-                        str.clear();
+    int_type overflow(int_type character) override {
+        if (!traits_type::eq_int_type(character, traits_type::eof())) {
+            const char value = traits_type::to_char_type(character);
+            if (value == '\n') {
+                if (sync() != 0) {
+                    return traits_type::eof();
                 }
+            } else {
+                pending += value;
             }
-            this->setp(buffer, buffer + bufsize - 1);
         }
-        return rc;
+        return traits_type::not_eof(character);
+    }
+    int sync() override {
+        if (!pending.empty()) {
+            if (__android_log_write(logPriority, "quest_client", pending.c_str()) < 0) {
+                return -1;
+            }
+            pending.clear();
+        }
+        return 0;
     }
 
-    char buffer[bufsize];
+    android_LogPriority logPriority;
+    std::string pending;
 };
+
 class DebugOutput {
 public:
+    DebugOutput()
+        : androidCerr(ANDROID_LOG_ERROR)
+        , previousCout(std::cout.rdbuf(&androidCout))
+        , previousCerr(std::cerr.rdbuf(&androidCerr)) {}
+
+    ~DebugOutput() {
+        androidCout.pubsync();
+        androidCerr.pubsync();
+        std::cout.rdbuf(previousCout);
+        std::cerr.rdbuf(previousCerr);
+    }
+
+    DebugOutput(const DebugOutput&) = delete;
+    DebugOutput& operator=(const DebugOutput&) = delete;
+
+private:
     AndroidStreambuf androidCout;
     AndroidStreambuf androidCerr;
-
-    DebugOutput()
-        : androidCout(), androidCerr(ANDROID_LOG_ERROR) {
-        auto *oldout = std::cout.rdbuf(&androidCout);
-        auto *olderr = std::cerr.rdbuf(&androidCerr);
-        if (oldout != &androidCout) {
-            __android_log_write(ANDROID_LOG_DEBUG, "quest_client", "redirected cout");
-        }
-        std::cout << "Testing cout redirect." << std::endl;
-        if (olderr != &androidCerr) {
-            __android_log_write(ANDROID_LOG_WARN, "quest_client", "redirected cerr");
-        }
-        std::cerr << "Testing cerr redirect." << std::endl;
-    }
+    std::streambuf* previousCout;
+    std::streambuf* previousCerr;
 };
-
-#else
-class DebugOutput {
-public:
-    DebugOutput() {
-    }
-};
-
-
-#endif
-
-#ifdef __ANDROID__
-#include <android/log.h>
-#include <sstream>
 
 #define XR_LOG_TAG "oculus_client"
 #define XR_LOG(...) {                                                           \
@@ -189,9 +80,3 @@ public:
         ostr<<__VA_ARGS__;                                                          \
         __android_log_write(ANDROID_LOG_ERROR, XR_LOG_TAG, ostr.str().c_str()); \
     }
-#else
-#include <iostream>
-
-#define XR_LOG(...) std::cout << __VA_ARGS__ << "\n"
-#define XR_LOG_ERROR(...) std::cerr << __VA_ARGS__ << "\n"
-#endif
