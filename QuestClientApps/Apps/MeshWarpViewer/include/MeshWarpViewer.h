@@ -135,7 +135,7 @@ private:
     void HandleInteractions(double now, double dt) override {
         // For each hand:
         for (int i = 0; i < 2; i++) {
-            // Draw the controllers:
+            // Update controller visibility
             handNodes[i].visible = handPoseState[i].isActive;
 
             if (clickState[i].isActive == XR_TRUE &&
@@ -172,14 +172,14 @@ private:
 
     // Actions
     XrAction clickAction;
-    // The realtime states of these actions
+    // The current click state for each controller
     XrActionStateBoolean clickState[2] = {{XR_TYPE_ACTION_STATE_BOOLEAN}, {XR_TYPE_ACTION_STATE_BOOLEAN}};
     // The thumbstick input action
     XrAction thumbstickAction;
     // The current thumbstick state for each controller
     XrActionStateVector2f thumbstickState[2] = {{XR_TYPE_ACTION_STATE_VECTOR2F}, {XR_TYPE_ACTION_STATE_VECTOR2F}};
     float movementSpeed = 2.0f;
-    // The haptic output action for grabbing
+    // The haptic output action
     XrAction buzzAction;
     // The current haptic output value for each controller
     float buzz[2] = {0, 0};

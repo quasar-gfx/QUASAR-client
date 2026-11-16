@@ -26,7 +26,7 @@ protected:
 
 public:
     OpenXRApp() {
-        // Set up spd for android logging
+        // Configure spdlog for Android logging
         spdlog::set_pattern("%v");
         std::string tag = "spdlog-android";
         auto logger = spdlog::android_logger_mt("android", tag);
@@ -74,7 +74,7 @@ public:
 protected:
     void CreateInstance() {
         // Fill out an XrApplicationInfo structure detailing the names and OpenXR version
-        // The application/engine name and version are user-definied. These may help IHVs or runtimes
+        // The application/engine name and version are user-defined. These may help IHVs or runtimes
         XrApplicationInfo appInfo;
         strncpy(appInfo.applicationName, "OpenXR App", XR_MAX_APPLICATION_NAME_SIZE);
         appInfo.applicationVersion = 1;
@@ -85,7 +85,7 @@ protected:
         instanceExtensions.push_back(XR_KHR_OPENGL_ES_ENABLE_EXTENSION_NAME);
         instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-        // Get all the Instance Extensions from the OpenXR instance
+        // Get the instance extensions supported by the runtime
         uint32_t extensionCount = 0;
         std::vector<XrExtensionProperties> extensionProperties;
         OPENXR_CHECK(xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr), "Failed to enumerate InstanceExtensionProperties.");
@@ -135,7 +135,7 @@ protected:
     }
 
     void DestroyDebugMessenger() {
-        // Check that "XR_EXT_debug_utils" is in the active Instance Extensions before destroying the XrDebugUtilsMessengerEXT
+        // Destroy the debug messenger if it was created
         if (debugUtilsMessenger != XR_NULL_HANDLE) {
             DestroyOpenXRDebugUtilsMessenger(xrInstance, debugUtilsMessenger);  // From OpenXRDebugUtils.h
         }
@@ -286,7 +286,7 @@ protected:
     }
 
     void AttachActionSet() {
-        // Attach the action set we just made to the session We could attach multiple action sets!
+        // Attach the action set to the session
         XrSessionActionSetsAttachInfo actionSetAttachInfo{XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
         actionSetAttachInfo.countActionSets = 1;
         actionSetAttachInfo.actionSets = &actionSet;
@@ -320,7 +320,7 @@ protected:
         viewConfigurations.resize(viewConfigurationCount);
         OPENXR_CHECK(xrEnumerateViewConfigurations(xrInstance, systemID, viewConfigurationCount, &viewConfigurationCount, viewConfigurations.data()), "Failed to enumerate View Configurations.");
 
-        // Pick the first application supported View Configuration Type con supported by the hardware
+        // Pick the first application-supported view configuration supported by the runtime
         for (const XrViewConfigurationType &appViewConfiguration : applicationViewConfigurations) {
             if (std::find(viewConfigurations.begin(), viewConfigurations.end(), appViewConfiguration) != viewConfigurations.end()) {
                 viewConfiguration = appViewConfiguration;
@@ -446,7 +446,7 @@ protected:
                 }
                 if (sessionStateChanged->state == XR_SESSION_STATE_LOSS_PENDING) {
                     // SessionState is loss pending. Exit the application
-                    // It's possible to try a reestablish an XrInstance and XrSession, but we will simply exit here
+                    // Exit instead of recreating the instance and session
                     sessionRunning = false;
                     applicationRunning = false;
                 }
@@ -684,12 +684,6 @@ protected:
         // Resize the layer projection views to match the view count. The layer projection views are used in the layer projection
         renderLayerInfo.layerProjectionViews.resize(viewCount, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW});
 
-        for (uint32_t i = 0; i < viewCount; i++) {
-            // Apply the camera position offset to the view
-            views[i].pose.position.x += cameraPositionOffset.x;
-            views[i].pose.position.y += cameraPositionOffset.y;
-            views[i].pose.position.z += cameraPositionOffset.z;
-        }
         for (int i = 0; i < 2; i++) {
             handNodeParents[i].setPosition(handNodeParents[i].getPosition() + cameraPositionOffset);
         }
@@ -708,7 +702,7 @@ protected:
         OPENXR_CHECK(xrWaitSwapchainImage(colorSwapchainInfo.swapchain, &waitInfo), "Failed to wait for Image from the Color Swapchain");
         OPENXR_CHECK(xrWaitSwapchainImage(depthSwapchainInfo.swapchain, &waitInfo), "Failed to wait for Image from the Depth Swapchain");
 
-        // Get the width and height and construct the viewport and scissors
+        // Use the recommended dimensions for both views
         const uint32_t& width = viewConfigurationViews[0].recommendedImageRectWidth;
         const uint32_t& height = viewConfigurationViews[0].recommendedImageRectHeight;
 
@@ -732,14 +726,14 @@ protected:
         renderer->resize(width, height);
         renderer->SetRenderAttachments(colorSwapchainInfo.imageViews[colorImageIndex], depthSwapchainInfo.imageViews[depthImageIndex]);
 
-        // Update vr cameras
+        // Apply virtual movement to render cameras, keeping compositor poses in localSpace.
         cameras->setProjectionMatrices({
             gxi::toGLM(views[0].fov, nearZ, farZ),
             gxi::toGLM(views[1].fov, nearZ, farZ)
         });
         cameras->setViewMatrices({
-            glm::inverse(gxi::toGlm(views[0].pose)),
-            glm::inverse(gxi::toGlm(views[1].pose))
+            glm::inverse(gxi::toGlm(views[0].pose, cameraPositionOffset)),
+            glm::inverse(gxi::toGlm(views[1].pose, cameraPositionOffset))
         });
 
         OnRender(now, dt);
@@ -763,7 +757,7 @@ public:
     static android_app* androidApp;
 
     // Custom data structure that is used by PollSystemEvents()
-    // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/maincpp#L133C1-L189C2
+    // Modified from https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/d6b6d7a10bdcf8d4fe806b4f415fde3dd5726878/src/tests/hello_xr/main.cpp#L133C1-L189C2
     struct AndroidAppState {
         bool resumed = false;
     };
@@ -790,7 +784,7 @@ public:
 
 protected:
     void PollSystemEvents() {
-        // Checks whether Android has requested that application should by destroyed
+        // Stop when Android requests application destruction
         if (androidApp->destroyRequested != 0) {
             applicationRunning = false;
             return;
@@ -867,9 +861,9 @@ protected:
     XrActionSet actionSet;
     // The action for getting the hand or controller position and orientation
     XrAction palmPoseAction;
-    // The XrPaths for left and right hand hands or controllers
+    // Paths for the left and right hands or controllers
     XrPath handPaths[2] = {0, 0};
-    // The spaces that represents the two hand poses
+    // Spaces representing the two hand poses
     XrSpace handPoseSpace[2];
     XrActionStatePose handPoseState[2] = {{XR_TYPE_ACTION_STATE_POSE}, {XR_TYPE_ACTION_STATE_POSE}};
     // The current poses obtained from the XrSpaces

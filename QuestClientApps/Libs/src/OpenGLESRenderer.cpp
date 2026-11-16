@@ -36,7 +36,7 @@ int64_t OpenGLESRenderer::SelectDepthSwapchainFormat(const std::vector<int64_t>&
 OpenGLESRenderer::OpenGLESRenderer(const Config& config, XrInstance xrInstance, XrSystemId systemId)
     : OpenGLRenderer(config)
 {
-    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_openglescpp#L101-L119
+    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L101-L119
     // Initialize the gl extensions. Note we have to open a window
     ksDriverInstance driverInstance{};
     ksGpuQueueInfo queueInfo{};
@@ -190,7 +190,7 @@ RenderStats OpenGLESRenderer::drawToScreen(const Shader& screenShader, const Ren
 }
 
 const std::vector<int64_t> OpenGLESRenderer::GetSupportedColorSwapchainFormats() {
-    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_openglescpp#L208-L216
+    // https://github.com/KhronosGroup/OpenXR-SDK-Source/blob/f122f9f1fc729e2dc82e12c3ce73efa875182854/src/tests/hello_xr/graphicsplugin_opengles.cpp#L208-L216
     GLint glMajorVersion = 0;
     glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersion);
     if (glMajorVersion >= 3) {

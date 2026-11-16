@@ -16,8 +16,7 @@ void android_main(struct android_app* app) {
     JNIEnv* env;
     app->activity->vm->AttachCurrentThread(&env, nullptr);
 
-    // Load xrInitializeLoaderKHR() function pointer. On Android, the loader must be initialized with variables from android_app*
-    // Without this, there's is no loader and thus our function calls to OpenXR would fail
+    // Look up the Android loader initialization function.
     XrInstance xrInstance = XR_NULL_HANDLE;  // Dummy XrInstance variable for OPENXR_CHECK macro
     PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
     OPENXR_CHECK(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*)&xrInitializeLoaderKHR), "Failed to get InstanceProcAddr for xrInitializeLoaderKHR.");
@@ -35,7 +34,7 @@ void android_main(struct android_app* app) {
     app->userData = &OpenXRApp::androidAppState;
     app->onAppCmd = OpenXRApp::AndroidAppHandleCmd;
 
-    // Set the asset manager for FileIO (required in order to load files from the Android filesystem)
+    // Register the Android asset manager for FileIO.
     FileIO::registerIOSystem(app->activity);
 
     OpenXRApp::androidApp = app;

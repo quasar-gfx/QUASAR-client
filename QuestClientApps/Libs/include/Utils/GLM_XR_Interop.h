@@ -2,9 +2,10 @@
 #define GLM_XR_INTEROP_H
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <OpenGLESRenderer.h>
+#include <openxr/openxr.h>
 
 namespace quasar {
 
@@ -27,10 +28,10 @@ inline Pose toGLM(const XrPosef &pose) {
     return { toGLM(pose.orientation), toGLM(pose.position) };
 }
 
-inline glm::mat4 toGlm(const XrPosef& p) {
+inline glm::mat4 toGlm(const XrPosef& p, const glm::vec3& positionOffset = glm::vec3(0.0f)) {
     Pose pose = toGLM(p);
     glm::mat4 orientation = glm::mat4_cast(pose.orientation);
-    glm::mat4 translation = glm::translate(glm::mat4(1.0f), pose.position);
+    glm::mat4 translation = glm::translate(glm::mat4(1.0f), pose.position + positionOffset);
     return translation * orientation;
 }
 
